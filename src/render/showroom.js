@@ -28,12 +28,20 @@ export class Showroom {
     this.env = buildEnvironment(s, this.gfx.renderer, menu ? (planet === 'earth' ? 'sunset' : PLANET_ENV[planet]) : 'night', this.gfx.q, new THREE.Vector3());
     if (this.env.water) this.env.water.position.y = -30;
     s.fog.density = 0.004;
+    if (!menu) this.studioEnv(s); // art: neutral softbox reflections (the night-city env painted cars/steel pink and smeared colour bars across the floor)
     const floor = new THREE.Mesh(new THREE.CircleGeometry(60, 64).rotateX(-Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: 0x0c0d12, roughness: 0.25, metalness: 0.6, clearcoat: 1 })); floor.receiveShadow = true; s.add(floor);
     const plate = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.4, 0.18, 64), new THREE.MeshPhysicalMaterial({ color: 0x23252d, metalness: 0.9, roughness: 0.25 })); plate.position.y = 0.09; plate.receiveShadow = true; s.add(plate); this.plate = plate;
     const ring = new THREE.Mesh(new THREE.TorusGeometry(4.3, 0.04, 8, 96), new THREE.MeshBasicMaterial({ color: 0x00e5ff, toneMapped: false })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.19; s.add(ring);
-    for (const [x, z, c] of [[6, 4, 0xffffff], [-6, 3, 0x88ccff], [0, -7, 0xff88cc]]) { const L = new THREE.SpotLight(c, 260, 40, 0.5, 0.6, 1.5); L.position.set(x, 9, z); L.castShadow = this.gfx.q.shadows > 0; s.add(L); }
+    for (const [x, z, c] of [[6, 4, 0xffffff], [-6, 3, 0xbfe0ff], [0, -7, 0xffd2e8]]) { const L = new THREE.SpotLight(c, 260, 40, 0.5, 0.6, 1.5); L.position.set(x, 9, z); L.castShadow = this.gfx.q.shadows > 0; s.add(L); }
     this.setCar(custom, vehicle);
     this.camState = { yaw: 0.9, pitch: 0.18, dist: vehicle === 'hauler' ? (menu ? 11 : 10.5) : (menu ? 8.5 : 7.5), auto: true };
+  }
+  studioEnv(s) {
+    const pm = new THREE.PMREMGenerator(this.gfx.renderer); const es = new THREE.Scene();
+    es.add(new THREE.Mesh(new THREE.SphereGeometry(20, 24, 12), new THREE.MeshBasicMaterial({ color: 0x15171d, side: THREE.BackSide })));
+    const box = (w, h, x, y, z, c) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); es.add(m); };
+    box(14, 3, 0, 12, 0, new THREE.Color(3, 3, 3.1)); box(6, 8, -14, 4, 6, new THREE.Color(1.5, 1.55, 1.65)); box(6, 8, 14, 4, -6, new THREE.Color(1.3, 1.3, 1.3)); box(10, 1.2, 0, 1.5, -15, new THREE.Color(0.2, 1.1, 1.3));
+    this.env.envRT?.dispose(); const rt = pm.fromScene(es, 0.03); pm.dispose(); this.env.envRT = rt; s.environment = rt.texture; s.environmentIntensity = 0.9;
   }
   setCar(custom, vehicle = this.vehicle || 'roadster') { this.vehicle = vehicle; if (this.car) { this.scene.remove(this.car); this.car.userData.dispose?.(); } this.car = buildVehicle(vehicle, custom, { quality: this.gfx.qName || 'high' }); this.car.position.y = 0.18 + (vehicle === 'hauler' ? 0.86 : 0.72); this.scene.add(this.car); if (this.camState) this.camState.dist = vehicle === 'hauler' ? 9 : (this.kind === 'menu' ? 8.5 : 7.5); }
 
