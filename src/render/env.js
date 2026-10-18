@@ -45,7 +45,7 @@ export function buildEnvironment(scene, renderer, envName, quality, center) {
   // environment map (reflections on paint/glass)
   const pm = new THREE.PMREMGenerator(renderer);
   const envScene = new THREE.Scene(); const skyClone = skyMesh.clone(); skyClone.material = skyMesh.material.clone(); if (skyClone.material.uniforms?.starAmt) skyClone.material.uniforms.starAmt.value = 0; envScene.add(skyClone);
-  const groundCol = { desert: 0x9a7650, canyon: 0x8a5a38, coast: 0x5a6a50, city: 0x101018, moon: 0x404040, mars: 0x8a4a2a }[e.ground];
+  const groundCol = { desert: 0x9a7650, canyon: 0x8a5a38, coast: 0x5a6a50, city: 0x101018, moon: e.sunI > 2 ? 0x9a9a9e : 0x4a4c54, mars: 0x8a4a2a }[e.ground]; // art: sunlit regolith is bright; a dark env ground turned metal/steel black on the Moon
   const g = new THREE.Mesh(new THREE.SphereGeometry(100, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshBasicMaterial({ color: groundCol, side: THREE.BackSide })); envScene.add(g);
   if (e.ground === 'city') for (let k = 0; k < 30; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(6, 20 + Math.random() * 30, 6), new THREE.MeshBasicMaterial({ color: [0xff2bd6, 0x29e7ff, 0xffb000][k % 3] })); const a = k / 30 * Math.PI * 2; b.position.set(Math.cos(a) * 60, 0, Math.sin(a) * 60); envScene.add(b); }
   const envRT = pm.fromScene(envScene, 0.02, 1, 5000); scene.environment = envRT.texture; scene.environmentIntensity = e.sky === 'sky' ? 0.28 : envName.startsWith('moon') ? 0.5 : 0.8; pm.dispose(); out.envRT = envRT;
