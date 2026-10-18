@@ -66,6 +66,8 @@ export function createBoostFlame(vehicle, opts = {}) {
   const api = {
     group,
     setVariant(id) { const v = BOOST_VARIANTS.find(b => b.id === id) || BOOST_VARIANTS[0]; uniforms.uCore.value.set(v.core); uniforms.uMid.value.set(v.mid); uniforms.uOuter.value.set(v.outer); api.variant = v.id; },
+    // free colours (game shop flames, animated rainbow): any THREE.Color-compatible values
+    setColors(core, mid, outer) { uniforms.uCore.value.set(core); uniforms.uMid.value.set(mid); uniforms.uOuter.value.set(outer); api.variant = 'custom'; },
     setIntensity(x) { target = Math.max(0, Math.min(1.5, x)); },
     update(dt) {
       time += dt; uniforms.uTime.value = time;

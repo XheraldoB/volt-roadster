@@ -5,6 +5,7 @@ import { createMarsMaterial } from '../../art/terrain/marsMaterial.js';
 import { buildEnvironment } from './env.js';
 import { FLAME_LIST } from '../shop.js';
 import { createColdGasThrusters } from '../../art/fx/coldGasThrusters.js';
+import { createBoostFlame } from '../../art/fx/boostFlame.js';
 import { buildCar, buildVehicle, animateUnderglow, buildTraffic, buildProp, buildRobot, buildArch, buildKicker, buildPad, buildBillboard, buildRocket, PAINTS } from './models.js';
 import { roadTexture, noiseNormalMap, detailTexture, windowsTexture } from './textures.js';
 import { Particles } from './particles.js';
@@ -18,6 +19,7 @@ const JOKES = [
   ['CAUTION', 'COWS MAY BE FAST'], ['FREE PARKING', 'ON THE MOON*  *no air'], ['SLOW DOWN?', 'NEVER HEARD OF IT'], ['DONUT DISTURB', 'FLY THROUGH ME'],
 ];
 
+const _white = new THREE.Color(1, 1, 1);
 const hsl = h => { const c = new THREE.Color().setHSL(h, 1, 0.55); return [c.r, c.g, c.b]; };
 export class LevelView {
   constructor(gfx, sim, opts) {
@@ -177,7 +179,9 @@ export class LevelView {
     const sim = this.sim, sc = this.scene;
     this.car = buildVehicle(sim.veh.id, this.opts.custom || {}, { wheelPos: sim.wheelPos, quality: this.gfx.qName || 'high' });
     if (sim.veh.rcs) { try { this.coldGas = createColdGasThrusters(this.car, { quality: this.gfx.qName || 'high', scene: sc }); } catch (e) { console.warn('cold-gas fx fallback', e); } }
-    this.flame = FLAME_LIST.find(f => f.id === (this.opts.custom || {}).flame) || FLAME_LIST[0]; this.trail = (this.opts.custom || {}).trail || 'none'; sc.add(this.car);
+    this.flame = FLAME_LIST.find(f => f.id === (this.opts.custom || {}).flame) || FLAME_LIST[0];
+    try { const hauler = sim.veh.id === 'hauler'; this.flameFx = createBoostFlame(this.car, { quality: this.gfx.qName || 'high', mounts: this.car.userData.nozzles, radius: hauler ? 0.13 : 0.11, length: hauler ? 1.6 : 1.4 }); this.flameCol = [new THREE.Color(), new THREE.Color(), new THREE.Color()]; } catch (e) { console.warn('boost flame fx fallback', e); } // art: shaped plasma jet
+    this.trail = (this.opts.custom || {}).trail || 'none'; sc.add(this.car);
     if (this.env.e.ground === 'city' || this.env.e.lamps || sim.level.env === 'moonnight') {
       const spot = new THREE.SpotLight(0xe8f4ff, 60, 90, 0.5, 0.5, 1.5); spot.position.set(0, 0.2, 2.0); spot.target.position.set(0, -1, 22); this.car.add(spot, spot.target);
     }
@@ -295,7 +299,8 @@ export class LevelView {
     const dustCol = { desert: [0.8, 0.65, 0.45], canyon: [0.75, 0.5, 0.32], coast: [0.7, 0.68, 0.6], city: [0.5, 0.5, 0.55], moon: [0.62, 0.62, 0.64], mars: [0.78, 0.45, 0.28] }[ground];
     const back = car.position.clone().addScaledVector(fwd, -2.0).addScaledVector(up, -0.55);
     const fl = this.flame, tt = this.time; const c1 = fl.rainbow ? hsl((tt * 0.6) % 1) : fl.c1, c2 = fl.rainbow ? hsl((tt * 0.6 + 0.5) % 1) : fl.c2;
-    if (sim.boosting) for (const nz of car.userData.nozzles) { const p = nz.clone().applyQuaternion(q).add(car.position); for (let k = 0; k < 3; k++) this.addP.emit(p, fwd.clone().multiplyScalar(-14).add(new THREE.Vector3().copy(sim.prevVel).multiplyScalar(0.9)), { color: c1, size: 1.1, life: 0.22, grow: -2, spread: 2, alpha: 0.9 }); this.addP.emit(p, sim.prevVel.clone().multiplyScalar(0.95), { color: c2, size: 0.7, life: 0.12 }); }
+    if (this.flameFx) { const [a, b, o] = this.flameCol; b.setRGB(...c1); a.setRGB(...c2).lerp(_white, 0.55); o.copy(b).multiplyScalar(0.55); this.flameFx.setColors(a, b, o); this.flameFx.setIntensity(sim.boosting ? 1 : 0); this.flameFx.update(dt); }
+    if (sim.boosting) for (const nz of car.userData.nozzles) { const p = nz.clone().applyQuaternion(q).add(car.position); for (let k = 0; k < (this.flameFx ? 1 : 3); k++) this.addP.emit(p, fwd.clone().multiplyScalar(-14).add(new THREE.Vector3().copy(sim.prevVel).multiplyScalar(0.9)), { color: c1, size: this.flameFx ? 0.45 : 1.1, life: this.flameFx ? 0.14 : 0.22, grow: -2, spread: 2, alpha: 0.9 }); if (!this.flameFx) this.addP.emit(p, sim.prevVel.clone().multiplyScalar(0.95), { color: c2, size: 0.7, life: 0.12 }); }
     this.trailFx(car, q, fwd, up);
     if (sim.veh.rcs) this.rcsFx(car, q, up);
     else if (sim.thrusting) for (const nz of car.userData.nozzles) { const p = nz.clone().applyQuaternion(q).add(car.position).addScaledVector(up, -0.3); for (let k = 0; k < 4; k++) this.addP.emit(p, up.clone().multiplyScalar(-16).add(sim.prevVel), { color: [0.3, 0.95, 1], size: 1.4, life: 0.25, grow: 2, spread: 3 }); }
