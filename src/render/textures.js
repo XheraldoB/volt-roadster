@@ -12,7 +12,7 @@ function tex(c, repeat = [1, 1], srgb = true) {
 export function roadTexture(style = 'asphalt') {
   const key = 'road' + style; if (cache.has(key)) return cache.get(key);
   const c = canvas(512, 512), g = c.getContext('2d'); const r = rng(7);
-  const base = { asphalt: [38, 40, 46], moon: [96, 96, 100], mars: [92, 58, 46], neon: [22, 22, 32], spaceport: [52, 54, 60] }[style] || [40, 40, 44];
+  const base = { asphalt: [47, 46, 45], moon: [96, 96, 100], mars: [92, 58, 46], neon: [22, 22, 32], spaceport: [52, 54, 60] }[style] || [40, 40, 44];
   g.fillStyle = `rgb(${base})`; g.fillRect(0, 0, 512, 512);
   const img = g.getImageData(0, 0, 512, 512);
   for (let i = 0; i < img.data.length; i += 4) { const n = (r() - 0.5) * 26; img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n; }

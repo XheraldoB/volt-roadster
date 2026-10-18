@@ -75,7 +75,8 @@ export class LevelView {
     const r = this.sim.road, style = this.env.e.road;
     const mk = (pos, idx, uv) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); if (uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g; };
     const rt = roadTexture(style);
-    const roadMat = new THREE.MeshStandardMaterial({ map: rt, roughness: style === 'neon' ? 0.35 : 0.82, metalness: style === 'neon' ? 0.3 : 0.05, normalMap: noiseNormalMap(20, 1.2), normalScale: new THREE.Vector2(0.4, 0.4), side: THREE.DoubleSide });
+    const neon = style === 'neon'; // art: low normal strength + rougher, less env so asphalt stops reading as rippling blue water / splotchy neon puddles
+    const roadMat = new THREE.MeshStandardMaterial({ map: rt, roughness: neon ? 0.55 : 0.9, metalness: neon ? 0.15 : 0.0, envMapIntensity: neon ? 0.7 : 0.45, normalMap: noiseNormalMap(20, 1.2), normalScale: new THREE.Vector2(neon ? 0.08 : 0.12, neon ? 0.08 : 0.12), side: THREE.DoubleSide });
     const road = new THREE.Mesh(mk(r.top.pos, r.top.idx, r.top.uv), roadMat); road.receiveShadow = true; road.castShadow = true; this.scene.add(road);
     const wallCol = { neon: 0xff2bd6, moon: 0xb8c4d8, mars: 0xe0e0e0, spaceport: 0xe6e9ee, asphalt: 0xe8e8e8 }[style] || 0xdddddd;
     const wallMat = new THREE.MeshStandardMaterial({ color: wallCol, roughness: 0.4, metalness: 0.5, emissive: style === 'neon' ? 0x7a0a66 : 0x000000, side: THREE.DoubleSide });
