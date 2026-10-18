@@ -7,6 +7,7 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAPass } from 'three/examples/jsm/postprocessing/FXAAPass.js';
+import { PRESETS as ART_POST } from '../../art/post/ultraPost.js';
 
 export const PRESETS = {
   low:    { target: 45, name: 'Low',    dpr: 1,   shadows: 0,    bloom: false, ao: false, msaa: 0, particles: 0.25, terrainRes: 96,  draw: 900,  decor: 0.3, vignette: false },
@@ -73,7 +74,7 @@ export class Gfx {
     const c = this.composer = new EffectComposer(this.renderer, rt);
     this.renderPass = new RenderPass(this.scene, this.camera); c.addPass(this.renderPass);
     if (q.ao) { this.aoPass = new GTAOPass(this.scene, this.camera, size.x, size.y); this.aoPass.output = GTAOPass.OUTPUT.Default; this.aoPass.blendIntensity = 0.85; this.aoPass.updateGtaoMaterial({ radius: 0.6, distanceExponent: 1.5, thickness: 1.2, scale: 1 }); c.addPass(this.aoPass); } else this.aoPass = null;
-    if (q.bloom) { this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x / 2, size.y / 2), 0.4, 0.45, 2.6); c.addPass(this.bloom); } else this.bloom = null;
+    if (q.bloom) { const b = ART_POST[this.qName]?.bloom || { strength: 0.35, radius: 0.12, threshold: 3.6 }; this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x / 2, size.y / 2), b.strength, b.radius, b.threshold); c.addPass(this.bloom); } else this.bloom = null; // art preset: only true emitters bloom (thr 3.6), the HDR sky no longer hazes the frame
     this.vig = new ShaderPass(VignetteShader); if (!q.vignette) this.vig.uniforms.amount.value = 0; c.addPass(this.vig);
     c.addPass(new OutputPass());
     if (!q.msaa) { this.fxaa = new FXAAPass(); c.addPass(this.fxaa); } else this.fxaa = null; // cheap AA on Low/Medium
