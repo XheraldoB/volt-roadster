@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#05070d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Volt Roadster - a 3D electric hypercar stunt racer across Earth, the Moon and Mars.">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<title>Volt Roadster</title>
+</head>
+<body data-screen="loading">
+<canvas id="game"></canvas>
+
+<!-- loading -->
+<section class="scr on" id="scr-loading"><div class="center"><div class="logo">VOLT<span>ROADSTER</span></div><div class="spinner"></div><div id="loading-text">Loading…</div></div></section>
+
+<!-- title -->
+<section class="scr" id="scr-title">
+  <div class="title-wrap"><div class="logo big">VOLT<span>ROADSTER</span></div><div class="tag">Electric hypercar stunts · Earth · Moon · Mars</div>
+    <button class="btn primary huge" id="btn-play">PLAY</button>
+    <div class="row-btns"><button class="btn" data-go="garage">🔧 Garage</button><button class="btn" data-go="base">🏗️ Base</button><button class="btn" data-go="settings">⚙️ Settings</button><button class="btn" data-go="fullscreen">⛶</button></div>
+  </div>
+  <div class="corner-coins">🪙 <span class="coinval">0</span></div>
+</section>
+
+<!-- world map -->
+<section class="scr" id="scr-map">
+  <div class="topbar"><button class="btn icon" data-go="title">◀</button><div id="planets"><button data-p="earth">🌍 Earth</button><button data-p="moon">🌙 Moon</button><button data-p="mars">🔴 Mars</button></div>
+    <div class="spacer"></div><div class="coins">🪙 <span class="coinval">0</span> <span class="gemsep">💎 <span class="gemval">0</span></span></div></div>
+  <div id="planet-desc"></div>
+  <div id="nodes"></div>
+  <div class="bottombar"><button class="btn" data-go="garage">🔧 Garage</button><button class="btn" data-go="base" id="btn-base">🏗️ Base <span class="badge"></span></button><button class="btn" data-go="daily" id="btn-daily">📅 Daily <span class="badge"></span></button><button class="btn" data-go="ach">🏆 Achievements</button><button class="btn" data-go="settings">⚙️</button></div>
+</section>
+
+<!-- garage -->
+<section class="scr" id="scr-garage">
+  <div class="topbar"><button class="btn icon" data-go="map">◀</button><h2>Garage</h2><div class="spacer"></div><div class="coins">🪙 <span class="coinval">0</span> <span class="gemsep">💎 <span class="gemval">0</span></span></div></div>
+  <div class="side-panel"><div id="garage-tabs" class="tabs"><button data-t="vehicle">🚗 Vehicle</button><button data-t="upgrades">⚡ Upgrades</button><button data-t="shop">🛍️ Shop</button><button data-t="gems">💎 Gems</button></div><div id="garage-body" class="scroll"></div></div>
+  <div class="hint">Drag to rotate</div>
+</section>
+
+<!-- base -->
+<section class="scr" id="scr-base">
+  <div class="topbar"><button class="btn icon" data-go="map">◀</button><div id="base-planets" class="tabs small"><button data-p="earth">🌍</button><button data-p="moon">🌙</button><button data-p="mars">🔴</button></div><div id="base-info"></div><div class="spacer"></div><div class="coins">🪙 <span class="coinval">0</span> <span class="gemsep">💎 <span class="gemval">0</span></span></div></div>
+  <div class="bottombar"><button class="btn primary" id="base-collect">Collect</button><button class="btn" id="base-trophy">🏆 Trophy Room</button></div>
+</section>
+
+<!-- trophy room -->
+<section class="scr" id="scr-trophy"><div class="topbar"><button class="btn icon" data-go="base">◀</button><div id="trophy-info"></div><div class="spacer"></div><button class="btn" data-go="ach">List</button></div></section>
+
+<!-- cutscene -->
+<section class="scr" id="scr-cut"><div id="cut-title"></div><div id="cut-count"></div><button class="btn" id="cut-skip">Skip ▶▶</button></section>
+
+<!-- race HUD -->
+<section class="scr" id="scr-race">
+  <div id="hud">
+    <div class="hud-tl"><canvas id="minimap" width="200" height="200"></canvas><div id="hud-pos"></div></div>
+    <div class="hud-tc"><div id="hud-level"></div><div class="hud-time-row"><span id="hud-time">0:00.00</span><span id="hud-ghost"></span></div>
+      <div id="bat"><span class="ic">🔋</span><div class="bar"><div id="bat-fill"></div></div><span id="bat-val">60s</span></div>
+      <div id="prog"><div id="prog-fill"></div></div><div id="quest-line"></div></div>
+    <div class="hud-tr"><div class="score"><span id="hud-score">0</span><span id="hud-mult"></span></div><div class="coins">🪙 <span id="hud-coins">0</span></div>
+      <div class="hud-btns"><button class="btn icon" id="btn-horn" title="Horn (H)">📯</button><button class="btn icon" id="btn-radio">📻</button><button class="btn icon" id="btn-cam">🎥</button><button class="btn icon" id="btn-respawn">↺</button><button class="btn icon" id="btn-pause">❚❚</button></div></div>
+    <div class="hud-bc"><div id="spd">0</div><div class="unit">km/h</div><div class="mini-bars"><div class="mb"><i>BOOST</i><div class="bar"><div id="boost-fill"></div></div></div><div class="mb"><i id="thr-lbl">THRUST</i><div class="bar"><div id="thr-fill"></div></div></div></div></div>
+    <div id="pops"></div><div id="big"></div><div id="radio"></div>
+  </div>
+  <div id="touch">
+    <div class="tc-left"><button class="tbtn steer" data-ctl="left">◀</button><button class="tbtn steer" data-ctl="right">▶</button></div>
+    <div class="tc-right"><button class="tbtn small" data-ctl="brake">BRAKE</button><button class="tbtn" data-ctl="gas" id="t-gas">GAS</button><button class="tbtn boost" data-ctl="boost">🔥</button><button class="tbtn jump" data-ctl="jump">⬆</button></div>
+  </div>
+</section>
+
+<!-- pause -->
+<section class="scr dim" id="scr-pause"><div class="panel center-panel"><h1>PAUSED</h1><div id="pause-stats"></div>
+  <div class="col-btns"><button class="btn primary" id="p-resume">Resume</button><button class="btn" id="p-restart">Restart</button><button class="btn" id="p-photo">📸 Photo mode</button><button class="btn" id="p-settings">Settings</button><button class="btn" id="p-map">Quit to map</button></div></div></section>
+
+<!-- photo mode -->
+<section class="scr" id="scr-photo"><div class="ph-top"><button class="btn icon" id="ph-close">✕</button><div id="ph-filters" class="tabs small"></div></div>
+  <div class="ph-side"><label>Zoom<input type="range" id="ph-zoom" min="3" max="40" step="0.5" value="9"></label><label>FOV<input type="range" id="ph-fov" min="20" max="100" value="50"></label></div>
+  <button class="shutter" id="ph-shot" aria-label="Take photo"></button><div class="hint">Drag to orbit · pinch to zoom</div></section>
+
+<!-- results -->
+<section class="scr dim" id="scr-results"><div class="panel center-panel wide"><div id="res-body"></div>
+  <div class="row-btns"><button class="btn primary" id="res-next">Next level ▶</button><button class="btn" id="res-retry">Retry</button><button class="btn" id="res-photo">📸</button><button class="btn" id="res-garage">Garage</button><button class="btn" id="res-map">Map</button></div></div></section>
+
+<!-- modals -->
+<div class="modal" id="m-levelcard"><div class="panel"><button class="x" data-close>✕</button><div id="lc-body"></div><div class="row-btns"><button class="btn primary" id="lc-race">🏁 Race vs AI</button><button class="btn" id="lc-trial">⏱ Time Trial</button></div></div></div>
+<div class="modal" id="m-settings"><div class="panel tall"><button class="x" data-close>✕</button><h2>Settings</h2><div id="set-body" class="scroll"></div></div></div>
+<div class="modal" id="m-ach"><div class="panel tall"><button class="x" data-close>✕</button><h2>Achievements</h2><div id="ach-body" class="scroll"></div></div></div>
+<div class="modal" id="m-daily"><div class="panel"><button class="x" data-close>✕</button><h2>Daily Challenges</h2><div id="daily-body"></div></div></div>
+<div class="modal" id="m-plot"><div class="panel tall"><button class="x" data-close>✕</button><div id="plot-body" class="scroll"></div></div></div>
+
+<div id="toasts"></div><div id="fps"></div><div id="fade"></div><div id="flash"></div>
+<div id="rotate"><div>📱↻</div><p>Rotate your phone to landscape</p></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

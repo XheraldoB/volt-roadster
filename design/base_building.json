@@ -1,0 +1,441 @@
+{
+  "schema": "volt-roadster/base_building@1",
+  "unlocked": "all three bases available from the start (req 21); Earth Garage HQ is pre-built",
+  "compatWithProgressJs": {
+    "model": "src/progress.js uses 6 plots per planet (save.bases[planet].plots = [{type, lvl}]) and BUILDINGS solar/refinery/robotbay/workshop/nitro/trophy. Keep that model; this file adds planet flavour, robot roles and new types.",
+    "mapping": {
+      "earth_garage": "workshop",
+      "earth_solar_carport": "solar",
+      "robot_workshop": "robotbay",
+      "moon_regolith_mine": "refinery",
+      "mars_ice_drill": "refinery",
+      "moon_habitat": "solar (Moon skin) + new air-drain perk",
+      "earth_scout_tower": "NEW type scout",
+      "moon_mass_driver": "NEW type massdriver",
+      "mars_dust_shield": "NEW type dustshield",
+      "mars_greenhouse": "NEW type greenhouse"
+    },
+    "keepFromProgressJs": [
+      "nitro (Nitro Plant)",
+      "trophy (Trophy Hall)"
+    ],
+    "robots": "progress.robotCount(s) = sum of robotbay levels; roles here are an assignment of those robots (save.robots = [{role, planet}]). Chargers -> Sim opts.robots.",
+    "costNote": "Costs here are scaled with the 120k core-upgrade economy (BASE_SCALE in gen/build_meta.mjs). progress.js building costs (300-1600) were tuned for MAX_UP=5; replace them with these when moving to 10 tiers."
+  },
+  "robots": {
+    "family": "VOLT-Bots (original design)",
+    "look": "Slim humanoid helpers, ~1.7 m, matte pearl-white shells with a single wraparound cyan light-bar visor, exposed graphite joints, a glowing amber battery core in the chest and role-coloured shoulder pads. No logos, no resemblance to any real product name.",
+    "roles": [
+      {
+        "role": "miner",
+        "name": "Dig",
+        "color": "amber",
+        "benefit": "Staffs a Mine/Drill building: passive coins per hour",
+        "simHook": "none (meta)",
+        "costs": [
+          240,
+          600,
+          1200,
+          2000
+        ],
+        "maxPerPlanet": 2
+      },
+      {
+        "role": "mechanic",
+        "name": "Wrench",
+        "color": "red",
+        "benefit": "-3% upgrade cost per mechanic (cap -15%); free tyre swap = +2% grip for the next run",
+        "simHook": "economy discount; bonus.grip optional",
+        "costs": [
+          320,
+          800,
+          1400,
+          2400
+        ],
+        "maxPerPlanet": 2
+      },
+      {
+        "role": "charger",
+        "name": "Juice",
+        "color": "green",
+        "benefit": "+1 s battery at every checkpoint per charger (cap 4)",
+        "simHook": "opts.robots -> sim.robots (checkpoint bonus = 3 + robots)",
+        "costs": [
+          280,
+          680,
+          1280,
+          2200
+        ],
+        "maxPerPlanet": 2
+      },
+      {
+        "role": "scout",
+        "name": "Peep",
+        "color": "violet",
+        "benefit": "Reveals side quests + gold coin caches on the minimap; +1 daily reroll at 2 scouts",
+        "simHook": "minimap layer; daily rerolls",
+        "costs": [
+          200,
+          520,
+          1040,
+          1800
+        ],
+        "maxPerPlanet": 1
+      }
+    ],
+    "cap": {
+      "total": 21,
+      "note": "robot n of a role costs costs[min(n, 3)]"
+    }
+  },
+  "buildings": [
+    {
+      "id": "earth_garage",
+      "planet": "earth",
+      "name": "Roadside Garage HQ",
+      "staffedBy": "mechanic",
+      "desc": "Where your Roadster lives. Mechanics work here.",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 0,
+          "buildMinutes": 0,
+          "benefit": "Home base. 1 mechanic slot."
+        },
+        {
+          "level": 2,
+          "cost": 600,
+          "buildMinutes": 10,
+          "benefit": "2 mechanic slots, paint shop"
+        },
+        {
+          "level": 3,
+          "cost": 1600,
+          "buildMinutes": 45,
+          "benefit": "Upgrade costs -5% (stacks with mechanics, total cap -20%)"
+        },
+        {
+          "level": 4,
+          "cost": 3610,
+          "buildMinutes": 120,
+          "benefit": "Ghost replays of your best runs on all levels"
+        },
+        {
+          "level": 5,
+          "cost": 6410,
+          "buildMinutes": 240,
+          "benefit": "Garage showroom (cosmetic) + -5% more"
+        }
+      ]
+    },
+    {
+      "id": "earth_solar_carport",
+      "planet": "earth",
+      "name": "Solar Carport",
+      "staffedBy": "charger",
+      "desc": "Free sunshine for your battery.",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 320,
+          "buildMinutes": 5,
+          "benefit": "+2 s starting battery"
+        },
+        {
+          "level": 2,
+          "cost": 1000,
+          "buildMinutes": 30,
+          "benefit": "+4 s starting battery, 1 charger slot"
+        },
+        {
+          "level": 3,
+          "cost": 2400,
+          "buildMinutes": 90,
+          "benefit": "+6 s, 2 charger slots"
+        },
+        {
+          "level": 4,
+          "cost": 4810,
+          "buildMinutes": 180,
+          "benefit": "+8 s, battery pickups +2 s"
+        }
+      ]
+    },
+    {
+      "id": "robot_workshop",
+      "planet": "earth",
+      "name": "Robot Workshop",
+      "staffedBy": null,
+      "desc": "Builds VOLT-Bots for every planet (robots are shipped by rocket, so they can work anywhere).",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 400,
+          "buildMinutes": 10,
+          "benefit": "Build robots (2 at a time)"
+        },
+        {
+          "level": 2,
+          "cost": 1400,
+          "buildMinutes": 60,
+          "benefit": "Robot build time -25%, 4 robots in queue"
+        },
+        {
+          "level": 3,
+          "cost": 3610,
+          "buildMinutes": 180,
+          "benefit": "Robots gain moods/quests (Robot Feelings side quest)"
+        }
+      ]
+    },
+    {
+      "id": "earth_scout_tower",
+      "planet": "earth",
+      "name": "Scout Tower",
+      "staffedBy": "scout",
+      "desc": "Eyes in the sky.",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 480,
+          "buildMinutes": 15,
+          "benefit": "Minimap shows side quest givers"
+        },
+        {
+          "level": 2,
+          "cost": 1400,
+          "buildMinutes": 60,
+          "benefit": "Minimap shows gold coin caches"
+        },
+        {
+          "level": 3,
+          "cost": 3210,
+          "buildMinutes": 150,
+          "benefit": "+1 daily challenge reroll"
+        }
+      ]
+    },
+    {
+      "id": "moon_regolith_mine",
+      "planet": "moon",
+      "name": "Regolith Mine",
+      "staffedBy": "miner",
+      "desc": "Helium-3 flavoured coins. Do not ask how.",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 600,
+          "buildMinutes": 15,
+          "benefit": "10 coins/h per staffed miner"
+        },
+        {
+          "level": 2,
+          "cost": 1600,
+          "buildMinutes": 60,
+          "benefit": "20 coins/h"
+        },
+        {
+          "level": 3,
+          "cost": 3410,
+          "buildMinutes": 150,
+          "benefit": "32 coins/h"
+        },
+        {
+          "level": 4,
+          "cost": 6010,
+          "buildMinutes": 240,
+          "benefit": "46 coins/h"
+        }
+      ]
+    },
+    {
+      "id": "moon_habitat",
+      "planet": "moon",
+      "name": "Habitat Dome",
+      "staffedBy": "charger",
+      "desc": "Somewhere to keep your helmet.",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 480,
+          "buildMinutes": 10,
+          "benefit": "1 charger slot on Moon levels (+1 s per checkpoint)"
+        },
+        {
+          "level": 2,
+          "cost": 1600,
+          "buildMinutes": 60,
+          "benefit": "Low-g landing assist +10% (air torque damping)"
+        },
+        {
+          "level": 3,
+          "cost": 3610,
+          "buildMinutes": 180,
+          "benefit": "Moon levels: battery drains 10% slower in the air"
+        }
+      ]
+    },
+    {
+      "id": "moon_mass_driver",
+      "planet": "moon",
+      "name": "Mass Driver",
+      "staffedBy": null,
+      "desc": "A railgun for cars. Totally safe.",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 2000,
+          "buildMinutes": 90,
+          "benefit": "Unlocks the Mass Driver daily stunt (launch the Roadster into a crater target)"
+        },
+        {
+          "level": 2,
+          "cost": 4810,
+          "buildMinutes": 240,
+          "benefit": "Ships miner coins from all planets: offline cap 6 h -> 10 h"
+        }
+      ]
+    },
+    {
+      "id": "mars_ice_drill",
+      "planet": "mars",
+      "name": "Polar Ice Drill",
+      "staffedBy": "miner",
+      "desc": "Water is the real Mars currency.",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 720,
+          "buildMinutes": 20,
+          "benefit": "12 coins/h per staffed miner"
+        },
+        {
+          "level": 2,
+          "cost": 1920,
+          "buildMinutes": 75,
+          "benefit": "24 coins/h"
+        },
+        {
+          "level": 3,
+          "cost": 4010,
+          "buildMinutes": 180,
+          "benefit": "38 coins/h"
+        },
+        {
+          "level": 4,
+          "cost": 6810,
+          "buildMinutes": 240,
+          "benefit": "55 coins/h"
+        }
+      ]
+    },
+    {
+      "id": "mars_dust_shield",
+      "planet": "mars",
+      "name": "Dust Shield Array",
+      "staffedBy": null,
+      "desc": "Pushes the storm back a little. Feeds stormFx in levels.mars.json.",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 1000,
+          "buildMinutes": 30,
+          "benefit": "Dust storms: gripMul penalty -25%"
+        },
+        {
+          "level": 2,
+          "cost": 2810,
+          "buildMinutes": 120,
+          "benefit": "penalty -50%, visibility +150 m"
+        },
+        {
+          "level": 3,
+          "cost": 5610,
+          "buildMinutes": 240,
+          "benefit": "penalty -75%, minimap no longer fuzzes in storms"
+        }
+      ]
+    },
+    {
+      "id": "mars_greenhouse",
+      "planet": "mars",
+      "name": "Greenhouse",
+      "staffedBy": "scout",
+      "desc": "Botanist Mark approves.",
+      "levels": [
+        {
+          "level": 1,
+          "cost": 600,
+          "buildMinutes": 15,
+          "benefit": "Potatoes! +5% coins on Mars levels"
+        },
+        {
+          "level": 2,
+          "cost": 2000,
+          "buildMinutes": 90,
+          "benefit": "+10%, DJ Phobos appears (Martian DJ quest)"
+        },
+        {
+          "level": 3,
+          "cost": 4410,
+          "buildMinutes": 210,
+          "benefit": "+15%, cosmetic: potato antenna topper"
+        }
+      ]
+    }
+  ],
+  "buildTimers": {
+    "realTime": true,
+    "maxMinutes": 240,
+    "accelerate": "each finished run cuts 30 min off every active build; staffed robots of the matching role cut build time 15%",
+    "noPaidSkip": true,
+    "offline": "timers continue offline (timestamp in save, cloud-synced)"
+  },
+  "passiveIncome": {
+    "formula": "sum over planets: rate[level] * min(staffedMiners,2) coins/h",
+    "offlineCapHours": 6,
+    "offlineCapWithMassDriver2": 10,
+    "collect": "auto-collected on next visit to the base screen"
+  },
+  "feedbackIntoCar": [
+    {
+      "source": "charger robots (Juice)",
+      "effect": "sim opts.robots = total chargers (cap 4) -> +1 s battery per checkpoint each",
+      "file": "src/sim.js Sim constructor opts.robots / rules() checkpoint bonus"
+    },
+    {
+      "source": "Solar Carport",
+      "effect": "bonus.tank += 2/4/6/8 s",
+      "file": "carStats(up, bonus) bonus.tank"
+    },
+    {
+      "source": "mechanic robots + Garage HQ",
+      "effect": "upgrade cost discount (cap -20%)",
+      "file": "economy upgrade purchase"
+    },
+    {
+      "source": "Dust Shield Array",
+      "effect": "reduces stormFx.gripMul penalty / fog on Mars",
+      "file": "levels.mars.json stormFx"
+    },
+    {
+      "source": "Habitat Dome",
+      "effect": "Moon air drain -10% (battery drain constant 0.3 in rules())",
+      "file": "src/sim.js rules() battery"
+    },
+    {
+      "source": "Greenhouse",
+      "effect": "+5/10/15% coin income on Mars",
+      "file": "economy run payout"
+    },
+    {
+      "source": "miners (Dig)",
+      "effect": "passive coins -> more upgrades",
+      "file": "economy"
+    }
+  ],
+  "totals": {
+    "buildingCosts": 85260,
+    "robotCosts": 28360
+  }
+}

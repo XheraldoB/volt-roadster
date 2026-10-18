@@ -1,0 +1,348 @@
+{
+  "schema": "volt-roadster/daily_challenges@1",
+  "compatWithProgressJs": "progress.dailyChallenges() already picks 3 of 12 per-run types with a string-hash LCG on local date, rewards 200/300/400 and streak +25%/day (cap 10 days). This pool is a drop-in superset: per-run goals map to dailyCheck(r.stat...), day-scope goals need save.daily.counters. Recommend capping streak at +50% (current cap is +250%).",
+  "seeding": {
+    "dayKey": "UTC date string YYYY-MM-DD (same challenges for everyone, cloud-save friendly)",
+    "seed": "fnv1a32(\"volt-daily:\" + dayKey)",
+    "rng": "mulberry32(seed) (src/noise.js rng() is fine if it is seedable)",
+    "featuredPlanet": "['earth','moon','mars'][daysSinceEpoch % 3]",
+    "featuredLevel": "rng pick from featuredPlanet levels, weighted towards levels the player has < 3 stars on",
+    "pick": "1 easy + 1 medium + 1 hard; a challenge whose planet != any must match featuredPlanet; reject any id used in the previous 5 days (recompute those days deterministically) and re-roll up to 10 times",
+    "rerolls": "1 free reroll per day per slot; +1 at Scout Tower level 3 (base_building.json)",
+    "resetAt": "00:00 UTC; show local countdown"
+  },
+  "rewards": {
+    "easy": 300,
+    "medium": 600,
+    "hard": 1000,
+    "allThreeBonus": 500,
+    "streak": {
+      "perDay": 0.1,
+      "max": 0.5,
+      "graceDays": 1
+    },
+    "weeklyChest": {
+      "completionsNeeded": 15,
+      "coins": 3000,
+      "cosmeticChance": 0.5
+    }
+  },
+  "trackingNeeds": "Per-day counters persisted in the save (coins, loops, carJumps, gaps, finishes, nearMiss, drift, flips, rolls, pads, questsDone, planetsFinished); per-run values come from sim.result.stat + result.position/score/stars/time. New stats needed: pads (count pad events), maxComboMult, flipsInOneJump, batteryLeft.",
+  "count": 25,
+  "pool": [
+    {
+      "id": "d_coins_300",
+      "tier": "easy",
+      "name": "Pocket Change",
+      "text": "Collect 300 coins today",
+      "goal": {
+        "stat": "coins",
+        "value": 300,
+        "scope": "day"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_loops_6",
+      "tier": "easy",
+      "name": "Loop the Loop",
+      "text": "Complete 6 loops",
+      "goal": {
+        "stat": "loops",
+        "value": 6,
+        "scope": "day"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_carjump_3",
+      "tier": "easy",
+      "name": "Leapfrog",
+      "text": "Jump over 3 traffic cars",
+      "goal": {
+        "stat": "carJumps",
+        "value": 3,
+        "scope": "day"
+      },
+      "planet": "earth"
+    },
+    {
+      "id": "d_gaps_5",
+      "tier": "easy",
+      "name": "Mind the Gap",
+      "text": "Clear 5 canyons or holes",
+      "goal": {
+        "stat": "gaps",
+        "value": 5,
+        "scope": "day"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_finish_3",
+      "tier": "easy",
+      "name": "Daily Drive",
+      "text": "Finish 3 levels",
+      "goal": {
+        "stat": "finishes",
+        "value": 3,
+        "scope": "day"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_nearmiss_5",
+      "tier": "easy",
+      "name": "Close Shave",
+      "text": "Get 5 near misses",
+      "goal": {
+        "stat": "nearMiss",
+        "value": 5,
+        "scope": "day"
+      },
+      "planet": "earth"
+    },
+    {
+      "id": "d_drift_10",
+      "tier": "easy",
+      "name": "Sideways Sunday",
+      "text": "Drift for 10 seconds total",
+      "goal": {
+        "stat": "drift",
+        "value": 10,
+        "scope": "day"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_flip_3",
+      "tier": "medium",
+      "name": "Flip Out",
+      "text": "Land 3 flips",
+      "goal": {
+        "stat": "flips",
+        "value": 3,
+        "scope": "day"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_roll_3",
+      "tier": "medium",
+      "name": "Barrel of Fun",
+      "text": "Land 3 barrel rolls",
+      "goal": {
+        "stat": "rolls",
+        "value": 3,
+        "scope": "day"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_air_8",
+      "tier": "medium",
+      "name": "Hang Time",
+      "text": "Stay airborne 8 s in one jump",
+      "goal": {
+        "stat": "maxAir",
+        "value": 8,
+        "scope": "run"
+      },
+      "planet": "moon"
+    },
+    {
+      "id": "d_pad_3",
+      "tier": "medium",
+      "name": "Sticky Wheels",
+      "text": "Land on 3 target pads",
+      "goal": {
+        "stat": "pads",
+        "value": 3,
+        "scope": "day"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_nocrash",
+      "tier": "medium",
+      "name": "Clean Sheet",
+      "text": "Finish the featured level with zero crashes",
+      "goal": {
+        "stat": "crashes",
+        "value": 0,
+        "cmp": "==",
+        "scope": "run",
+        "level": "featured"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_race_top2",
+      "tier": "medium",
+      "name": "Podium Finish",
+      "text": "Finish top 2 in any race",
+      "goal": {
+        "stat": "position",
+        "value": 2,
+        "cmp": "<=",
+        "scope": "run",
+        "mode": "race"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_storm_finish",
+      "tier": "medium",
+      "name": "Storm Rider",
+      "text": "Finish a Mars level with a dust storm",
+      "goal": {
+        "stat": "finishes",
+        "value": 1,
+        "scope": "day",
+        "filter": "level.storm>0"
+      },
+      "planet": "mars"
+    },
+    {
+      "id": "d_quest_1",
+      "tier": "medium",
+      "name": "Good Samaritan",
+      "text": "Complete any side quest",
+      "goal": {
+        "stat": "questsDone",
+        "value": 1,
+        "scope": "day"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_combo_x4",
+      "tier": "medium",
+      "name": "Combo Breaker",
+      "text": "Reach a x4 combo multiplier",
+      "goal": {
+        "stat": "maxComboMult",
+        "value": 4,
+        "scope": "run"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_speed_70",
+      "tier": "medium",
+      "name": "Ludicrous",
+      "text": "Hit 70 m/s (252 km/h)",
+      "goal": {
+        "stat": "maxSpeed",
+        "value": 70,
+        "scope": "run"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_perfect_1",
+      "tier": "hard",
+      "name": "Bullseye",
+      "text": "Land a PERFECT landing (within 2.5 m)",
+      "goal": {
+        "stat": "perfect",
+        "value": 1,
+        "scope": "run"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_gold_featured",
+      "tier": "hard",
+      "name": "Gold Rush",
+      "text": "Get 3 stars on the featured level",
+      "goal": {
+        "stat": "stars",
+        "value": 3,
+        "scope": "run",
+        "level": "featured"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_win_race",
+      "tier": "hard",
+      "name": "Champion",
+      "text": "Win a race",
+      "goal": {
+        "stat": "position",
+        "value": 1,
+        "cmp": "==",
+        "scope": "run",
+        "mode": "race"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_score_25k",
+      "tier": "hard",
+      "name": "Showboat",
+      "text": "Score 25,000 points in one run",
+      "goal": {
+        "stat": "score",
+        "value": 25000,
+        "scope": "run"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_lowbatt",
+      "tier": "hard",
+      "name": "Running on Fumes",
+      "text": "Finish with less than 5 s of battery left",
+      "goal": {
+        "stat": "batteryLeft",
+        "value": 5,
+        "cmp": "<",
+        "scope": "run"
+      },
+      "planet": "any"
+    },
+    {
+      "id": "d_double_flip",
+      "tier": "hard",
+      "name": "Double Trouble",
+      "text": "Land a 2x flip",
+      "goal": {
+        "stat": "flipsInOneJump",
+        "value": 2,
+        "scope": "run"
+      },
+      "planet": "moon"
+    },
+    {
+      "id": "d_olympus",
+      "tier": "hard",
+      "name": "Summit Fever",
+      "text": "Finish Olympus Ascent or Olympus Mons Descent under silver time",
+      "goal": {
+        "stat": "time",
+        "value": "silver",
+        "cmp": "<=",
+        "scope": "run",
+        "levels": [
+          "r3",
+          "r7"
+        ]
+      },
+      "planet": "mars"
+    },
+    {
+      "id": "d_tri_planet",
+      "tier": "hard",
+      "name": "Interplanetary",
+      "text": "Finish one level on each planet today",
+      "goal": {
+        "stat": "planetsFinished",
+        "value": 3,
+        "scope": "day"
+      },
+      "planet": "any"
+    }
+  ]
+}

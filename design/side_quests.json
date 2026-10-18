@@ -1,0 +1,829 @@
+{
+  "schema": "volt-roadster/side_quests@1",
+  "notes": "status: engine = already in src/levels.js; new-level = attached to a new level using an existing sim.questRules type (no code); needs-code = new type (fragile, speedtrap, statGoal) or skin field. statGoal reads sim.stat keys (flips, rolls, loops, carJumps, nearMiss, perfect, maxAir, gaps, drift, maxSpeed). Rewards are coins (= quest.reward) plus xp for a player-level bar.",
+  "triggers": {
+    "levelStart": "quest is active when the level loads (current sim behaviour)",
+    "proximity": "starts when the player reaches the pickup (sim pizza/deliver/rover)",
+    "afterStars": "offered on the level card once that level has >= N stars",
+    "baseVisit": "offered by a character at a base building"
+  },
+  "repeatReward": 0.25,
+  "count": 28,
+  "quests": [
+    {
+      "id": "sq_mailbox",
+      "planet": "earth",
+      "level": "e1",
+      "name": "Mailbox Mayhem",
+      "simType": "mailbox",
+      "status": "engine",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "mailbox",
+        "name": "Mailbox Mayhem",
+        "text": "Smash 8 roadside mailboxes",
+        "count": 8,
+        "reward": 250
+      },
+      "reward": {
+        "coins": 250,
+        "xp": 50
+      },
+      "dialogue": {
+        "giver": "Mayor Pemberton",
+        "intro": "Those mailboxes have been sending me spam for years. Do what you must.",
+        "success": "Finally, peace and quiet. And no more catalogues.",
+        "fail": "The mailboxes win this round."
+      }
+    },
+    {
+      "id": "sq_pizza_express",
+      "planet": "earth",
+      "level": "e2",
+      "name": "Pizza Express",
+      "simType": "pizza",
+      "status": "engine",
+      "trigger": {
+        "kind": "proximity",
+        "item": "pizza"
+      },
+      "objective": {
+        "type": "pizza",
+        "name": "Pizza Express",
+        "text": "Grab the pizza and deliver it before it goes cold",
+        "time": 32,
+        "reward": 350
+      },
+      "reward": {
+        "coins": 350,
+        "xp": 70
+      },
+      "dialogue": {
+        "giver": "Luigi Volta",
+        "intro": "Thirty-two seconds or it is free. And I do not do free.",
+        "success": "Hot, crispy, slightly airborne. Perfetto!",
+        "fail": "Cold pizza. A tragedy in one act."
+      }
+    },
+    {
+      "id": "sq_donut",
+      "planet": "earth",
+      "level": "e3",
+      "name": "Donut Dunk",
+      "simType": "ring",
+      "status": "engine",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "ring",
+        "name": "Donut Dunk",
+        "text": "Fly through the giant donut billboard",
+        "reward": 400
+      },
+      "reward": {
+        "coins": 400,
+        "xp": 80
+      },
+      "dialogue": {
+        "giver": "Officer Glaze",
+        "intro": "Fly through the donut. I would, but I would eat it.",
+        "success": "Sprinkles everywhere. Magnificent.",
+        "fail": "You missed the donut. The donut is disappointed."
+      }
+    },
+    {
+      "id": "sq_runaway_cow",
+      "planet": "earth",
+      "level": "e4",
+      "name": "Runaway Cow",
+      "simType": "cow",
+      "status": "engine",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "cow",
+        "name": "Runaway Cow",
+        "text": "Catch Bessie the runaway cow",
+        "reward": 450
+      },
+      "reward": {
+        "coins": 450,
+        "xp": 90
+      },
+      "dialogue": {
+        "giver": "Farmer Joan",
+        "intro": "Bessie saw the ocean and just... went. Bring her home!",
+        "success": "Moo! (Bessie says thank you and also moo.)",
+        "fail": "Bessie is now a beach cow. Forever."
+      }
+    },
+    {
+      "id": "sq_lost_luggage",
+      "planet": "earth",
+      "level": "e5",
+      "name": "Lost Luggage",
+      "simType": "collect",
+      "status": "new-level",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "collect",
+        "item": "suitcase",
+        "name": "Lost Luggage",
+        "text": "Collect 6 suitcases that fell off a roof rack",
+        "count": 6,
+        "reward": 400
+      },
+      "reward": {
+        "coins": 400,
+        "xp": 80
+      },
+      "dialogue": {
+        "giver": "Gary (Tourist)",
+        "intro": "I strapped six suitcases to my roof. In hindsight, with string.",
+        "success": "All six! Even the one full of socks!",
+        "fail": "Somewhere out there, my socks are free."
+      }
+    },
+    {
+      "id": "sq_hoop_dreams",
+      "planet": "earth",
+      "level": "e6",
+      "name": "Hoop Dreams",
+      "simType": "ring",
+      "status": "new-level",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "ring",
+        "name": "Hoop Dreams",
+        "text": "Fly through the flaming hoop above the Loop Launcher",
+        "reward": 450
+      },
+      "reward": {
+        "coins": 450,
+        "xp": 90
+      },
+      "dialogue": {
+        "giver": "Ringmaster Flo",
+        "intro": "The flaming hoop! Safety rating: technically legal.",
+        "success": "Through the fire! The crowd goes mild! I mean wild!",
+        "fail": "You went around the hoop. That is called driving."
+      }
+    },
+    {
+      "id": "sq_lighthouse_pizza",
+      "planet": "earth",
+      "level": "e7",
+      "name": "Lighthouse Pizza",
+      "simType": "pizza",
+      "status": "new-level",
+      "trigger": {
+        "kind": "proximity",
+        "item": "pizza"
+      },
+      "objective": {
+        "type": "pizza",
+        "name": "Lighthouse Pizza",
+        "text": "The lighthouse keeper ordered a large pepperoni. Deliver it hot",
+        "time": 40,
+        "reward": 450
+      },
+      "reward": {
+        "coins": 450,
+        "xp": 90
+      },
+      "dialogue": {
+        "giver": "Keeper Morgan",
+        "intro": "Large pepperoni. The bridge is out, but I believe in you.",
+        "success": "It flew over the sea and it is still hot? Marry me. No. Tip accepted.",
+        "fail": "The seagulls got it. They always get it."
+      }
+    },
+    {
+      "id": "sq_runaway_robot",
+      "planet": "earth",
+      "level": "e8",
+      "name": "Runaway Robot",
+      "simType": "cow",
+      "status": "new-level",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "cow",
+        "skin": "robot",
+        "name": "Runaway Robot",
+        "text": "Catch B0LT, the delivery robot that ran off with your charger cable",
+        "reward": 550
+      },
+      "reward": {
+        "coins": 550,
+        "xp": 110
+      },
+      "dialogue": {
+        "giver": "B0LT (fleeing)",
+        "intro": "B0LT: I AM NOT RUNNING. I AM RELOCATING. WITH YOUR CABLE.",
+        "success": "B0LT: FINE. HERE IS YOUR CABLE. I WAS GOING TO RETURN IT. EVENTUALLY.",
+        "fail": "B0LT: SEE YOU NEVER, HUMAN. (beep)"
+      },
+      "skin": "robot",
+      "needsCode": "cow logic reused; render B0LT model when quest.skin===\"robot\", emit \"beep\" instead of \"moo\""
+    },
+    {
+      "id": "sq_cheese",
+      "planet": "moon",
+      "level": "m1",
+      "name": "Cheese Survey",
+      "simType": "collect",
+      "status": "engine",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "collect",
+        "item": "cheese",
+        "name": "Cheese Survey",
+        "text": "Collect 6 moon-cheese samples (science says yes)",
+        "count": 6,
+        "reward": 350
+      },
+      "reward": {
+        "coins": 350,
+        "xp": 70
+      },
+      "dialogue": {
+        "giver": "Dr. Brie",
+        "intro": "Science has never proven the Moon is not cheese. Collect samples.",
+        "success": "Results: 100% cheese. Peer review pending.",
+        "fail": "Inconclusive. Also hungry."
+      }
+    },
+    {
+      "id": "sq_polar_ice",
+      "planet": "moon",
+      "level": "m4",
+      "name": "Polar Ice Run",
+      "simType": "deliver",
+      "status": "new-level",
+      "trigger": {
+        "kind": "proximity",
+        "item": "ice"
+      },
+      "objective": {
+        "type": "deliver",
+        "item": "ice",
+        "name": "Polar Ice Run",
+        "text": "Haul a block of crater ice to the base before the sun melts it",
+        "time": 55,
+        "reward": 450
+      },
+      "reward": {
+        "coins": 450,
+        "xp": 90
+      },
+      "dialogue": {
+        "giver": "Base Chief Okafor",
+        "intro": "Crater ice for the coffee machine. This is a mission-critical latte.",
+        "success": "Latte secured. You are a hero of the outpost.",
+        "fail": "It sublimated. Into space. Like my hopes."
+      }
+    },
+    {
+      "id": "sq_alien",
+      "planet": "moon",
+      "level": "m2",
+      "name": "Alien Hitchhiker",
+      "simType": "deliver",
+      "status": "engine",
+      "trigger": {
+        "kind": "proximity",
+        "item": "alien"
+      },
+      "objective": {
+        "type": "deliver",
+        "item": "alien",
+        "name": "Alien Hitchhiker",
+        "text": "Pick up the alien and drop it at its UFO",
+        "time": 45,
+        "reward": 450
+      },
+      "reward": {
+        "coins": 450,
+        "xp": 90
+      },
+      "dialogue": {
+        "giver": "Zorp",
+        "intro": "Zorp: Greetings. My saucer is parked over there. Also I ate your snacks.",
+        "success": "Zorp: Five stars. Would be abducted by you again.",
+        "fail": "Zorp: I will simply teleport. Bye, slow earthling."
+      }
+    },
+    {
+      "id": "sq_core_sampler",
+      "planet": "moon",
+      "level": "m5",
+      "name": "Core Sampler",
+      "simType": "collect",
+      "status": "new-level",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "collect",
+        "item": "core",
+        "name": "Core Sampler",
+        "text": "Collect 6 glowing core samples (NOT for eating)",
+        "count": 6,
+        "reward": 500
+      },
+      "reward": {
+        "coins": 500,
+        "xp": 100
+      },
+      "dialogue": {
+        "giver": "Geologist Pat",
+        "intro": "They glow. They hum. Please do not lick them.",
+        "success": "Six cores! Only one is humming ominously.",
+        "fail": "The cores are now part of the abyss. Science weeps."
+      }
+    },
+    {
+      "id": "sq_space_donut",
+      "planet": "moon",
+      "level": "m3",
+      "name": "Space Donut",
+      "simType": "ring",
+      "status": "engine",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "ring",
+        "name": "Space Donut",
+        "text": "Fly through the orbital donut",
+        "reward": 500
+      },
+      "reward": {
+        "coins": 500,
+        "xp": 100
+      },
+      "dialogue": {
+        "giver": "Officer Glaze (in orbit)",
+        "intro": "They sent me to space. For donuts. I regret nothing.",
+        "success": "A donut in zero g. Truly the final frontier.",
+        "fail": "The donut drifts on without you."
+      }
+    },
+    {
+      "id": "sq_buggy_selfie",
+      "planet": "moon",
+      "level": "m6",
+      "name": "Buggy Selfie",
+      "simType": "rover",
+      "status": "new-level",
+      "trigger": {
+        "kind": "proximity",
+        "item": "moonbuggy"
+      },
+      "objective": {
+        "type": "rover",
+        "skin": "moonbuggy",
+        "name": "Buggy Selfie",
+        "text": "Stop next to the abandoned moon buggy for a 2 second selfie",
+        "reward": 450
+      },
+      "reward": {
+        "coins": 450,
+        "xp": 90
+      },
+      "dialogue": {
+        "giver": "Influencer Kai",
+        "intro": "Vintage moon buggy, Earthrise, you. Hold still for two seconds. Content!",
+        "success": "#MoonLife #NoFilter #NoAtmosphere",
+        "fail": "Blurry. Unfollowing."
+      },
+      "skin": "moonbuggy"
+    },
+    {
+      "id": "sq_earthrise_hoop",
+      "planet": "moon",
+      "level": "m7",
+      "name": "Earthrise Hoop",
+      "simType": "ring",
+      "status": "new-level",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "ring",
+        "name": "Earthrise Hoop",
+        "text": "Thread the giant hoop at the apex of the Earthrise jump",
+        "reward": 550
+      },
+      "reward": {
+        "coins": 550,
+        "xp": 110
+      },
+      "dialogue": {
+        "giver": "Ringmaster Flo (spacesuit)",
+        "intro": "Biggest hoop, biggest jump, biggest view. Do not look down. Or do, it is pretty.",
+        "success": "Eleven seconds of air and a hoop! Legend!",
+        "fail": "You missed a hoop the size of a stadium. Impressive, in a way."
+      }
+    },
+    {
+      "id": "sq_potatoes",
+      "planet": "mars",
+      "level": "r1",
+      "name": "Martian Farmer",
+      "simType": "collect",
+      "status": "engine",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "collect",
+        "item": "potato",
+        "name": "Martian Farmer",
+        "text": "Collect 6 lost potatoes",
+        "count": 6,
+        "reward": 350
+      },
+      "reward": {
+        "coins": 350,
+        "xp": 70
+      },
+      "dialogue": {
+        "giver": "Botanist Mark",
+        "intro": "I am going to have to science the potatoes out of this. Help me find them.",
+        "success": "Six potatoes! That is a whole sol of dinner.",
+        "fail": "Ketchup without potatoes. The saddest condiment."
+      }
+    },
+    {
+      "id": "sq_antenna",
+      "planet": "mars",
+      "level": "r4",
+      "name": "Antenna Bits",
+      "simType": "collect",
+      "status": "new-level",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "collect",
+        "item": "antenna",
+        "name": "Antenna Bits",
+        "text": "Collect 6 pieces of a lander antenna (some assembly required)",
+        "count": 6,
+        "reward": 400
+      },
+      "reward": {
+        "coins": 400,
+        "xp": 80
+      },
+      "dialogue": {
+        "giver": "Lander Unit L-7",
+        "intro": "L-7: Antenna detached. Cannot stream my favourite show. Please assist.",
+        "success": "L-7: Signal restored. Episode 4,812 resumes.",
+        "fail": "L-7: Static. Only static."
+      }
+    },
+    {
+      "id": "sq_rover_reunion",
+      "planet": "mars",
+      "level": "r2",
+      "name": "Rover Reunion",
+      "simType": "rover",
+      "status": "engine",
+      "trigger": {
+        "kind": "proximity",
+        "item": "rover"
+      },
+      "objective": {
+        "type": "rover",
+        "name": "Rover Reunion",
+        "text": "Stop next to the lonely rover for 2 seconds",
+        "reward": 400
+      },
+      "reward": {
+        "coins": 400,
+        "xp": 80
+      },
+      "dialogue": {
+        "giver": "Old Rover",
+        "intro": "beep... boop... (it has been alone for a long time)",
+        "success": "BEEP BEEP! (happiest rover on Mars)",
+        "fail": "boop. (sad)"
+      }
+    },
+    {
+      "id": "sq_dustbot",
+      "planet": "mars",
+      "level": "r5",
+      "name": "Runaway Dust-Bot",
+      "simType": "cow",
+      "status": "new-level",
+      "trigger": {
+        "kind": "levelStart"
+      },
+      "objective": {
+        "type": "cow",
+        "skin": "dustbot",
+        "name": "Runaway Dust-Bot",
+        "text": "Catch the panicking cleaning robot before it vacuums the whole planet",
+        "reward": 500
+      },
+      "reward": {
+        "coins": 500,
+        "xp": 100
+      },
+      "dialogue": {
+        "giver": "Dust-Bot 3000",
+        "intro": "Dust-Bot: SO. MUCH. DUST. I MUST CLEAN IT ALL. FAREWELL.",
+        "success": "Dust-Bot: Thank you. I will start with one crater at a time.",
+        "fail": "Dust-Bot has vacuumed itself into a dune."
+      },
+      "skin": "dustbot",
+      "needsCode": "cow logic, dustbot skin"
+    },
+    {
+      "id": "sq_canyon_pizza",
+      "planet": "mars",
+      "level": "r6",
+      "name": "Canyon Pizza",
+      "simType": "pizza",
+      "status": "new-level",
+      "trigger": {
+        "kind": "proximity",
+        "item": "pizza"
+      },
+      "objective": {
+        "type": "pizza",
+        "noCrash": true,
+        "name": "Canyon Pizza",
+        "text": "Deliver a pizza across the canyon without spilling it (no crashes!)",
+        "time": 45,
+        "reward": 500
+      },
+      "reward": {
+        "coins": 500,
+        "xp": 100
+      },
+      "dialogue": {
+        "giver": "Luigi Volta (Mars franchise)",
+        "intro": "Across the canyon. No spilling. The toppings are very nervous.",
+        "success": "Not one olive out of place. You are an artist.",
+        "fail": "Pizza face-down in the regolith. Mars-gherita."
+      },
+      "needsCode": "quest.noCrash: fail pizza/deliver on crash() or land strength > 0.85"
+    },
+    {
+      "id": "sq_ice_core",
+      "planet": "mars",
+      "level": "r3",
+      "name": "Ice Core Express",
+      "simType": "deliver",
+      "status": "engine",
+      "trigger": {
+        "kind": "proximity",
+        "item": "ice"
+      },
+      "objective": {
+        "type": "deliver",
+        "item": "ice",
+        "name": "Ice Core Express",
+        "text": "Rush an ice core to the base before it melts",
+        "time": 50,
+        "reward": 550
+      },
+      "reward": {
+        "coins": 550,
+        "xp": 110
+      },
+      "dialogue": {
+        "giver": "Dr. Frost",
+        "intro": "This ice core is 3 billion years old and melting in 50 seconds. No pressure.",
+        "success": "Still frozen! History preserved!",
+        "fail": "3 billion years, ruined in your cup holder."
+      }
+    },
+    {
+      "id": "sq_rover_lift",
+      "planet": "mars",
+      "level": "r7",
+      "name": "Rover Ride-Along",
+      "simType": "rover",
+      "status": "new-level",
+      "trigger": {
+        "kind": "proximity",
+        "item": "marsrover"
+      },
+      "objective": {
+        "type": "rover",
+        "skin": "marsrover",
+        "name": "Rover Ride-Along",
+        "text": "Stop by the lost rover for 2 seconds so it can hitch a lift home",
+        "reward": 550
+      },
+      "reward": {
+        "coins": 550,
+        "xp": 110
+      },
+      "dialogue": {
+        "giver": "Lost Rover \"Pebble\"",
+        "intro": "Pebble: My wheels are tired. Can I ride on your roof? I promise not to drill anything.",
+        "success": "Pebble: Wheee! Best. Field trip. Ever.",
+        "fail": "Pebble: I will just roll home. Slowly. Over 14 years."
+      },
+      "skin": "marsrover"
+    },
+    {
+      "id": "sq_grandma_eggs",
+      "planet": "earth",
+      "level": "e2",
+      "name": "Grandma's Eggs",
+      "simType": "fragile",
+      "status": "needs-code",
+      "trigger": {
+        "kind": "afterStars",
+        "stars": 3
+      },
+      "objective": {
+        "type": "fragile",
+        "item": "eggs",
+        "text": "Deliver a dozen eggs over the canyons. Land softly (no hard landings).",
+        "maxLandStrength": 0.6,
+        "reward": 500
+      },
+      "reward": {
+        "coins": 500,
+        "xp": 100
+      },
+      "dialogue": {
+        "giver": "Grandma Ada",
+        "intro": "Twelve eggs, three canyons, zero excuses, sweetie.",
+        "success": "Not a single crack! Have a cookie. Have six.",
+        "fail": "Well, now we are having omelettes."
+      }
+    },
+    {
+      "id": "sq_speed_camera",
+      "planet": "earth",
+      "level": "e6",
+      "name": "Say Cheese, Speed Camera",
+      "simType": "speedtrap",
+      "status": "needs-code",
+      "trigger": {
+        "kind": "levelStart",
+        "minTier": {
+          "speed": 3
+        }
+      },
+      "objective": {
+        "type": "speedtrap",
+        "text": "Pass the speed camera at 80 m/s (288 km/h) for the perfect blurry photo",
+        "speed": 80,
+        "reward": 450
+      },
+      "reward": {
+        "coins": 450,
+        "xp": 90,
+        "cosmetic": "photo_speed_blur"
+      },
+      "dialogue": {
+        "giver": "Speed Camera SC-9",
+        "intro": "SC-9: I have photographed 4 million cars. None were interesting.",
+        "success": "SC-9: Finally. Art.",
+        "fail": "SC-9: Just another sedan. Yawn."
+      }
+    },
+    {
+      "id": "sq_moon_golf",
+      "planet": "moon",
+      "level": "m1",
+      "name": "Moon Golf",
+      "simType": "statGoal",
+      "status": "needs-code",
+      "trigger": {
+        "kind": "afterStars",
+        "stars": 2
+      },
+      "objective": {
+        "type": "statGoal",
+        "stat": "maxAir",
+        "value": 8,
+        "text": "Hit a 1971-style moon golf shot: stay airborne 8 seconds to \"drive\" the ball",
+        "reward": 400
+      },
+      "reward": {
+        "coins": 400,
+        "xp": 80,
+        "cosmetic": "decal_golf_ball"
+      },
+      "dialogue": {
+        "giver": "Caddie Bot",
+        "intro": "Fore! In one-sixth gravity, the ball goes miles and miles.",
+        "success": "Hole in one! It landed in a crater. Same thing.",
+        "fail": "Mulligan. Nobody saw. Except everyone."
+      }
+    },
+    {
+      "id": "sq_martian_dj",
+      "planet": "mars",
+      "level": "r4",
+      "name": "Martian DJ",
+      "simType": "statGoal",
+      "status": "needs-code",
+      "trigger": {
+        "kind": "baseVisit",
+        "building": "mars_greenhouse"
+      },
+      "objective": {
+        "type": "statGoal",
+        "stat": "flips+rolls",
+        "value": 4,
+        "withinSeconds": 40,
+        "text": "DJ Phobos needs 4 flips or rolls in 40 s to drop the beat",
+        "reward": 450
+      },
+      "reward": {
+        "coins": 450,
+        "xp": 90,
+        "cosmetic": "horn_bassdrop"
+      },
+      "dialogue": {
+        "giver": "DJ Phobos",
+        "intro": "Every flip is a beat. Every roll is a bass drop. Make it rain dust!",
+        "success": "The whole colony is dancing! Even the potatoes!",
+        "fail": "Tough crowd. Martians do not clap, they just stare."
+      }
+    },
+    {
+      "id": "sq_robot_sulk",
+      "planet": "any",
+      "level": "any",
+      "name": "Robot Feelings",
+      "simType": "statGoal",
+      "status": "needs-code",
+      "trigger": {
+        "kind": "baseVisit",
+        "building": "robot_workshop"
+      },
+      "objective": {
+        "type": "statGoal",
+        "stat": "loops",
+        "value": 5,
+        "text": "Your charger robot Juice is sulking. Do 5 loops in one run to cheer it up",
+        "reward": 350
+      },
+      "reward": {
+        "coins": 350,
+        "xp": 70,
+        "robotMood": "+1 (charger works 10% faster for 24 h)"
+      },
+      "dialogue": {
+        "giver": "Juice (charger robot)",
+        "intro": "Juice: Nobody notices me. I just charge. And charge. Sigh.",
+        "success": "Juice: Five loops? For ME? I am charging with joy!",
+        "fail": "Juice: It is fine. I am fine. (it is not fine)"
+      }
+    },
+    {
+      "id": "sq_parcel_traffic",
+      "planet": "earth",
+      "level": "e5",
+      "name": "Express Parcel",
+      "simType": "statGoal",
+      "status": "needs-code",
+      "trigger": {
+        "kind": "afterStars",
+        "stars": 1
+      },
+      "objective": {
+        "type": "statGoal",
+        "stat": "carJumps",
+        "value": 5,
+        "text": "Jump 5 cars while carrying an \"URGENT\" parcel",
+        "reward": 450
+      },
+      "reward": {
+        "coins": 450,
+        "xp": 90
+      },
+      "dialogue": {
+        "giver": "Courier Dee",
+        "intro": "Traffic is the enemy. The sky is free. You get the idea.",
+        "success": "Delivered by air! Signature not required.",
+        "fail": "Stuck in traffic like a normal person. Ew."
+      }
+    }
+  ]
+}

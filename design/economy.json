@@ -1,0 +1,1246 @@
+{
+  "schema": "volt-roadster/economy@1",
+  "currency": "coins",
+  "saveKeys": {
+    "upgrades": "save.upgrades = { tank, speed, accel, handling, boost, thruster, magnet } (ints, 0 = stock) -> passed as carStats(up, bonus)"
+  },
+  "upgradeTracks": [
+    {
+      "key": "tank",
+      "name": "Battery Tank",
+      "desc": "Longer runs: +12 s of battery per tier.",
+      "simKey": "up.tank -> carStats().tank = 60 + 12*l",
+      "maxTier": 10,
+      "totalCost": 20810,
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 180,
+          "stats": {
+            "tank": 72
+          },
+          "delta": "+12 s tank"
+        },
+        {
+          "tier": 2,
+          "cost": 320,
+          "stats": {
+            "tank": 84
+          },
+          "delta": "+12 s tank"
+        },
+        {
+          "tier": 3,
+          "cost": 540,
+          "stats": {
+            "tank": 96
+          },
+          "delta": "+12 s tank"
+        },
+        {
+          "tier": 4,
+          "cost": 830,
+          "stats": {
+            "tank": 108
+          },
+          "delta": "+12 s tank"
+        },
+        {
+          "tier": 5,
+          "cost": 1230,
+          "stats": {
+            "tank": 120
+          },
+          "delta": "+12 s tank"
+        },
+        {
+          "tier": 6,
+          "cost": 1770,
+          "stats": {
+            "tank": 132
+          },
+          "delta": "+12 s tank"
+        },
+        {
+          "tier": 7,
+          "cost": 2450,
+          "stats": {
+            "tank": 144
+          },
+          "delta": "+12 s tank"
+        },
+        {
+          "tier": 8,
+          "cost": 3320,
+          "stats": {
+            "tank": 156
+          },
+          "delta": "+12 s tank"
+        },
+        {
+          "tier": 9,
+          "cost": 4400,
+          "stats": {
+            "tank": 168
+          },
+          "delta": "+12 s tank"
+        },
+        {
+          "tier": 10,
+          "cost": 5770,
+          "stats": {
+            "tank": 180
+          },
+          "delta": "+12 s tank"
+        }
+      ]
+    },
+    {
+      "key": "speed",
+      "name": "Top Speed",
+      "desc": "Higher top speed: +6 m/s (21.6 km/h) per tier. Max 112 m/s ≈ 403 km/h.",
+      "simKey": "up.speed -> vmax = 52 + 6*l",
+      "maxTier": 10,
+      "totalCost": 23930,
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 210,
+          "stats": {
+            "vmax": 58,
+            "kmh": 209
+          },
+          "delta": "+6 m/s vmax"
+        },
+        {
+          "tier": 2,
+          "cost": 370,
+          "stats": {
+            "vmax": 64,
+            "kmh": 230
+          },
+          "delta": "+6 m/s vmax"
+        },
+        {
+          "tier": 3,
+          "cost": 620,
+          "stats": {
+            "vmax": 70,
+            "kmh": 252
+          },
+          "delta": "+6 m/s vmax"
+        },
+        {
+          "tier": 4,
+          "cost": 950,
+          "stats": {
+            "vmax": 76,
+            "kmh": 274
+          },
+          "delta": "+6 m/s vmax"
+        },
+        {
+          "tier": 5,
+          "cost": 1410,
+          "stats": {
+            "vmax": 82,
+            "kmh": 295
+          },
+          "delta": "+6 m/s vmax"
+        },
+        {
+          "tier": 6,
+          "cost": 2030,
+          "stats": {
+            "vmax": 88,
+            "kmh": 317
+          },
+          "delta": "+6 m/s vmax"
+        },
+        {
+          "tier": 7,
+          "cost": 2820,
+          "stats": {
+            "vmax": 94,
+            "kmh": 338
+          },
+          "delta": "+6 m/s vmax"
+        },
+        {
+          "tier": 8,
+          "cost": 3820,
+          "stats": {
+            "vmax": 100,
+            "kmh": 360
+          },
+          "delta": "+6 m/s vmax"
+        },
+        {
+          "tier": 9,
+          "cost": 5060,
+          "stats": {
+            "vmax": 106,
+            "kmh": 382
+          },
+          "delta": "+6 m/s vmax"
+        },
+        {
+          "tier": 10,
+          "cost": 6640,
+          "stats": {
+            "vmax": 112,
+            "kmh": 403
+          },
+          "delta": "+6 m/s vmax"
+        }
+      ]
+    },
+    {
+      "key": "accel",
+      "name": "Acceleration",
+      "desc": "Quicker launches and loop entries: +1.5 m/s² per tier.",
+      "simKey": "up.accel -> accel = 10 + 1.5*l",
+      "maxTier": 10,
+      "totalCost": 20810,
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 180,
+          "stats": {
+            "accel": 11.5,
+            "zeroTo100kmh": 2.42
+          },
+          "delta": "+1.5 m/s^2"
+        },
+        {
+          "tier": 2,
+          "cost": 320,
+          "stats": {
+            "accel": 13,
+            "zeroTo100kmh": 2.14
+          },
+          "delta": "+1.5 m/s^2"
+        },
+        {
+          "tier": 3,
+          "cost": 540,
+          "stats": {
+            "accel": 14.5,
+            "zeroTo100kmh": 1.92
+          },
+          "delta": "+1.5 m/s^2"
+        },
+        {
+          "tier": 4,
+          "cost": 830,
+          "stats": {
+            "accel": 16,
+            "zeroTo100kmh": 1.74
+          },
+          "delta": "+1.5 m/s^2"
+        },
+        {
+          "tier": 5,
+          "cost": 1230,
+          "stats": {
+            "accel": 17.5,
+            "zeroTo100kmh": 1.59
+          },
+          "delta": "+1.5 m/s^2"
+        },
+        {
+          "tier": 6,
+          "cost": 1770,
+          "stats": {
+            "accel": 19,
+            "zeroTo100kmh": 1.46
+          },
+          "delta": "+1.5 m/s^2"
+        },
+        {
+          "tier": 7,
+          "cost": 2450,
+          "stats": {
+            "accel": 20.5,
+            "zeroTo100kmh": 1.36
+          },
+          "delta": "+1.5 m/s^2"
+        },
+        {
+          "tier": 8,
+          "cost": 3320,
+          "stats": {
+            "accel": 22,
+            "zeroTo100kmh": 1.26
+          },
+          "delta": "+1.5 m/s^2"
+        },
+        {
+          "tier": 9,
+          "cost": 4400,
+          "stats": {
+            "accel": 23.5,
+            "zeroTo100kmh": 1.18
+          },
+          "delta": "+1.5 m/s^2"
+        },
+        {
+          "tier": 10,
+          "cost": 5770,
+          "stats": {
+            "accel": 25,
+            "zeroTo100kmh": 1.11
+          },
+          "delta": "+1.5 m/s^2"
+        }
+      ]
+    },
+    {
+      "key": "handling",
+      "name": "Handling & Grip",
+      "desc": "Tyre grip + steering (grip is folded in here). Also reduces dust-storm grip loss.",
+      "simKey": "up.handling -> grip = 3.1+0.35*l, steer = 0.42+0.03*l",
+      "maxTier": 10,
+      "totalCost": 18730,
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 160,
+          "stats": {
+            "grip": 3.45,
+            "steer": 0.45,
+            "stormGripRecovery": 0.03
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        },
+        {
+          "tier": 2,
+          "cost": 290,
+          "stats": {
+            "grip": 3.8,
+            "steer": 0.48,
+            "stormGripRecovery": 0.06
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        },
+        {
+          "tier": 3,
+          "cost": 490,
+          "stats": {
+            "grip": 4.15,
+            "steer": 0.51,
+            "stormGripRecovery": 0.09
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        },
+        {
+          "tier": 4,
+          "cost": 750,
+          "stats": {
+            "grip": 4.5,
+            "steer": 0.54,
+            "stormGripRecovery": 0.12
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        },
+        {
+          "tier": 5,
+          "cost": 1100,
+          "stats": {
+            "grip": 4.85,
+            "steer": 0.57,
+            "stormGripRecovery": 0.15
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        },
+        {
+          "tier": 6,
+          "cost": 1590,
+          "stats": {
+            "grip": 5.2,
+            "steer": 0.6,
+            "stormGripRecovery": 0.18
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        },
+        {
+          "tier": 7,
+          "cost": 2210,
+          "stats": {
+            "grip": 5.55,
+            "steer": 0.63,
+            "stormGripRecovery": 0.21
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        },
+        {
+          "tier": 8,
+          "cost": 2990,
+          "stats": {
+            "grip": 5.9,
+            "steer": 0.66,
+            "stormGripRecovery": 0.24
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        },
+        {
+          "tier": 9,
+          "cost": 3960,
+          "stats": {
+            "grip": 6.25,
+            "steer": 0.69,
+            "stormGripRecovery": 0.27
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        },
+        {
+          "tier": 10,
+          "cost": 5190,
+          "stats": {
+            "grip": 6.6,
+            "steer": 0.72,
+            "stormGripRecovery": 0.3
+          },
+          "delta": "+0.35 grip, +0.03 steer"
+        }
+      ]
+    },
+    {
+      "key": "boost",
+      "name": "Boost",
+      "desc": "Stronger and longer boost.",
+      "simKey": "up.boost -> boostMul = 1.5+0.1*l, boostCap = 2.6+0.6*l",
+      "maxTier": 10,
+      "totalCost": 18730,
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 160,
+          "stats": {
+            "boostMul": 1.6,
+            "boostCap": 3.2
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        },
+        {
+          "tier": 2,
+          "cost": 290,
+          "stats": {
+            "boostMul": 1.7,
+            "boostCap": 3.8
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        },
+        {
+          "tier": 3,
+          "cost": 490,
+          "stats": {
+            "boostMul": 1.8,
+            "boostCap": 4.4
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        },
+        {
+          "tier": 4,
+          "cost": 750,
+          "stats": {
+            "boostMul": 1.9,
+            "boostCap": 5
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        },
+        {
+          "tier": 5,
+          "cost": 1100,
+          "stats": {
+            "boostMul": 2,
+            "boostCap": 5.6
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        },
+        {
+          "tier": 6,
+          "cost": 1590,
+          "stats": {
+            "boostMul": 2.1,
+            "boostCap": 6.2
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        },
+        {
+          "tier": 7,
+          "cost": 2210,
+          "stats": {
+            "boostMul": 2.2,
+            "boostCap": 6.8
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        },
+        {
+          "tier": 8,
+          "cost": 2990,
+          "stats": {
+            "boostMul": 2.3,
+            "boostCap": 7.4
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        },
+        {
+          "tier": 9,
+          "cost": 3960,
+          "stats": {
+            "boostMul": 2.4,
+            "boostCap": 8
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        },
+        {
+          "tier": 10,
+          "cost": 5190,
+          "stats": {
+            "boostMul": 2.5,
+            "boostCap": 8.6
+          },
+          "delta": "+0.1 boostMul, +0.6 s capacity"
+        }
+      ]
+    },
+    {
+      "key": "thruster",
+      "name": "Thrusters (Air Control)",
+      "desc": "Higher jump, longer mid-air thrust and stronger air control for precision landings.",
+      "simKey": "up.thruster -> jumpV = 5.5+0.8*l; thrustCap = 1.0+0.3*l (DECIDED by Game Maker: 0.3 s per tier, replaces sim.carStats 0.5*l); airControlMul is new (scales the 5.5 torque constant in sim air control)",
+      "maxTier": 8,
+      "totalCost": 16980,
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 240,
+          "stats": {
+            "jumpV": 6.3,
+            "thrustCap": 1.3,
+            "airControlMul": 1.06
+          },
+          "delta": "+0.8 m/s jump, +0.3 s thrust, +6% air torque"
+        },
+        {
+          "tier": 2,
+          "cost": 480,
+          "stats": {
+            "jumpV": 7.1,
+            "thrustCap": 1.6,
+            "airControlMul": 1.12
+          },
+          "delta": "+0.8 m/s jump, +0.3 s thrust, +6% air torque"
+        },
+        {
+          "tier": 3,
+          "cost": 790,
+          "stats": {
+            "jumpV": 7.9,
+            "thrustCap": 1.9,
+            "airControlMul": 1.18
+          },
+          "delta": "+0.8 m/s jump, +0.3 s thrust, +6% air torque"
+        },
+        {
+          "tier": 4,
+          "cost": 1270,
+          "stats": {
+            "jumpV": 8.7,
+            "thrustCap": 2.2,
+            "airControlMul": 1.24
+          },
+          "delta": "+0.8 m/s jump, +0.3 s thrust, +6% air torque"
+        },
+        {
+          "tier": 5,
+          "cost": 1900,
+          "stats": {
+            "jumpV": 9.5,
+            "thrustCap": 2.5,
+            "airControlMul": 1.3
+          },
+          "delta": "+0.8 m/s jump, +0.3 s thrust, +6% air torque"
+        },
+        {
+          "tier": 6,
+          "cost": 2780,
+          "stats": {
+            "jumpV": 10.3,
+            "thrustCap": 2.8,
+            "airControlMul": 1.36
+          },
+          "delta": "+0.8 m/s jump, +0.3 s thrust, +6% air torque"
+        },
+        {
+          "tier": 7,
+          "cost": 3970,
+          "stats": {
+            "jumpV": 11.1,
+            "thrustCap": 3.1,
+            "airControlMul": 1.42
+          },
+          "delta": "+0.8 m/s jump, +0.3 s thrust, +6% air torque"
+        },
+        {
+          "tier": 8,
+          "cost": 5550,
+          "stats": {
+            "jumpV": 11.9,
+            "thrustCap": 3.4,
+            "airControlMul": 1.48
+          },
+          "delta": "+0.8 m/s jump, +0.3 s thrust, +6% air torque"
+        }
+      ]
+    }
+  ],
+  "optionalPerks": [
+    {
+      "key": "magnet",
+      "name": "Coin Magnet (optional perk)",
+      "desc": "Pulls coins in from further away.",
+      "simKey": "NEW: sim pickup check uses 3.4 m radius; replace with stats.magnet",
+      "maxTier": 8,
+      "totalCost": 9250,
+      "tiers": [
+        {
+          "tier": 1,
+          "cost": 130,
+          "stats": {
+            "pickupRadius": 4.3
+          },
+          "delta": "+0.9 m pickup radius"
+        },
+        {
+          "tier": 2,
+          "cost": 260,
+          "stats": {
+            "pickupRadius": 5.2
+          },
+          "delta": "+0.9 m pickup radius"
+        },
+        {
+          "tier": 3,
+          "cost": 430,
+          "stats": {
+            "pickupRadius": 6.1
+          },
+          "delta": "+0.9 m pickup radius"
+        },
+        {
+          "tier": 4,
+          "cost": 690,
+          "stats": {
+            "pickupRadius": 7
+          },
+          "delta": "+0.9 m pickup radius"
+        },
+        {
+          "tier": 5,
+          "cost": 1040,
+          "stats": {
+            "pickupRadius": 7.9
+          },
+          "delta": "+0.9 m pickup radius"
+        },
+        {
+          "tier": 6,
+          "cost": 1510,
+          "stats": {
+            "pickupRadius": 8.8
+          },
+          "delta": "+0.9 m pickup radius"
+        },
+        {
+          "tier": 7,
+          "cost": 2160,
+          "stats": {
+            "pickupRadius": 9.7
+          },
+          "delta": "+0.9 m pickup radius"
+        },
+        {
+          "tier": 8,
+          "cost": 3030,
+          "stats": {
+            "pickupRadius": 10.6
+          },
+          "delta": "+0.9 m pickup radius"
+        }
+      ]
+    }
+  ],
+  "income": {
+    "perRun": {
+      "collectedCoins": "≈263 coins available per run (auto-placed + bonus arcs/rings, from levels.*.json); expect 55% early -> 85% late (skill + magnet)",
+      "trickCoins": "floor(result.score/120) (= progress.applyResult earn.score)",
+      "crashPenalty": "none (no coin loss; fail = keep collected coins)"
+    },
+    "firstTime": {
+      "starBonus": "150 per newly earned star (= progress.applyResult); optional proposal: scale by (0.8+0.2*diff)",
+      "questReward": "level quest.reward (250-550), repeats pay 25% (= progress.applyResult)",
+      "races": "see races.json",
+      "poolTotal": 62100
+    },
+    "daily": "daily_challenges.json: 300/600/1000 + 500 for all three, streak up to +50%, weekly chest 3000",
+    "passive": "base_building.json miners (coins/h, offline cap 6 h, 10 h with Mass Driver 2)",
+    "sinks": {
+      "upgrades": 119990,
+      "magnetPerk": 9250,
+      "buildings": 85260,
+      "robots": 28360,
+      "cosmetics": "optional, earned not bought (no shop pressure)"
+    }
+  },
+  "pacing": {
+    "assumptions": "Session = 20 min = 6 runs; 2 sessions/day; player buys the cheapest next item, weighting car upgrades first (base/robot prices x1.5, magnet x1.3 when ranking); skill-based coin pickup 55%->85%; first-time rewards (stars, quests, race first-wins) paid at up to 3,300 per session until the pool is empty.",
+    "table": [
+      {
+        "session": 1,
+        "hours": 0.3,
+        "earnedThisSession": 5242,
+        "purchases": 19,
+        "tiers": {
+          "tank": 2,
+          "speed": 2,
+          "accel": 2,
+          "handling": 2,
+          "boost": 2,
+          "thruster": 2,
+          "magnet": 2
+        },
+        "baseLevels": "2/34",
+        "minerCoinsPerHour": 0
+      },
+      {
+        "session": 2,
+        "hours": 0.7,
+        "earnedThisSession": 5327,
+        "purchases": 10,
+        "tiers": {
+          "tank": 3,
+          "speed": 3,
+          "accel": 3,
+          "handling": 4,
+          "boost": 3,
+          "thruster": 2,
+          "magnet": 3
+        },
+        "baseLevels": "5/34",
+        "minerCoinsPerHour": 0
+      },
+      {
+        "session": 3,
+        "hours": 1,
+        "earnedThisSession": 5392,
+        "purchases": 8,
+        "tiers": {
+          "tank": 4,
+          "speed": 3,
+          "accel": 4,
+          "handling": 4,
+          "boost": 4,
+          "thruster": 3,
+          "magnet": 4
+        },
+        "baseLevels": "7/34",
+        "minerCoinsPerHour": 20
+      },
+      {
+        "session": 4,
+        "hours": 1.3,
+        "earnedThisSession": 5577,
+        "purchases": 7,
+        "tiers": {
+          "tank": 4,
+          "speed": 4,
+          "accel": 4,
+          "handling": 5,
+          "boost": 5,
+          "thruster": 3,
+          "magnet": 4
+        },
+        "baseLevels": "9/34",
+        "minerCoinsPerHour": 44
+      },
+      {
+        "session": 5,
+        "hours": 1.7,
+        "earnedThisSession": 5767,
+        "purchases": 5,
+        "tiers": {
+          "tank": 5,
+          "speed": 4,
+          "accel": 5,
+          "handling": 5,
+          "boost": 5,
+          "thruster": 4,
+          "magnet": 5
+        },
+        "baseLevels": "9/34",
+        "minerCoinsPerHour": 44
+      },
+      {
+        "session": 6,
+        "hours": 2,
+        "earnedThisSession": 5832,
+        "purchases": 4,
+        "tiers": {
+          "tank": 5,
+          "speed": 5,
+          "accel": 5,
+          "handling": 5,
+          "boost": 5,
+          "thruster": 4,
+          "magnet": 5
+        },
+        "baseLevels": "11/34",
+        "minerCoinsPerHour": 44
+      },
+      {
+        "session": 8,
+        "hours": 2.7,
+        "earnedThisSession": 5923,
+        "purchases": 4,
+        "tiers": {
+          "tank": 6,
+          "speed": 5,
+          "accel": 6,
+          "handling": 6,
+          "boost": 6,
+          "thruster": 5,
+          "magnet": 6
+        },
+        "baseLevels": "11/34",
+        "minerCoinsPerHour": 44
+      },
+      {
+        "session": 10,
+        "hours": 3.3,
+        "earnedThisSession": 6034,
+        "purchases": 3,
+        "tiers": {
+          "tank": 6,
+          "speed": 6,
+          "accel": 6,
+          "handling": 7,
+          "boost": 7,
+          "thruster": 5,
+          "magnet": 6
+        },
+        "baseLevels": "14/34",
+        "minerCoinsPerHour": 44
+      },
+      {
+        "session": 15,
+        "hours": 5,
+        "earnedThisSession": 6545,
+        "purchases": 4,
+        "tiers": {
+          "tank": 7,
+          "speed": 7,
+          "accel": 7,
+          "handling": 8,
+          "boost": 8,
+          "thruster": 6,
+          "magnet": 7
+        },
+        "baseLevels": "19/34",
+        "minerCoinsPerHour": 88
+      },
+      {
+        "session": 20,
+        "hours": 6.7,
+        "earnedThisSession": 3472,
+        "purchases": 1,
+        "tiers": {
+          "tank": 8,
+          "speed": 8,
+          "accel": 8,
+          "handling": 8,
+          "boost": 8,
+          "thruster": 6,
+          "magnet": 7
+        },
+        "baseLevels": "20/34",
+        "minerCoinsPerHour": 88
+      },
+      {
+        "session": 30,
+        "hours": 10,
+        "earnedThisSession": 3886,
+        "purchases": 2,
+        "tiers": {
+          "tank": 9,
+          "speed": 9,
+          "accel": 9,
+          "handling": 9,
+          "boost": 9,
+          "thruster": 7,
+          "magnet": 8
+        },
+        "baseLevels": "23/34",
+        "minerCoinsPerHour": 112
+      },
+      {
+        "session": 40,
+        "hours": 13.3,
+        "earnedThisSession": 4245,
+        "purchases": 1,
+        "tiers": {
+          "tank": 10,
+          "speed": 9,
+          "accel": 10,
+          "handling": 10,
+          "boost": 10,
+          "thruster": 8,
+          "magnet": 8
+        },
+        "baseLevels": "26/34",
+        "minerCoinsPerHour": 112
+      },
+      {
+        "session": 50,
+        "hours": 16.7,
+        "earnedThisSession": 4796,
+        "purchases": 0,
+        "tiers": {
+          "tank": 10,
+          "speed": 10,
+          "accel": 10,
+          "handling": 10,
+          "boost": 10,
+          "thruster": 8,
+          "magnet": 8
+        },
+        "baseLevels": "33/34",
+        "minerCoinsPerHour": 168
+      },
+      {
+        "session": 51,
+        "hours": 17,
+        "note": "everything maxed (upgrades + magnet + buildings + all 21 robots)"
+      }
+    ],
+    "sessionsToMax": {
+      "tank": {
+        "firstTier": 1,
+        "maxed": 38,
+        "hoursToMax": 12.7
+      },
+      "speed": {
+        "firstTier": 1,
+        "maxed": 43,
+        "hoursToMax": 14.3
+      },
+      "accel": {
+        "firstTier": 1,
+        "maxed": 40,
+        "hoursToMax": 13.3
+      },
+      "handling": {
+        "firstTier": 1,
+        "maxed": 32,
+        "hoursToMax": 10.7
+      },
+      "boost": {
+        "firstTier": 1,
+        "maxed": 33,
+        "hoursToMax": 11
+      },
+      "thruster": {
+        "firstTier": 1,
+        "maxed": 37,
+        "hoursToMax": 12.3
+      },
+      "magnet": {
+        "firstTier": 1,
+        "maxed": 21,
+        "hoursToMax": 7
+      }
+    },
+    "earlySessionsWithAPurchase": "20/20",
+    "everythingMaxed": {
+      "session": 51,
+      "hours": 17,
+      "note": "everything maxed (upgrades + magnet + buildings + all 21 robots)"
+    },
+    "coreFirstProfile": {
+      "note": "same income, player ignores base/robots until all car tracks are maxed",
+      "coreMaxHours": 8.7,
+      "sessionsToMax": {
+        "tank": 22,
+        "speed": 26,
+        "accel": 24,
+        "handling": 18,
+        "boost": 19,
+        "thruster": 20,
+        "magnet": 13
+      },
+      "everythingMaxed": {
+        "session": 54,
+        "hours": 18,
+        "note": "everything maxed (upgrades + magnet + buildings + all 21 robots)"
+      },
+      "earlySessionsWithAPurchase": "20/20"
+    },
+    "summary": {
+      "coreMaxHoursBalanced": 14.3,
+      "coreMaxHoursCoreFirst": 8.7,
+      "everythingMaxHours": 17,
+      "target": "core ~120k coins / ~12 h (Game Maker, Oct 18): balanced and core-first players bracket 12 h"
+    },
+    "noPaywall": [
+      "No premium currency, no timers you can pay to skip, no energy system",
+      "Build timers can be cut 30 min per finished run (playing is the accelerator)",
+      "Crashing or failing never costs coins",
+      "Every level is completable at tier 0 with skill (all gap minTakeoffSpeed <= 46 m/s except Grand Gulch 44 / Summit Launch 44 which need a short boost; base vmax 52, boost 66)"
+    ]
+  },
+  "levelRewards": [
+    {
+      "id": "e1",
+      "diff": 1,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 250,
+      "coinsAvailable": 205
+    },
+    {
+      "id": "e2",
+      "diff": 2,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 350,
+      "coinsAvailable": 260
+    },
+    {
+      "id": "e3",
+      "diff": 3,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 400,
+      "coinsAvailable": 255
+    },
+    {
+      "id": "e5",
+      "diff": 3,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 400,
+      "coinsAvailable": 185
+    },
+    {
+      "id": "e4",
+      "diff": 4,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 450,
+      "coinsAvailable": 329
+    },
+    {
+      "id": "e6",
+      "diff": 4,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 450,
+      "coinsAvailable": 314
+    },
+    {
+      "id": "e7",
+      "diff": 4,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 450,
+      "coinsAvailable": 258
+    },
+    {
+      "id": "e8",
+      "diff": 5,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 550,
+      "coinsAvailable": 324
+    },
+    {
+      "id": "m1",
+      "diff": 2,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 350,
+      "coinsAvailable": 253
+    },
+    {
+      "id": "m4",
+      "diff": 3,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 450,
+      "coinsAvailable": 243
+    },
+    {
+      "id": "m2",
+      "diff": 3,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 450,
+      "coinsAvailable": 259
+    },
+    {
+      "id": "m5",
+      "diff": 4,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 500,
+      "coinsAvailable": 323
+    },
+    {
+      "id": "m3",
+      "diff": 4,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 500,
+      "coinsAvailable": 294
+    },
+    {
+      "id": "m6",
+      "diff": 4,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 450,
+      "coinsAvailable": 254
+    },
+    {
+      "id": "m7",
+      "diff": 5,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 550,
+      "coinsAvailable": 313
+    },
+    {
+      "id": "r1",
+      "diff": 2,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 350,
+      "coinsAvailable": 176
+    },
+    {
+      "id": "r4",
+      "diff": 3,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 400,
+      "coinsAvailable": 219
+    },
+    {
+      "id": "r2",
+      "diff": 3,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 400,
+      "coinsAvailable": 212
+    },
+    {
+      "id": "r5",
+      "diff": 4,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 500,
+      "coinsAvailable": 240
+    },
+    {
+      "id": "r6",
+      "diff": 4,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 500,
+      "coinsAvailable": 272
+    },
+    {
+      "id": "r3",
+      "diff": 5,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 550,
+      "coinsAvailable": 242
+    },
+    {
+      "id": "r7",
+      "diff": 5,
+      "starBonus": [
+        150,
+        150,
+        150
+      ],
+      "quest": 550,
+      "coinsAvailable": 345
+    }
+  ]
+}

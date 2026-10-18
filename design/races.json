@@ -1,0 +1,1013 @@
+{
+  "schema": "volt-roadster/races@1",
+  "notes": "sim.js currently spawns exactly 3 AI (mode \"race\") with one rubber-band table. aiRivals>3 and per-event rubberBand tiers need small sim changes (see DESIGN_NOTES). Rival names = sim.js AI_NAMES.",
+  "rivals": [
+    {
+      "name": "Nova",
+      "colorIndex": 0,
+      "style": "clean racer",
+      "taunts": [
+        "See you at the finish. Well, I will.",
+        "Your battery is showing."
+      ]
+    },
+    {
+      "name": "Sparky",
+      "colorIndex": 1,
+      "style": "chaotic jumper",
+      "taunts": [
+        "WHEEE! Oh hi, you are still here?",
+        "I jumped a bus once. On purpose. Mostly."
+      ]
+    },
+    {
+      "name": "Ion Ivy",
+      "colorIndex": 2,
+      "style": "drift queen",
+      "taunts": [
+        "Corners are just straights with style.",
+        "Try to keep up, sparky. Oh wait, that is Sparky."
+      ]
+    },
+    {
+      "name": "Turbo Tess",
+      "colorIndex": 3,
+      "style": "boost hog",
+      "taunts": [
+        "Boost is a lifestyle.",
+        "My boost meter has a boost meter."
+      ]
+    },
+    {
+      "name": "Ampere",
+      "colorIndex": 4,
+      "style": "calculated",
+      "taunts": [
+        "Your racing line is 3.7% suboptimal.",
+        "Calculating your defeat... done."
+      ]
+    },
+    {
+      "name": "Watt Rodriguez",
+      "colorIndex": 5,
+      "style": "show-off",
+      "taunts": [
+        "Did everyone see that? Somebody film that!",
+        "Autographs after the race."
+      ]
+    },
+    {
+      "name": "Coil",
+      "colorIndex": 6,
+      "style": "silent pro",
+      "taunts": [
+        "...",
+        "... (revs engine politely)"
+      ]
+    },
+    {
+      "name": "Dyna",
+      "colorIndex": 7,
+      "style": "veteran",
+      "taunts": [
+        "I was looping loops before loops were cool.",
+        "Back in my day the Moon had no ramps."
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "earth_sprint_cup",
+      "planet": "earth",
+      "name": "Sunrise Sprint Cup",
+      "levels": [
+        "e1",
+        "e2"
+      ],
+      "format": {
+        "type": "series",
+        "pointsPerPosition": [
+          10,
+          6,
+          3,
+          1
+        ]
+      },
+      "aiRivals": 3,
+      "skill": {
+        "base": 0.82,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "easy",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.7
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.82
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.92
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.12
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.05
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          600,
+          350,
+          200,
+          80
+        ],
+        "firstWinBonus": 500,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "decal_sunrise"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "earth_rush_hour",
+      "planet": "earth",
+      "name": "Rush Hour Duel",
+      "levels": [
+        "e5"
+      ],
+      "format": {
+        "type": "duel",
+        "rival": "Sparky",
+        "rule": "bonus +200 coins per car jumped"
+      },
+      "aiRivals": 1,
+      "skill": {
+        "base": 0.9,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "normal",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.72
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.85
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.93
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.18
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.08
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          900,
+          0,
+          0,
+          0
+        ],
+        "firstWinBonus": 600,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "horn_traffic"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "earth_coast_gp",
+      "planet": "earth",
+      "name": "Coastline Grand Prix",
+      "levels": [
+        "e4",
+        "e7"
+      ],
+      "format": {
+        "type": "series",
+        "pointsPerPosition": [
+          10,
+          6,
+          3,
+          1
+        ]
+      },
+      "aiRivals": 3,
+      "skill": {
+        "base": 0.92,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "normal",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.72
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.85
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.93
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.18
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.08
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          1200,
+          700,
+          400,
+          160
+        ],
+        "firstWinBonus": 900,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "paint_sunset_pearl"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "earth_canyon_gp",
+      "planet": "earth",
+      "name": "Grand Canyon GP",
+      "levels": [
+        "e8"
+      ],
+      "format": {
+        "type": "single"
+      },
+      "aiRivals": 3,
+      "skill": {
+        "base": 0.96,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "hard",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.8
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.9
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.97
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.22
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.1
+          }
+        ],
+        "limits": {
+          "minMult": 0.8,
+          "maxMult": 1.22,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 0,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          1600,
+          900,
+          500,
+          200
+        ],
+        "firstWinBonus": 1500,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "wheels_canyon"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "earth_elimination",
+      "planet": "earth",
+      "name": "Loop City Elimination",
+      "levels": [
+        "e3",
+        "e6"
+      ],
+      "format": {
+        "type": "elimination",
+        "rule": "last place at each checkpoint after the 3rd is eliminated"
+      },
+      "aiRivals": 5,
+      "skill": {
+        "base": 0.9,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "normal",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.72
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.85
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.93
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.18
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.08
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          1300,
+          700,
+          400,
+          160
+        ],
+        "firstWinBonus": 1000,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "trail_neon"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "moon_sprint",
+      "planet": "moon",
+      "name": "Tranquility Sprint",
+      "levels": [
+        "m1"
+      ],
+      "format": {
+        "type": "single"
+      },
+      "aiRivals": 3,
+      "skill": {
+        "base": 0.84,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "easy",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.7
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.82
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.92
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.12
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.05
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          700,
+          400,
+          250,
+          100
+        ],
+        "firstWinBonus": 500,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "decal_crescent"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "moon_lowg_relay",
+      "planet": "moon",
+      "name": "Low-G Relay",
+      "levels": [
+        "m4",
+        "m2"
+      ],
+      "format": {
+        "type": "series",
+        "pointsPerPosition": [
+          10,
+          6,
+          3,
+          1
+        ],
+        "rule": "airtime over 6 s grants +1 point"
+      },
+      "aiRivals": 3,
+      "skill": {
+        "base": 0.88,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "normal",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.72
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.85
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.93
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.18
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.08
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          1100,
+          600,
+          350,
+          140
+        ],
+        "firstWinBonus": 800,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "trail_stardust"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "moon_rille_gp",
+      "planet": "moon",
+      "name": "Hadley Rille GP",
+      "levels": [
+        "m6"
+      ],
+      "format": {
+        "type": "single"
+      },
+      "aiRivals": 3,
+      "skill": {
+        "base": 0.93,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "normal",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.72
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.85
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.93
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.18
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.08
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          1300,
+          750,
+          400,
+          160
+        ],
+        "firstWinBonus": 1000,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "paint_regolith_grey"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "moon_dark_side",
+      "planet": "moon",
+      "name": "Dark Side Championship",
+      "levels": [
+        "m3",
+        "m5",
+        "m7"
+      ],
+      "format": {
+        "type": "series",
+        "pointsPerPosition": [
+          10,
+          6,
+          3,
+          1
+        ]
+      },
+      "aiRivals": 4,
+      "skill": {
+        "base": 0.97,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "hard",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.8
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.9
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.97
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.22
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.1
+          }
+        ],
+        "limits": {
+          "minMult": 0.8,
+          "maxMult": 1.22,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 0,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          2200,
+          1200,
+          700,
+          280
+        ],
+        "firstWinBonus": 2000,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "body_kit_lunar"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "mars_dust_rally",
+      "planet": "mars",
+      "name": "Red Dust Rally",
+      "levels": [
+        "r1",
+        "r4"
+      ],
+      "format": {
+        "type": "series",
+        "pointsPerPosition": [
+          10,
+          6,
+          3,
+          1
+        ]
+      },
+      "aiRivals": 3,
+      "skill": {
+        "base": 0.85,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "easy",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.7
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.82
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.92
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.12
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.05
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          800,
+          450,
+          250,
+          100
+        ],
+        "firstWinBonus": 600,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "decal_redplanet"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "mars_storm_chaser",
+      "planet": "mars",
+      "name": "Storm Chaser",
+      "levels": [
+        "r5"
+      ],
+      "format": {
+        "type": "single",
+        "rule": "storm intensity ramps 0.4 -> 1.0 during the race; AI also loses grip (stormFx.gripMul)"
+      },
+      "aiRivals": 3,
+      "skill": {
+        "base": 0.92,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "normal",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.72
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.85
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.93
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.18
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.08
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          1400,
+          800,
+          450,
+          180
+        ],
+        "firstWinBonus": 1100,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "lights_storm_amber"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "mars_valles_gp",
+      "planet": "mars",
+      "name": "Valles Marineris GP",
+      "levels": [
+        "r2",
+        "r6"
+      ],
+      "format": {
+        "type": "series",
+        "pointsPerPosition": [
+          10,
+          6,
+          3,
+          1
+        ]
+      },
+      "aiRivals": 3,
+      "skill": {
+        "base": 0.93,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "normal",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.72
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.85
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.93
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.18
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.08
+          }
+        ],
+        "limits": {
+          "minMult": 0.7,
+          "maxMult": 1.18,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 250,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          1500,
+          850,
+          450,
+          180
+        ],
+        "firstWinBonus": 1100,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "paint_rust_metallic"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "mars_olympus",
+      "planet": "mars",
+      "name": "Olympus Championship",
+      "levels": [
+        "r3",
+        "r7"
+      ],
+      "format": {
+        "type": "series",
+        "pointsPerPosition": [
+          10,
+          6,
+          3,
+          1
+        ]
+      },
+      "aiRivals": 4,
+      "skill": {
+        "base": 0.98,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "hard",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.8
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.9
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.97
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.22
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.1
+          }
+        ],
+        "limits": {
+          "minMult": 0.8,
+          "maxMult": 1.22,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 0,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          2400,
+          1300,
+          750,
+          300
+        ],
+        "firstWinBonus": 2200,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "body_kit_olympus"
+      },
+      "unlocked": true
+    },
+    {
+      "id": "tri_planet_final",
+      "planet": "any",
+      "name": "Tri-Planet Final",
+      "levels": [
+        "e8",
+        "m7",
+        "r3"
+      ],
+      "format": {
+        "type": "series",
+        "pointsPerPosition": [
+          12,
+          7,
+          4,
+          1
+        ],
+        "rule": "unlocks after winning any 6 events (soft goal, not a gate on planets)"
+      },
+      "aiRivals": 4,
+      "skill": {
+        "base": 1,
+        "perDiff": 0.035,
+        "spread": 0.025,
+        "simFormula": "skill = 0.82 + diff*0.035; rival k gets skill*(0.97+0.025k)"
+      },
+      "rubberBand": {
+        "tier": "hard",
+        "bands": [
+          {
+            "gapOver": 160,
+            "mult": 0.8
+          },
+          {
+            "gapOver": 50,
+            "mult": 0.9
+          },
+          {
+            "gapOver": 0,
+            "mult": 0.97
+          },
+          {
+            "gapUnder": -120,
+            "mult": 1.22
+          },
+          {
+            "gapUnder": -40,
+            "mult": 1.1
+          }
+        ],
+        "limits": {
+          "minMult": 0.8,
+          "maxMult": 1.22,
+          "neverExceed": "aiVmax = player stats.vmax * 1.05 (no impossible catch-ups)",
+          "disableInLast": 0,
+          "note": "disableInLast: metres before finish where AI stops slowing down for the player, so wins feel earned"
+        }
+      },
+      "rewards": {
+        "coinsByPosition": [
+          4000,
+          2000,
+          1000,
+          400
+        ],
+        "firstWinBonus": 5000,
+        "repeatMultiplier": 0.5,
+        "cosmeticOnFirstWin": "paint_tri_planet_chrome"
+      },
+      "unlocked": true
+    }
+  ]
+}
