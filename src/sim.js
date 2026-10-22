@@ -19,7 +19,8 @@ export const ESC = { yawGain: 1.15, yawSlack: 0.12, rate: 7, slide: 2.2 };
 export const AUTO_RIGHT_T = 0.9;
 export const LAND_CLEAN = 9, LAND_HARD = 14, LAND_CRASH = 23; // m/s along the surface normal, scaled by sqrt(toughness)
 export const WALL_LOSS = 13, WALL_PENALTY = 250;
-export const HOVER_SINK = -1.2, HOVER_K = 2.6, HOVER_MAX = 2.6; // cold-gas hover: target sink m/s, gain 1/s, max lift in g
+export const HOVER_SINK = -1.2, HOVER_K = 2.6, HOVER_MAX = 2.6, HOVER_DRAG = 0.3, HOVER_FADE = 0.9; // B6: hover bleeds horizontal speed (1/s) and fades out over HOVER_FADE s when the gas runs dry
+ // cold-gas hover: target sink m/s, gain 1/s, max lift in g
 const EARTH_G = 9.81;
 const tmpV = new Vector3(), tmpV2 = new Vector3(), tmpQ = new Quaternion();
 const v3 = (o) => new Vector3(o.x, o.y, o.z);
@@ -27,7 +28,7 @@ const WORLD_UP = new Vector3(0, 1, 0), _t1 = new Vector3(), _t2 = new Vector3(),
 let _ray = null;
 const STATIC_ONLY = col => { const p = col.parent(); return !p || p.isFixed(); }; // road, terrain, pads: never traffic or meteors
 // air-control tuning (rad/s, 1/s). maxRate keeps the car from spinning wildly; response is how fast it follows input.
-export const AIR = { pitchRate: 4.2, yawRate: 2.6, rollRate: 4.5, response: 9, maxRate: 6.5, levelKp: 3.2, levelKpNear: 6, levelMax: 3.2, noGasAuth: 0.3, gasPerRate: 0.45, steerThrust: 0.9, steerGlide: 0.3 };
+export const AIR = { pitchRate: 4.2, yawRate: 2.6, rollRate: 4.5, response: 9, maxRate: 6.5, levelKp: 3.2, levelKpNear: 6, levelMax: 3.2, noGasAuth: 0.3, gasPerRate: 0.45, steerThrust: 1.25, steerGlide: 0.4 }; // B23: more air authority (velocity redirect rad/s)
 const AI_NAMES = ['Nova', 'Sparky', 'Ion Ivy', 'Turbo Tess', 'Ampere', 'Watt Rodriguez', 'Coil', 'Dyna'];
 
 export function carStats(up = {}, bonus = {}, veh = VEHICLES.roadster) {
@@ -495,17 +496,20 @@ export class Sim {
         this.thrust = Math.max(0, this.thrust - h * 0.5 * this.fuelK); this.thrusting = true;
         const vy = b.linvel().y, lift = Math.max(0, Math.min(this.g * HOVER_MAX, this.g + HOVER_K * (0 - vy)));
         this.bodyThrust(lift, up);
-      } else if (!grounded && this.veh.rcs && this.gas > 0 && this.air > 0.12) {
+      } else if (!grounded && this.veh.rcs && (this.gas > 0 || this.hoverFade > 0) && this.air > 0.12) {
         // cold-gas hover / soft-landing burn: a vertical-speed controller that tracks a gentle descent (HOVER_SINK).
         // Lift = g + k*(target - vy), clamped to [0, HOVER_MAX*g]: it never adds climb beyond the target and never pushes down,
         // so holding JUMP can only ever fall slower than not holding it. Scales with planet gravity.
         const vy = b.linvel().y;
         const lift = Math.max(0, Math.min(this.g * HOVER_MAX, this.g + HOVER_K * (HOVER_SINK - vy)));
-        if (lift > 0) { this.gas = Math.max(0, this.gas - h * this.fuelK * (0.35 + 0.65 * Math.min(1, lift / (this.g * HOVER_MAX)))); this.thrusting = true; this.rcs.lift = Math.min(1, lift / (this.g * 1.5)); this.bodyThrust(lift, up); }
+        // B6: out of gas -> the burn tapers over HOVER_FADE s instead of cutting to a free-fall drop
+        if (this.gas > 0) this.hoverFade = 1; else this.hoverFade = Math.max(0, this.hoverFade - h / HOVER_FADE);
+        const fl = lift * (this.gas > 0 ? 1 : this.hoverFade);
+        if (fl > 0) { if (this.gas > 0) this.gas = Math.max(0, this.gas - h * this.fuelK * (0.35 + 0.65 * Math.min(1, lift / (this.g * HOVER_MAX)))); this.thrusting = true; this.rcs.lift = Math.min(1, fl / (this.g * 1.5)); this.bodyThrust(fl, up, true); }
       }
     }
     this.jumpHeld = !!inp.jump;
-    if (grounded) { this.thrust = Math.min(st.thrustCap, this.thrust + h * 0.5); this.gas = Math.min(st.gasCap, this.gas + h * 0.22); }
+    if (grounded) { this.hoverFade = 0; this.thrust = Math.min(st.thrustCap, this.thrust + h * 0.5); this.gas = Math.min(st.gasCap, this.gas + h * 0.22); }
     // ---- air control (rate controller, not raw torque impulses) ----
     // steer = yaw (or roll with the air-roll setting), gas/brake = nose down/up. With no input the car levels itself
     // toward the surface it will land on. Angular velocity is driven toward a target with a fixed response, clamped and damped,
@@ -713,13 +717,17 @@ export class Sim {
 
   // thrust acts along the car's own up axis: its vertical part matches the requested lift, so tilting the nose
   // forward/back (GAS/BRAKE while thrusting) pushes the car forward/back - that is how you stretch or shorten a jump.
-  bodyThrust(lift, up) {
+  bodyThrust(lift, up, hover = false) {
     const b = this.body, m = this.mass, h = this.h || STEP;
     if (up.y < 0.35) { b.applyImpulse({ x: 0, y: m * lift * h, z: 0 }, true); return; }
     // tilted on purpose (GAS/BRAKE held): constant thrust of 1 g along the body, so the tilt trades lift for push and
     // braking/stretching changes the range instead of just hovering longer. Level: vertical controller (hover).
     if (this.airTiltIn) { // vectored: the tilt mostly pushes (up to ~0.9 g at full tilt), with light lift so braking really shortens the jump
       const gh = Math.max(this.g * 1.6, 6) * m * h, gv = this.g * 0.35 * m * h; /* push has a floor so tilting still works in Moon gravity */ b.applyImpulse({ x: up.x * gh, y: gv, z: up.z * gh }, true); return;
+    }
+    if (hover) { // B6: the level hover burn is (almost) purely vertical and bleeds horizontal speed, so holding JUMP no longer glides far past the pad
+      b.applyImpulse({ x: 0, y: lift * m * h, z: 0 }, true);
+      const lv = b.linvel(), d = Math.max(0, 1 - HOVER_DRAG * h); b.setLinvel({ x: lv.x * d, y: lv.y, z: lv.z * d }, true); return;
     }
     const k = lift / Math.max(0.6, up.y) * m * h; b.applyImpulse({ x: up.x * k, y: up.y * k, z: up.z * k }, true);
   }

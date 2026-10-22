@@ -102,6 +102,17 @@ for (const veh of ['roadster', 'hauler']) {
     const a = await fly(false), b = await fly(true);
     ok(`${veh} ${lvl} side ${side > 0 ? '+' : ''}${side} m: player steers onto the landing pad`, !!b.padHit && !b.crashed, { noControl: a.padHit || (a.crashed ? 'crash' : 'miss'), withControl: b.padHit || (b.crashed ? 'crash' : 'miss') });
   }
+  // B6: holding JUMP for the whole flight (pickup hover) must not glide far past the pad, and running out of gas must not end in a hard drop
+  if (veh === 'hauler') for (const lvl of ['e1', 'm1', 'r1']) {
+    const s = await mk(lvl, veh); const g = s.tr.features.find(f => f.type === 'gap'); const sg = s.tr.def.segments.find(x => x.t === 'gap' && x.name === g.name);
+    s.respawnAt(g.s0 - 160, sg?.speed ?? 36); let landS = null, hard = false, crashed = false, maxDrop = 0;
+    for (let t = 0; t < 30; t += H) { const inp = I({ throttle: s.grounded ? 1 : 0, jump: !s.grounded && s.prog.s > g.s0 }); if (s.grounded) { const left = new Vector3(1, 0, 0).applyQuaternion(s.pose.q); const tgt = s.tr.samples[Math.min(s.tr.samples.length - 1, s.prog.i + 14)]; inp.steer = Math.max(-1, Math.min(1, -tgt.p.clone().sub(s.pose.p).dot(left) * 0.18)); }
+      if (!s.grounded) maxDrop = Math.max(maxDrop, -s.body.linvel().y);
+      s.fixed(H, inp); for (const ev of s.events) { if (ev.type === 'hardLanding') hard = true; if (ev.type === 'crash') crashed = true; if (ev.type === 'land' && s.prog.s > g.s0 && landS == null) landS = s.prog.s; } s.events.length = 0;
+      if (landS != null || crashed) break; }
+    const past = landS != null ? landS - g.padS : null;
+    ok(`${veh} ${lvl} full JUMP hold: lands within 60 m past the pad, no hard drop`, past != null && past < 60 && !hard && !crashed, { pastPad: past == null ? null : +past.toFixed(1), hard, crashed, maxSinkMs: +maxDrop.toFixed(1) });
+  }
   // B16 dust devil on Mars: short hop
   { const s = await mk('r1', veh); const d = s.devils[0]; if (d) { s.respawnAt(d.s - 60, 20); let airT = 0, maxAir = 0; run(s, (s) => { const left = new Vector3(1, 0, 0).applyQuaternion(s.pose.q); return I({ throttle: 0.6, steer: Math.max(-1, Math.min(1, (s.prog.x - d.x) * 0.1)) }); }, 6, s => { maxAir = Math.max(maxAir, s.air); });
       ok(`${veh} Mars dust devil gives a short hop (< 2 s air)`, maxAir < 2, { maxAir: maxAir.toFixed(2), used: d.used }); } else ok(`${veh} dust devil present on r1`, false, 'none'); }

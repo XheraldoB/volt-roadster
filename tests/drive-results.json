@@ -191,7 +191,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 6.1m"
+   "withControl": "PAD LANDING 6.0m"
   }
  },
  {
@@ -199,7 +199,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 5.2m"
+   "withControl": "PAD LANDING 5.3m"
   }
  },
  {
@@ -327,7 +327,7 @@
   "pass": true,
   "info": {
    "noIn": "-19.6",
-   "hold": "-18.6",
+   "hold": "-13.6",
    "climb": "0.00"
   }
  },
@@ -370,7 +370,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 6.1m"
+   "withControl": "PAD LANDING 5.7m"
   }
  },
  {
@@ -378,7 +378,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 5.9m"
+   "withControl": "PAD LANDING 5.5m"
   }
  },
  {
@@ -394,7 +394,7 @@
   "pass": true,
   "info": {
    "noControl": "miss",
-   "withControl": "PERFECT LANDING!"
+   "withControl": "PAD LANDING 5.6m"
   }
  },
  {
@@ -402,7 +402,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 8.1m"
+   "withControl": "PAD LANDING 7.7m"
   }
  },
  {
@@ -410,7 +410,37 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 6.9m"
+   "withControl": "PAD LANDING 5.4m"
+  }
+ },
+ {
+  "id": "hauler e1 full JUMP hold: lands within 60 m past the pad, no hard drop",
+  "pass": true,
+  "info": {
+   "pastPad": 27.5,
+   "hard": false,
+   "crashed": false,
+   "maxSinkMs": 14.9
+  }
+ },
+ {
+  "id": "hauler m1 full JUMP hold: lands within 60 m past the pad, no hard drop",
+  "pass": true,
+  "info": {
+   "pastPad": -26.6,
+   "hard": false,
+   "crashed": false,
+   "maxSinkMs": 1.2
+  }
+ },
+ {
+  "id": "hauler r1 full JUMP hold: lands within 60 m past the pad, no hard drop",
+  "pass": true,
+  "info": {
+   "pastPad": 5.9,
+   "hard": false,
+   "crashed": false,
+   "maxSinkMs": 7.8
   }
  },
  {
