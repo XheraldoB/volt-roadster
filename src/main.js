@@ -287,12 +287,12 @@ function renderSettings() {
 }
 function renderCloud() {
   const box = $('#cloud-box'); if (!box) return; const c = save.cloud || {};
-  box.innerHTML = `<div class="cloud"><div>Recovery code <b class="code">${esc(c.code || '')}</b> <button class="btn small" id="cl-copy">Copy</button></div>
-    <div class="muted">Status: ${esc(c.status || 'new')}${c.lastSync ? ' · last sync ' + new Date(c.lastSync).toLocaleTimeString() : ''}. Saves to the cloud on launch, at checkpoints, after races and when you leave.</div>
-    <div class="row2"><button class="btn small" id="cl-sync">Sync now</button><input id="cl-code" placeholder="VOLT-XXXX-XXXX-XXXX" maxlength="19"><button class="btn small" id="cl-restore">Restore</button></div></div>`;
-  $('#cl-copy').onclick = () => { navigator.clipboard?.writeText(c.code).then(() => toast('Code copied')).catch(() => toast(c.code)); };
+  box.innerHTML = `<div class="cloud"><div>Recovery code <b class="code">${c.code ? esc(c.code) : '— (created after your first race)'}</b> ${c.code ? '<button class="btn small" id="cl-copy">Copy</button>' : ''}</div>
+    <div class="muted">Status: ${esc(c.status || 'new')}${c.lastSync ? ' · last sync ' + new Date(c.lastSync).toLocaleTimeString() : ''}. Saves to the cloud once you have progress: at checkpoints, after races and when you leave.</div>
+    <div class="row2"><button class="btn small" id="cl-sync">Sync now</button><input id="cl-code" placeholder="VOLT-XXXX-XXXX-XXXX" maxlength="40" autocapitalize="characters" autocomplete="off" spellcheck="false"><button class="btn small" id="cl-restore">Restore</button></div></div>`;
+  if ($('#cl-copy')) $('#cl-copy').onclick = () => { navigator.clipboard?.writeText(c.code).then(() => toast('Code copied')).catch(() => toast(c.code)); };
   $('#cl-sync').onclick = async () => { const r = await cloudSync(); toast(r && r.ok ? '☁️ Synced' : '☁️ Sync failed: ' + esc(r?.error || 'offline')); };
-  $('#cl-restore').onclick = async () => { const code = $('#cl-code').value; try { const j = await P.cloudRestore(code); const cloud = { id: j.id, secret: j.secret, code: j.code, lastSync: Date.now(), status: 'synced' }; save = P.mergeCloud({ ...P.defaultSave(), updatedAt: 0 }, j.data); save.cloud = cloud; persist(true); applySettings(); toast('☁️ Progress restored!'); hideModal(); toMap(); } catch (e) { toast('Restore failed: ' + esc(e.message)); } };
+  $('#cl-restore').onclick = async () => { const code = P.normCode($('#cl-code').value); $('#cl-code').value = code; try { const j = await P.cloudRestore(code); const old = save.cloud && save.cloud.id !== j.id && save.cloud.lastSync ? save.cloud : null; const cloud = { id: j.id, secret: j.secret, code: j.code, lastSync: Date.now(), status: 'synced' }; save = P.mergeCloud({ ...P.defaultSave(), updatedAt: 0 }, j.data); save.cloud = cloud; persist(true); applySettings(); P.cloudForget(old); toast('☁️ Progress restored!'); hideModal(); toMap(); } catch (e) { toast('Restore failed: ' + esc(e.message)); } };
 }
 function refreshShow() { if (G.screen === 'garage') toGarage(); else if (G.screen === 'map') toMap(); else if (G.screen === 'base') toBase(G.basePlanet); else if (G.screen === 'title') toTitle(); }
 
@@ -579,6 +579,6 @@ window.__game = {
   requestAnimationFrame(frame);
   // refinery idle collection, cloud load/merge
   toTitle();
-  try { const r = await P.cloudLoad(save); if (r.ok && r.data) { const merged = P.mergeCloud(save, r.data); if (merged !== save) { save = merged; persist(true); applySettings(); toast('☁️ Cloud progress loaded'); coinsBar(); } } save.cloud.status = r.ok ? 'synced' : (r.status === 404 ? 'new' : 'offline'); await cloudSync(); } catch (e) {}
+  try { const r = await P.cloudLoad(save); if (r.ok && r.data) { const merged = P.mergeCloud(save, r.data); if (merged !== save) { save = merged; persist(true); applySettings(); toast('☁️ Cloud progress loaded'); coinsBar(); } } if (save.cloud) save.cloud.status = r.ok ? 'synced' : (r.status === 404 ? 'new' : 'offline'); await cloudSync(); } catch (e) {}
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {});
 })();

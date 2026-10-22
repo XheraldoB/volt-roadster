@@ -158,7 +158,11 @@ export function ensureCloudIdentity(s) {
   return s.cloud;
 }
 const strip = s => { const c = { ...s }; delete c.cloud; return c; };
+// B14: nothing is written to the cloud until the player has real progress (a race, a purchase or a base build)
+export const hasProgress = s => !!(s.stats && s.stats.races > 0) || Object.keys(s.levels || {}).length > 0 || (s.totalCoins || 0) > 0 || (s.owned?.vehicles || []).length > 1 || Object.entries(s.owned || {}).some(([k, a]) => k !== 'vehicles' && Array.isArray(a) && a.length > (k === 'horns' ? 1 : 0)) || Object.values(s.bases || {}).some(b => (b.plots || []).some(Boolean));
+export const normCode = code => String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^VOLT/, '').slice(0, 12).replace(/(.{4})(?=.)/g, '$1-').replace(/^/, 'VOLT-');
 export async function cloudSave(s, beacon = false) {
+  if (!s.cloud && !hasProgress(s)) return { ok: false, error: 'nothing-to-sync', skipped: true };
   const c = ensureCloudIdentity(s); const body = JSON.stringify({ id: c.id, secret: c.secret, code: c.code, data: strip(s) });
   try {
     if (beacon && navigator.sendBeacon) { navigator.sendBeacon('/api/save', new Blob([body], { type: 'application/json' })); return { ok: true }; }
@@ -167,14 +171,17 @@ export async function cloudSave(s, beacon = false) {
   } catch (e) { c.status = 'offline'; return { ok: false, error: 'offline' }; }
 }
 export async function cloudLoad(s) {
-  const c = ensureCloudIdentity(s);
+  if (!s.cloud) return { ok: false, status: 404, fresh: true }; // a fresh device has nothing in the cloud: no request, no identity yet
+  const c = s.cloud;
   try { const r = await fetch(`/api/load?id=${encodeURIComponent(c.id)}&secret=${encodeURIComponent(c.secret)}`); if (!r.ok) return { ok: false, status: r.status }; const j = await r.json(); if (!j.data) return { ok: false, found: false, error: j.error }; return { ok: true, data: j.data }; }
   catch (e) { return { ok: false, error: 'offline' }; }
 }
 export async function cloudRestore(code) {
-  const r = await fetch(`/api/load?code=${encodeURIComponent(code.trim().toUpperCase())}`); const j = await r.json().catch(() => ({}));
+  const r = await fetch(`/api/load?code=${encodeURIComponent(normCode(code))}`); const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || 'Code not found'); return j; // {id, secret, code, data}
 }
+// B14: after restoring onto this device, delete the record this device had created under its old identity
+export async function cloudForget(old) { if (!old || !old.id || !old.secret) return; try { await fetch('/api/forget', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: old.id, secret: old.secret, code: old.code }) }); } catch (e) {} }
 export function mergeCloud(local, remote) { // newest wins
   if (!remote || !remote.updatedAt) return local; if (remote.updatedAt > local.updatedAt) { const m = migrate(remote); m.cloud = local.cloud; return m; } return local;
 }
