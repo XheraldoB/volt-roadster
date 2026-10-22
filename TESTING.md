@@ -450,3 +450,36 @@ Verdict: **CONDITIONAL PASS.** The new features (reverse, classic layout, camera
 | Far chase | DONE | 10.5 m back (+1.2 m at speed), 3 m up, +6° FOV (qa-shots/r28-cam-chase.png) |
 
 Suites: drive 76/76, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 24/24.
+
+## Regression (commit 56ae92f)
+Build: fresh worktree /workspace/volt-roadster-qa-56ae92f -> /workspace/vr-dist-56ae92f, preview :4173 (old one stopped). Live assets identical; GitHub master = 56ae92f. The dev's node tests pass, including the new B34/B35 all-level test. Zero live writes: live boot 3.6 s, 0 errors, only the restore GET. No commits or source edits. Scripts: qa/b34-stress.mjs, p11.mjs, p11b.mjs, p11c.mjs, p11d.mjs; results in qa/*-results.json.
+
+| Item | Result |
+|---|---|
+| B34 Node stress (own steering bot, 23 levels x 2 vehicles x stock/Lv3/Lv5 = 138 runs) | 127 clean: max lateral 3.0 m, yaw at stop <= 1 deg, peak <= 1.08 g, longest stop 544 m, >= 196 m of road left. 4 more are clean (jerk 205-267 g/s at ~1 g, just over my 200 limit). 1 harness miss (e4 hauler: bot fell into a gap before the finish). **6 fail (B36)**: r1 and r6 at Lv3/Lv5 cross the line airborne off a late jump |
+| B34 browser (DPR 3) | PASS. e1 Lv5 roadster at 320 km/h and m6 Lv5 at 321 km/h: lateral <= 0.08 m, yaw 0, peak 1.05-1.06 g, jerk 24 g/s, still braking smoothly at 8 s (projected stop about 400 m). e1 stock hauler at 171 km/h: stops in 133 m / 5.4 s, peak 0.97 g, lateral 0.09 m, 0 crashes |
+| B35 stock decel (browser) | FIXED. e1 roadster 186 km/h: 0.16 -> 0.98 g over 0.5 s, then 0.97 -> 0.88 g, stop in 155 m. r6 roadster 182 km/h: peak 1.00 g, stop in 148 m. Jerk <= 104 g/s, no one-step spikes |
+| Far chase camera | FIXED. 10.5 m back, 3.0 m up, FOV 68 (close: 5.2 m back, 1.7 m up, FOV 62). Clearly distinct (r11-cam-close-vs-far.png). Loops/flips: chase min 4.0 m, close min 3.1 m, hood 0.54-0.72 m; 0 NaN, 0 below ground |
+| RP14 cycle + persistence | PASS: chase -> hood -> close -> chase, saved across reload |
+| Tutorial | PASS: shows, holds the clock, Got it -> countdown resumes, no black screen; level change ok |
+| RP12/RP13 | Carried over (no input/UI files changed since ab1aa7a; seen in screenshots) |
+| B32, kill-plane stress | PASS: backwall 0 drops, after-finish 0 kills, 0 NaN, 2 kills total (flips at gap edges, respawned) |
+
+New bugs:
+- **B36 (Major): a late jump can carry a fast car over the finish line airborne, where the auto-stop can't help.** Node, Lv3/Lv5 on r6 and r1.
+  - r6 hauler Lv5: crosses the line 104 m up, lands about 625 m in at 277 km/h, then hits the end wall at about 200 km/h (572 g).
+  - r6 roadster Lv3/Lv5: 43-49 g impacts.
+  - r1: lands 13-20 m off-centre; one Lv5 roadster run ends 347 m off-road.
+  - The dev's test misses this because its bot starts at the line.
+  - Suggested fix: clamp airborne speed and steer to the centre after finishing, or extend the end barrier.
+- **B37 (Minor, cosmetic): gear badge shows "R" at 0 km/h during the countdown after the tutorial (expected N).** r11-after-tutorial.png.
+
+Verdict: **CONDITIONAL PASS.** B34 is fixed for ground finishes, and B35 and the far camera are fixed. B36 (airborne finish on r1/r6 at upgraded speed) stays open.
+
+## Fix round 12 (B36, B37)
+- B36 root cause: boost bypassed the take-off governor, so the last jump before the finish on r6/r1 launched the car up to ~100 m over the line. The last jump whose landing is within 700 m of the finish is now governed even when boosting (cap ≈1.2× design speed); the finish is no longer crossed airborne on any level.
+- Post-finish airborne assist: horizontal speed damped at 14 m/s² toward 30 m/s, in-air lateral steer to the centreline, sink rate limited (−7 m/s, −1.5 m/s below 5 m) for a soft landing, spin damped; grounded finish braking unchanged.
+- Found during testing: rivals that finished earlier stopped in-lane just past the line and a fast finisher rear-ended them (10.2 g spike on r1). Finished rivals now coast to the shoulder and become non-colliding.
+- New sim test (tools/finishrun.mjs, in drive.test): full run-up through the last pre-finish jump, upgrades 0/3/5 × roadster/hauler × 23 levels = 138 runs: 138/138 ok, 0 airborne at finish, max post-finish 2.4 g, all stopped on the road. Existing barriers proved sufficient.
+- B37: gear badge shows N during countdown and below 1 km/h.
+- Suites: drive 77/77, quests 15/15, simtest roadster 23/23, hauler 23/23, qa local 31/31, player.browser 24/24.

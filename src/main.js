@@ -521,7 +521,7 @@ function drawMinimap() {
 $('#minimap').onclick = () => { G.mapBig = !G.mapBig; $('#minimap').classList.toggle('big', G.mapBig); };
 function updateHud() {
   const s = G.sim, st = s.stats;
-  $('#spd').textContent = Math.round(s.speed * 3.6); { const gr = s.reversing || s.forwardSpeed < -0.5 ? 'R' : s.speed < 0.5 ? 'N' : 'D'; const ge = $('#gear'); if (ge.textContent !== gr) { ge.textContent = gr; ge.className = 'gear ' + gr; } }
+  $('#spd').textContent = Math.round(s.speed * 3.6); { const gr = s.state === 'countdown' || s.speed * 3.6 < 1 ? 'N' : s.reversing || s.fspeed < -0.5 ? 'R' : 'D'; /* B37: N when stopped / counting down */ const ge = $('#gear'); if (ge.textContent !== gr) { ge.textContent = gr; ge.className = 'gear ' + gr; } }
   updateHorizon(s);
   const bat = s.battery / st.tank; $('#bat-fill').style.width = (bat * 100).toFixed(1) + '%'; $('#bat-val').textContent = Math.ceil(s.battery) + 's'; $('#bat').classList.toggle('low', bat < 0.2);
   $('#boost-fill').style.width = (s.boost / st.boostCap * 100).toFixed(1) + '%'; $('#thr-fill').style.width = (s.veh.rcs ? s.gas / st.gasCap : s.thrust / st.thrustCap) * 100 + '%';

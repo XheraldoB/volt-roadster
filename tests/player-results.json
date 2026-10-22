@@ -36,16 +36,16 @@
   "id": "RP touch GAS drives forward",
   "pass": true,
   "info": {
-   "ds": 2.3,
-   "kmh": 24
+   "ds": 1.7,
+   "kmh": 21
   }
  },
  {
   "id": "RP touch BRAKE stops then REVERSES",
   "pass": true,
   "info": {
-   "s1": 24.1,
-   "s2": 26.1
+   "s1": 23.5,
+   "s2": 25.5
   }
  },
  {
@@ -99,9 +99,9 @@
   "id": "RP10 frame-time ring buffer",
   "pass": true,
   "info": {
-   "n": 175,
-   "p50": 283.3,
-   "p95": 616.7
+   "n": 165,
+   "p50": 350,
+   "p95": 733.3
   }
  },
  {
@@ -191,7 +191,7 @@
     "gear": "D"
    },
    "g2": {
-    "s": 25.540727615356445,
+    "s": 25.629453659057617,
     "gear": "R",
     "rev": true
    }
@@ -227,9 +227,10 @@
   "id": "B26 results toasts never cover score/buttons and ignore taps",
   "pass": true,
   "info": {
-   "toasts": 1,
+   "toasts": 2,
    "overlaps": 0,
    "pe": [
+    "none",
     "none"
    ]
   }

@@ -19,6 +19,7 @@ export const ESC = { yawGain: 1.15, yawSlack: 0.12, rate: 7, slide: 2.2 };
 export const AUTO_RIGHT_T = 0.9;
 export const LAND_CLEAN = 9, LAND_HARD = 14, LAND_CRASH = 23; // m/s along the surface normal, scaled by sqrt(toughness)
 export const WALL_LOSS = 13, WALL_PENALTY = 250;
+export const FINISH_AIR_SAFE = 30, FINISH_AIR_DEC = 14, FINISH_AIR_SINK = -7; /* B36: post-finish airborne assist (m/s, m/s², m/s) */
 export const FINISH_DEC = 8.6, FINISH_MAX_DEC = 10.2; /* applied brake; rolling + air drag add ~1-2 m/s² on top */ /* finish auto-stop: target ~1 g, cap 1.2 g */
 export const KILL_MARGIN = 60, MAX_LINVEL = 160, MAX_ANGVEL = 40; /* kill plane margin (m), runaway caps (m/s, rad/s) */
 export const HOVER_SINK = -1.2, HOVER_K = 2.6, HOVER_MAX = 2.6, HOVER_DRAG = 0.5, HOVER_FADE = 3.0, HOVER_RESERVE_SINK = -4.5, HOVER_RESERVE_MAX = 1.5; // B6: hover bleeds horizontal speed (1/s) and fades out over HOVER_FADE s when the gas runs dry
@@ -190,8 +191,8 @@ export class Sim {
       const nAI = Math.max(1, Math.min(3, (this.level.objective && this.level.objective.ai) || 3));
       for (let k = 0; k < nAI; k++) {
         const rb = this.world.createRigidBody(kinDesc());
-        this.world.createCollider(R.ColliderDesc.cuboid(0.95, 0.45, 2.15).setTranslation(0, 0.55, 0), rb);
-        this.ai.push({ name: AI_NAMES[(k + this.level.diff * 2) % AI_NAMES.length], s: [36, 36, 50][k], x: [-4.2, 4.2, 0][k], tx: 0, v: 0, skill: skill * (0.97 + 0.025 * k), rb,
+        const col = this.world.createCollider(R.ColliderDesc.cuboid(0.95, 0.45, 2.15).setTranslation(0, 0.55, 0), rb);
+        this.ai.push({ col, name: AI_NAMES[(k + this.level.diff * 2) % AI_NAMES.length], s: [36, 36, 50][k], x: [-4.2, 4.2, 0][k], tx: 0, v: 0, skill: skill * (0.97 + 0.025 * k), rb,
           p: new Vector3(), q: new Quaternion(), pp: new Vector3(), pq: new Quaternion(), finished: false, finishTime: 0, wheelRot: 0, color: k });
       }
     }
@@ -411,6 +412,13 @@ export class Sim {
     }
     // ---- driving forces ----
     const thr = control ? (inp.throttle || 0) : (this.state === 'countdown' ? 0 : 0);
+    /* B36: finished while airborne (late jump): bleed horizontal speed toward a safe speed, drift onto the centreline, and cap the sink rate so the landing is soft */
+    if (this.state === 'finished' && !grounded) { const v = b.linvel(), hs = Math.hypot(v.x, v.z), sm2 = this.tr.samples[this.prog.i];
+      let nx = v.x, nz = v.z; if (hs > FINISH_AIR_SAFE) { const k = Math.max(FINISH_AIR_SAFE, hs - FINISH_AIR_DEC * h) / hs; nx *= k; nz *= k; }
+      const X = sm2.X, lat = nx * X.x + nz * X.z, want = Math.max(-6, Math.min(6, -this.prog.x * 0.8)), dl = (want - lat) * Math.min(1, 2.5 * h); nx += X.x * dl; nz += X.z * dl;
+      const sink = this.prog.h < 5 ? -1.5 : FINISH_AIR_SINK; /* soft-landing assist: near the road the sink rate eases to 1.5 m/s */
+      const vy = v.y < sink ? v.y + (sink - v.y) * Math.min(1, (this.prog.h < 5 ? 8 : 3) * h) : v.y;
+      b.setLinvel({ x: nx, y: vy, z: nz }, true); const w = b.angvel(); const kw = Math.max(0, 1 - 3 * h); b.setAngvel({ x: w.x * kw, y: w.y * kw, z: w.z * kw }, true); }
     /* B31: after the finish, inputs are locked and the car does a smooth cinematic stop before the end of the run-off */
     if (this.state === 'finished' && grounded) { const v = b.linvel(), hs = Math.hypot(v.x, v.z); if (hs > 0.05) {
       this.finT = (this.finT || 0) + h; /* B33: the finish brake ramps in over ~0.5 s */
@@ -434,7 +442,7 @@ export class Sim {
       const req = f ? (this.tr.def.segments.find(sg => sg.t === 'gap' && sg.name === f.name)?.speed ?? 40) * 1.04 : 0;
       if (req && fspeed < req) drive = Math.max(drive, this.mass * Math.min(14, (req - fspeed) * 2.2));
       // speed governor on take-off (unless boosting): arrive at the design speed so the landing pad is reachable with air control
-      else if (req && !boosting && fspeed > req * 1.06) { const lv = b.linvel(), k = Math.max(0.9, 1 - (fspeed - req * 1.05) / Math.max(1, fspeed) * Math.min(1, 6 * h)); b.setLinvel({ x: lv.x * k, y: lv.y * k, z: lv.z * k }, true); }
+      else if (req && (!boosting || (f && this.tr.finishS - f.land1 < 700 && fspeed > req * 1.2)) && fspeed > req * 1.06) { /* B36: the last jump before the finish is governed even when boosting, so the finish is never crossed high in the air */ const lv = b.linvel(), k = Math.max(0.9, 1 - (fspeed - req * 1.05) / Math.max(1, fspeed) * Math.min(1, 6 * h)); b.setLinvel({ x: lv.x * k, y: lv.y * k, z: lv.z * k }, true); }
     }
     let braking = 0;
     // brake / reverse: BRAKE slows the car; once (nearly) stopped, keeping BRAKE held engages reverse (capped speed).
@@ -627,7 +635,8 @@ export class Sim {
         tx = Math.max(-5, Math.min(5, tx));
         a.tx = tx; a.x += Math.max(-4 * h, Math.min(4 * h, tx - a.x));
         if (a.s >= this.tr.finishS) { a.finished = true; a.finishTime = this.raceTime; this.emit('aiFinish', { name: a.name }); }
-      } else if (a.finished) { a.v *= 0.98; a.s += a.v * h; }
+      } else if (a.finished) { /* finished rivals coast to a stop on the shoulder and become ghosts, so a fast finisher can't rear-end them */
+        if (a.col && !a.col.isSensor()) a.col.setSensor(true); a.v = Math.max(0, a.v - 5 * h); a.s += a.v * h; a.x += (Math.sign(a.x || 1) * (ROAD_W / 2 - 1.3) - a.x) * Math.min(1, 1.5 * h); }
       a.wheelRot += a.v * h / 0.36;
       const P = poseAt(this.tr, a.s, a.x, 0);
       a.p.copy(P.p); a.q.copy(P.q);

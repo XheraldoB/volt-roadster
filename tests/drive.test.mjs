@@ -177,6 +177,10 @@ for (const veh of ['hauler', 'roadster']) { const s = await mk('m1', veh); s.bat
   const r = P.buyVehicle(s, VEHICLES.hauler); ok('B7 cannot buy without 6000 coins', !r.ok && s.coins === 300, r);
   s.coins = 7000; const r2 = P.buyVehicle(s, VEHICLES.hauler); ok('B7 buying deducts 6000 and grants ownership', r2.ok && s.coins === 1000 && P.selectVehicle(s, 'hauler'));
 }
+{ /* B36: full run-up through the last pre-finish jump, upgrade levels 0/3/5, both vehicles, all levels */
+  const { finishRuns } = await import('../tools/finishrun.mjs'); const R2 = await finishRuns(); const bad = R2.filter(r => !r.ok);
+  ok('B36 pre-finish jump run-up: grounded at finish, peak g<=4 after line, stops on road (0/3/5 x 2 vehicles x all levels)', !bad.length && !R2.some(r => r.airAtFin), { runs: R2.length, bad: bad.slice(0, 3), maxG: Math.max(...R2.map(r => r.peakG)), air: R2.filter(r => r.airAtFin).length });
+}
 console.log(`\n${res.length - fail}/${res.length} passed`);
 import('fs').then(fs => fs.writeFileSync(new URL('./drive-results.json', import.meta.url), JSON.stringify(res, null, 1)));
 process.exitCode = fail ? 1 : 0;

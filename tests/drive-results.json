@@ -580,5 +580,15 @@
  {
   "id": "B7 buying deducts 6000 and grants ownership",
   "pass": true
+ },
+ {
+  "id": "B36 pre-finish jump run-up: grounded at finish, peak g<=4 after line, stops on road (0/3/5 x 2 vehicles x all levels)",
+  "pass": true,
+  "info": {
+   "runs": 138,
+   "bad": [],
+   "maxG": 2.4,
+   "air": 0
+  }
  }
 ]
