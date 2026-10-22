@@ -38,6 +38,15 @@ const rs = await G(() => window.__game.car); ok('RP restart level resets progres
 await hold('[data-ctl="gas"]', 3000);
 const ft = await G(() => window.__game.frameTimes(300)); const srt = [...ft].sort((a, b) => a - b);
 ok('RP10 frame-time ring buffer', ft.length > 30, { n: ft.length, p50: srt[srt.length >> 1], p95: srt[Math.floor(srt.length * 0.95)] });
+// B24 / B25 on a OnePlus 15 sized viewport at Ultra: native resolution and thumb-sized HUD buttons
+{ const c2 = await browser.newContext({ viewport: { width: 924, height: 424 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }); const p2 = await c2.newPage();
+  await p2.goto(`${BASE}/?q=ultra`); await p2.waitForFunction(() => window.__game?.screen === 'title', null, { timeout: 60000 });
+  await p2.evaluate(() => window.__game.loadLevel('e1')); await p2.waitForFunction(() => window.__game.screen === 'race', null, { timeout: 90000 }); await p2.waitForTimeout(1500);
+  const r = await p2.evaluate(() => ({ pr: window.__game.pixelRatio, db: window.__game.drawingBuffer, q: window.__game.quality }));
+  ok('B24 Ultra renders at native DPR (OnePlus 15: 2772x1272)', r.pr >= 3 * (r.db.dynScale || 1) - 0.01 && r.db.w >= 2772 * 0.85 - 1, { pr: r.pr, w: r.db.w, h: r.db.h, dynScale: r.db.dynScale, q: r.q });
+  const bb = await p2.evaluate(() => { const b = document.querySelector('#btn-pause').getBoundingClientRect(); return { w: b.width, h: b.height }; });
+  const mm = Math.min(bb.w, bb.h) * 3 / 450 * 25.4; ok('B25 pause button >= 9 mm on the phone', mm >= 9, { css: bb, mm: +mm.toFixed(1) });
+  await p2.screenshot({ path: 'qa-shots/b24-ultra-native.png' }); await c2.close(); }
 mkdirSync('qa-shots', { recursive: true }); await page.screenshot({ path: 'qa-shots/rp9-sharpness.png' });
 ok('RP9 sharpness screenshot saved (qa-shots/rp9-sharpness.png)', true, {});
 ok('no page errors', errs.length === 0, { errs });

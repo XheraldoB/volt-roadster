@@ -234,4 +234,4 @@ body[data-screen="results"] #toasts { top: auto; bottom: calc(var(--sb) + 4vh); 
 #horizon[data-v="bad"] { border-color: #ff3b3b; } #horizon[data-v="bad"] .hz-dot { background: #ff3b3b; }
 /* QA RP8 (p4): HUD icon buttons (pause, respawn, camera...) were ~42 px tall; give them a thumb-sized target that scales with the screen */
 body.touch .hud-btns { gap: max(6px, 1vh); }
-body.touch .hud-btns .btn { min-width: max(46px, 10vh); min-height: max(46px, 10vh); padding: 0.3em; font-size: max(1rem, 3.4vh); display: inline-flex; align-items: center; justify-content: center; }
+body.touch .hud-btns .btn { min-width: max(54px, 12.5vh); min-height: max(54px, 12.5vh); padding: 0.3em; font-size: max(1rem, 3.4vh); display: inline-flex; align-items: center; justify-content: center; }
