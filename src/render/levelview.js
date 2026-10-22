@@ -11,11 +11,13 @@ import { createBoostFlame } from '../../art/fx/boostFlame.js';
 import { buildCar, buildVehicle, animateUnderglow, buildTraffic, buildProp, buildRobot, buildArch, buildKicker, buildPad, buildBillboard, buildRocket, PAINTS } from './models.js';
 import { roadTexture, noiseNormalMap, detailTexture, windowsTexture } from './textures.js';
 import { Particles } from './particles.js';
+import { mergeStatic, mergeVehicle, PropInstances } from './batch.js';
 import { terrainArrays } from '../terrain.js';
 import { poseAt, sampleAt, nearest, ROAD_W } from '../track.js';
 import { rng } from '../noise.js';
 
 const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4(), _s = new THREE.Vector3(1, 1, 1), _e = new THREE.Euler();
+const _v = new THREE.Vector3(), _yq = new THREE.Quaternion(), _Y = new THREE.Vector3(0, 1, 0);
 const JOKES = [
   ['HONK IF YOU', 'LOVE LOOPS'], ['MARS', 'NOW WITH 38% GRAVITY!'], ['0 COLD PIZZAS', 'DELIVERED BY ROADSTER'], ['THIS BILLBOARD', 'INTENTIONALLY LEFT AWESOME'],
   ['CAUTION', 'COWS MAY BE FAST'], ['FREE PARKING', 'ON THE MOON*  *no air'], ['SLOW DOWN?', 'NEVER HEARD OF IT'], ['DONUT DISTURB', 'FLY THROUGH ME'],
@@ -97,12 +99,12 @@ export class LevelView {
     const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(strip, 3)); sg.setIndex(sidx);
     this.scene.add(new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ color: stripCol, side: THREE.DoubleSide, toneMapped: false })));
     // arches, pads, kickers
-    const place = (obj, s, x = 0, h = 0) => { const P = poseAt(this.tr, s, x, h); obj.position.copy(P.p); obj.quaternion.copy(P.q); this.scene.add(obj); return obj; };
+    const place = (obj, s, x = 0, h = 0) => { const P = poseAt(this.tr, s, x, h); obj.position.copy(P.p); obj.quaternion.copy(P.q); mergeStatic(obj); this.scene.add(obj); return obj; };
     place(buildArch('START', '#39ff6a'), this.sim.startS + 6);
     place(buildArch('FINISH', '#ffd23f'), this.tr.finishS);
     this.tr.checkpoints.slice(1).forEach((s, i) => place(buildArch('CHECKPOINT ' + (i + 1), '#00e5ff'), s));
     for (const f of this.tr.features) if (f.type === 'gap') { const pad = buildPad(f.padR); place(pad, f.padS, 0, 0.04); }
-    for (const k of this.sim.kickers) { const m = buildKicker(); m.position.copy(k.p); m.quaternion.copy(k.q); this.scene.add(m); }
+    for (const k of this.sim.kickers) { const m = buildKicker(); m.position.copy(k.p); m.quaternion.copy(k.q); mergeStatic(m); this.scene.add(m); }
     // spaceport finale rocket
     if (this.sim.level.spaceport) { const rk = buildRocket(1); place(rk, this.tr.length - 2, 0, -1.0); rk.translateZ(14); this.rocket = rk; }
   }
@@ -160,19 +162,19 @@ export class LevelView {
     }
     if (ground === 'mars' || ground === 'moon') { // habitat domes
       for (let k = 0; k < 3; k++) { const s = tr.samples[Math.floor(tr.samples.length * (0.2 + k * 0.3))]; const x = s.p.x - s.X.x * (60 + k * 20), z = s.p.z - s.X.z * (60 + k * 20);
-        const dome = buildProp('base'); dome.scale.setScalar(2 + k * 0.6); dome.position.set(x, T.heightAt(x, z), z); this.scene.add(dome); }
+        const dome = buildProp('base'); dome.scale.setScalar(2 + k * 0.6); dome.position.set(x, T.heightAt(x, z), z); mergeStatic(dome); this.scene.add(dome); }
     }
     // joke billboards (Easter egg) along the road
     const nb = ground === 'moon' ? 2 : 3;
     for (let k = 0; k < nb; k++) {
       const s0 = this.sim.safeS(400 + k * (tr.finishS - 600) / nb); const j = JOKES[(k + this.sim.level.id.charCodeAt(1)) % JOKES.length];
       const bb = buildBillboard(j[0], j[1], k % 2 ? ['#ff8a00', '#ff2a6d'] : ['#00c6ff', '#7a2cff']); const P = poseAt(tr, s0, (k % 2 ? 1 : -1) * (ROAD_W / 2 + 14), 0);
-      bb.position.copy(P.p); bb.position.y = T.heightAt(P.p.x, P.p.z); bb.lookAt(poseAt(tr, s0 - 60, 0, 0).p.setY(bb.position.y)); this.scene.add(bb);
+      bb.position.copy(P.p); bb.position.y = T.heightAt(P.p.x, P.p.z); bb.lookAt(poseAt(tr, s0 - 60, 0, 0).p.setY(bb.position.y)); mergeStatic(bb); this.scene.add(bb);
     }
     // spaceport: towers and parked rockets
     if (this.sim.level.spaceport) for (let k = 0; k < 4; k++) {
       const s = tr.samples[Math.floor(tr.samples.length * (0.15 + k * 0.2))]; const x = s.p.x + s.X.x * (90 + k * 25), z = s.p.z + s.X.z * (90 + k * 25);
-      const rk = buildRocket(0.8 + this.rand() * 0.4); rk.position.set(x, T.heightAt(x, z), z); this.scene.add(rk);
+      const rk = buildRocket(0.8 + this.rand() * 0.4); rk.position.set(x, T.heightAt(x, z), z); mergeStatic(rk); this.scene.add(rk);
       const tower = new THREE.Mesh(new THREE.BoxGeometry(5, 80, 5), new THREE.MeshStandardMaterial({ color: 0x333a44, metalness: 0.7, roughness: 0.5, wireframe: false })); tower.position.set(x + 9, rk.position.y + 40, z); tower.castShadow = true; this.scene.add(tower);
     }
   }
@@ -180,7 +182,7 @@ export class LevelView {
   // ---------- dynamic entities ----------
   buildEntities() {
     const sim = this.sim, sc = this.scene;
-    this.car = buildVehicle(sim.veh.id, this.opts.custom || {}, { wheelPos: sim.wheelPos, quality: this.gfx.qName || 'high' });
+    this.car = buildVehicle(sim.veh.id, this.opts.custom || {}, { wheelPos: sim.wheelPos, quality: this.gfx.qName || 'high' }); mergeVehicle(this.car);
     { // landing-target marker: where the car will touch down (ballistic prediction from the sim)
       const g = new THREE.RingGeometry(1.5, 2.1, 40); g.rotateX(-Math.PI / 2); const gi = new THREE.CircleGeometry(0.35, 16); gi.rotateX(-Math.PI / 2);
       const mat = new THREE.MeshBasicMaterial({ color: 0x40e0ff, transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -4 });
@@ -198,10 +200,12 @@ export class LevelView {
     const coinMat = new THREE.MeshPhysicalMaterial({ color: 0xffc533, metalness: 1, roughness: 0.18, emissive: 0x6a4a00, emissiveIntensity: 0.6, clearcoat: 1 });
     this.coins = new THREE.InstancedMesh(coinGeo, coinMat, sim.coinsList.length); this.coins.castShadow = true; sc.add(this.coins); this.coins.frustumCulled = false;
     sim.coinsList.forEach(c => { const P = poseAt(this.tr, c.s, c.x, c.h); c.q = P.q.clone(); });
-    this.pickups = sim.pickups.map(pk => { const m = buildProp(pk.kind); m.position.copy(pk.p); sc.add(m); return m; });
-    this.traffic = sim.traffic.map(t => { const m = buildTraffic(t.type, t.color); sc.add(m); return m; });
+    // pickups (battery / nitro ...): one InstancedMesh per kind and material instead of a group of meshes each
+    this.pickInst = new Map(); this.pickSlot = sim.pickups.map(pk => { let e = this.pickInst.get(pk.kind); if (!e) this.pickInst.set(pk.kind, e = { n: 0 }); return e.n++; });
+    for (const [kind, e] of this.pickInst) { e.inst = new PropInstances(buildProp(kind), e.n); sc.add(e.inst.group); }
+    this.traffic = sim.traffic.map(t => { const m = buildTraffic(t.type, t.color); if (m.userData.legs) mergeStatic(m, m.userData.legs); else mergeVehicle(m); sc.add(m); return m; });
     const aiPaints = ['white', 'blue', 'gold', 'cyan', 'green', 'purple', 'orange'];
-    this.ai = sim.ai.map((a, k) => { const m = buildCar({ paint: aiPaints[(k + sim.level.diff) % aiPaints.length], finish: 'metallic', rims: ['spoke5', 'turbine', 'mesh'][k % 3] }, { wheelPos: sim.wheelPos }); sc.add(m); return m; });
+    this.ai = sim.ai.map((a, k) => { const m = buildCar({ paint: aiPaints[(k + sim.level.diff) % aiPaints.length], finish: 'metallic', rims: ['spoke5', 'turbine', 'mesh'][k % 3] }, { wheelPos: sim.wheelPos }); mergeVehicle(m); sc.add(m); return m; });
     this.quest = sim.questItems.map(o => { const m = buildProp(o.kind === 'house' || o.kind === 'ufo' || o.kind === 'base' ? o.kind : o.kind); m.position.copy(o.p); m.quaternion.copy(o.q); if (o.kind === 'ring') { m.rotation.set(0, 0, 0); m.quaternion.copy(o.q); } sc.add(m); return m; });
     if (sim.cow) this.cowMesh = this.quest[this.quest.length - 1];
     // quest beacons (vertical light beam over pickups/dropoffs)
@@ -231,18 +235,19 @@ export class LevelView {
     this.car.visible = !(sim.crashT > 0 && sim.crashT < 1.3);
     // traffic & ai
     sim.traffic.forEach((tf, k) => { const m = this.traffic[k]; m.position.lerpVectors(tf.pp, tf.p, alpha); m.quaternion.slerpQuaternions(tf.pq, tf.q, alpha); });
-    sim.ai.forEach((a, k) => { const m = this.ai[k]; m.position.lerpVectors(a.pp, a.p, alpha); m.quaternion.slerpQuaternions(a.pq, a.q, alpha); m.position.addScaledVector(new THREE.Vector3(0, 1, 0).applyQuaternion(m.quaternion), 0.68); m.userData.wheels.forEach(w => { w.userData.spin.rotation.x = a.wheelRot; }); });
+    sim.ai.forEach((a, k) => { const m = this.ai[k]; m.position.lerpVectors(a.pp, a.p, alpha); m.quaternion.slerpQuaternions(a.pq, a.q, alpha); m.position.addScaledVector(_v.set(0, 1, 0).applyQuaternion(m.quaternion), 0.68); m.userData.wheels.forEach(w => { w.userData.spin.rotation.x = a.wheelRot; }); });
     // ghost replay
     if (this.ghostCar && sim.ghost) { const fr = sim.ghost.frames; const ft = sim.raceTime * 10; const i = Math.min(fr.length - 2, Math.floor(ft)); const f = Math.min(1, ft - i); const a = fr[Math.max(0, i)], b = fr[Math.max(0, i + 1)];
-      if (a && b) { this.ghostCar.position.set(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f); _q.set(a[3], a[4], a[5], a[6]); const qb = new THREE.Quaternion(b[3], b[4], b[5], b[6]); this.ghostCar.quaternion.copy(_q).slerp(qb, f); } this.ghostCar.visible = sim.state !== 'countdown' || true; }
+      if (a && b) { this.ghostCar.position.set(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f); _q.set(a[3], a[4], a[5], a[6]); _yq.set(b[3], b[4], b[5], b[6]); this.ghostCar.quaternion.copy(_q).slerp(_yq, f); } this.ghostCar.visible = sim.state !== 'countdown' || true; }
     // coins (only near ones updated)
     const ps = sim.prog.s; const spin = t * 3;
     sim.coinsList.forEach((c, k) => {
       if (c.taken || Math.abs(c.s - ps) > 420) { _m.makeScale(0, 0, 0); this.coins.setMatrixAt(k, _m); return; }
-      _q.copy(c.q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), spin + k)); _m.compose(c.p, _q, _s.set(1, 1, 1)); this.coins.setMatrixAt(k, _m);
+      _q.copy(c.q).multiply(_yq.setFromAxisAngle(_Y, spin + k)); _m.compose(c.p, _q, _s.set(1, 1, 1)); this.coins.setMatrixAt(k, _m);
     });
     this.coins.instanceMatrix.needsUpdate = true;
-    sim.pickups.forEach((pk, k) => { const m = this.pickups[k]; m.visible = !pk.taken; m.rotation.y = t * 2; m.position.y = pk.p.y + Math.sin(t * 3 + k) * 0.2; });
+    sim.pickups.forEach((pk, k) => { const e = this.pickInst.get(pk.kind).inst, i = this.pickSlot[k]; if (pk.taken || Math.abs(pk.s - ps) > 420) { e.hide(i); return; } _yq.setFromAxisAngle(_Y, t * 2); _v.copy(pk.p); _v.y += Math.sin(t * 3 + k) * 0.2; _m.compose(_v, _yq, _s.set(1, 1, 1)); e.set(i, _m); });
+    for (const e of this.pickInst.values()) e.inst.commit();
     // quest props
     sim.questItems.forEach((o, k) => { const m = this.quest[k];
       if (o.kind === 'mailbox' && o.rb) { const tt = o.rb.translation(), rr = o.rb.rotation(); m.position.set(tt.x, tt.y - 0.1, tt.z); m.quaternion.set(rr.x, rr.y, rr.z, rr.w); }
@@ -259,8 +264,8 @@ export class LevelView {
       if (!v) { const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(1.6, 0), new THREE.MeshStandardMaterial({ color: 0x3a2a20, emissive: 0xff5a10, emissiveIntensity: 1.5, flatShading: true }));
         const ring = new THREE.Mesh(new THREE.RingGeometry(m.r - 0.6, m.r, 40), new THREE.MeshBasicMaterial({ color: 0xff2020, transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false })); const P = poseAt(this.tr, m.s, m.x, 0.08); ring.position.copy(P.p); ring.quaternion.copy(P.q); ring.rotateX(-Math.PI / 2);
         this.scene.add(rock, ring); v = { rock, ring }; this.meteorMeshes.set(m, v); }
-      const k = m.t / m.T; v.rock.position.copy(m.p).add(new THREE.Vector3(-40 * k, 160 * k, 30 * k)); v.rock.rotation.x += dt * 4; v.ring.material.opacity = 0.35 + 0.35 * Math.sin(t * 20);
-      for (let i = 0; i < 3; i++) this.addP.emit(v.rock.position, new THREE.Vector3(Math.random() - 0.5, 2, Math.random() - 0.5), { color: [1, 0.5, 0.15], size: 3, life: 0.6, grow: 2 });
+      const k = m.t / m.T; v.rock.position.copy(m.p).add(_v.set(-40 * k, 160 * k, 30 * k)); v.rock.rotation.x += dt * 4; v.ring.material.opacity = 0.35 + 0.35 * Math.sin(t * 20);
+      for (let i = 0; i < 3; i++) this.addP.emit(v.rock.position, _v.set(Math.random() - 0.5, 2, Math.random() - 0.5), { color: [1, 0.5, 0.15], size: 3, life: 0.6, grow: 2 });
     }
     for (const [m, v] of this.meteorMeshes) if (!live.has(m)) { this.scene.remove(v.rock, v.ring); this.meteorMeshes.delete(m); }
     // dust devils

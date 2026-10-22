@@ -335,9 +335,10 @@ export function addUnderglow(group, custom, y, w, l) {
   strip.rotation.x = -Math.PI / 2; strip.position.y = y - 0.08; group.add(strip);
   group.userData.underglow = { light, strip, mode: special ? ug : 'solid' };
 }
+const _ugC = new THREE.Color();
 export function animateUnderglow(group, t, beat = 0) {
   const u = group.userData.underglow; if (!u || u.mode === 'solid') return;
-  if (u.mode === 'rainbow') { const c = new THREE.Color().setHSL((t * 0.25) % 1, 1, 0.55); u.light.color.copy(c); u.strip.material.color.copy(c); }
+  if (u.mode === 'rainbow') { const c = _ugC.setHSL((t * 0.25) % 1, 1, 0.55); u.light.color.copy(c); u.strip.material.color.copy(c); }
   else { const k = 0.4 + 0.6 * Math.abs(Math.sin(t * 4 + beat)); u.light.intensity = 4 * k; u.strip.material.opacity = 0.45 * k; }
 }
 export function addSpoiler(group, kind, paintMat, carbonMat, deckY, z, width) {
