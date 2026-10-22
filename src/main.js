@@ -47,6 +47,18 @@ async function cloudSync(beacon = false) {
 }
 
 // ---------------- screens ----------------
+// HUD artificial horizon: shown while airborne; the bar tilts with roll and slides with pitch, the dot shows the landing verdict
+const HZ = { el: null, bar: null, dot: null, on: false, f: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3() };
+function updateHorizon(s) {
+  if (!HZ.el) { HZ.el = $('#horizon'); HZ.bar = HZ.el && HZ.el.querySelector('.hz-bar'); HZ.dot = HZ.el && HZ.el.querySelector('.hz-dot'); if (!HZ.el) return; }
+  const show = !s.grounded && s.air > 0.25 && s.state === 'race';
+  if (show !== HZ.on) { HZ.on = show; HZ.el.classList.toggle('on', show); }
+  if (!show) return;
+  const q = s.pose.q; HZ.f.set(0, 0, 1).applyQuaternion(q); HZ.r.set(1, 0, 0).applyQuaternion(q); HZ.u.set(0, 1, 0).applyQuaternion(q);
+  const roll = Math.atan2(HZ.r.y, HZ.u.y), pitch = Math.asin(Math.max(-1, Math.min(1, HZ.f.y)));
+  HZ.bar.style.transform = `translateY(${(pitch * 40).toFixed(1)}px) rotate(${(roll * 57.3).toFixed(1)}deg)`;
+  const L = s.landing; HZ.el.dataset.v = !L ? 'none' : (L.vImp > 14 * Math.sqrt(s.veh.tough || 1) ? 'bad' : (L.onPad ? 'pad' : 'ok'));
+}
 function go(name) {
   G.screen = name;
   $$('.scr').forEach(e => e.classList.toggle('on', e.id === 'scr-' + name));
@@ -496,6 +508,7 @@ $('#minimap').onclick = () => { G.mapBig = !G.mapBig; $('#minimap').classList.to
 function updateHud() {
   const s = G.sim, st = s.stats;
   $('#spd').textContent = Math.round(s.speed * 3.6);
+  updateHorizon(s);
   const bat = s.battery / st.tank; $('#bat-fill').style.width = (bat * 100).toFixed(1) + '%'; $('#bat-val').textContent = Math.ceil(s.battery) + 's'; $('#bat').classList.toggle('low', bat < 0.2);
   $('#boost-fill').style.width = (s.boost / st.boostCap * 100).toFixed(1) + '%'; $('#thr-fill').style.width = (s.veh.rcs ? s.gas / st.gasCap : s.thrust / st.thrustCap) * 100 + '%';
   $('#hud-coins').textContent = s.coins; $('#hud-score').textContent = nf(s.score);
@@ -568,7 +581,7 @@ window.__game = {
   levels: () => LEVELS.map(l => ({ id: l.id, planet: l.planet, name: l.name, diff: l.diff })),
   loadLevel: (id, mode = 'race') => { const l = levelById(id); if (!l) throw new Error('no level ' + id); return startLevel(l, mode); },
   save: () => { persist(true); return JSON.parse(JSON.stringify(save)); }, load: () => { save = P.loadLocal(); applySettings(); return save; },
-  get state() { return save; }, input, sim: () => G.sim, gfx, goto: name => ({ title: toTitle, map: toMap, garage: toGarage, base: toBase })[name]?.(), cloudSync, pause, applySettings: () => { applySettings(); layoutTouch(); },
+  get state() { return save; }, input, show, sim: () => G.sim, gfx, goto: name => ({ title: toTitle, map: toMap, garage: toGarage, base: toBase })[name]?.(), cloudSync, pause, applySettings: () => { applySettings(); layoutTouch(); },
 };
 
 // ---------------- boot ----------------

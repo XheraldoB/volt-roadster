@@ -89,16 +89,17 @@ export function buildCar(custom = {}, opts = {}) {
     cs.push({ z, w, wt: w * 0.66, top, bot: 0.04, n: 2.6 });
   }
   const cabin = new THREE.Mesh(loft(cs, 20, true), glass); cabin.castShadow = true; group.add(cabin);
-  // roof spine + pillars in body colour for silhouette
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.02, 0.62), paintMat); roof.position.set(0, 0.435, -0.25); group.add(roof);
+  // (roof plate removed: the canopy silhouette carries the roof)
+  const bodyTop = z => interp([[-2.2, -0.02], [-2.05, 0.1], [-1.6, 0.08], [-1.0, 0.07], [0.6, 0.05], [1.3, -0.04], [1.9, -0.14], [2.22, -0.3]], z);
   // headlights (slim emissive slits)
   const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xdff4ff, emissiveIntensity: 3.2 });
   for (const sx of [-1, 1]) {
-    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.045, 0.12), headMat); hl.position.set(sx * 0.62, -0.13, 1.98); hl.rotation.y = sx * 0.42; hl.rotation.z = sx * -0.12; group.add(hl);
-    const drl = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.02, 0.06), headMat); drl.position.set(sx * 0.66, -0.2, 1.95); drl.rotation.y = sx * 0.5; group.add(drl);
+    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.03, 0.1), headMat); hl.position.set(sx * 0.6, bodyTop(2.0) - 0.035, 2.0); hl.rotation.set(0.5, sx * 0.42, sx * -0.12); // follows the nose slope (B9) group.add(hl);
+    const drl = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.02, 0.06), headMat); drl.position.set(sx * 0.66, bodyTop(1.95) - 0.07, 1.95); drl.rotation.set(0.5, sx * 0.5, 0); group.add(drl);
     // side intake + mirror
-    const intake = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.18, 0.6), black); intake.position.set(sx * 0.955, -0.15, -0.7); group.add(intake);
-    const mir = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.16), paintMat); mir.position.set(sx * 0.82, 0.14, 0.72); group.add(mir);
+    const intake = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.18, 0.6), black); intake.position.set(sx * 0.925, -0.15, -0.7); group.add(intake);
+    // B9: slim black camera-mirror pods flush on the canopy base (the old body-colour cubes read as floating blocks)
+    const mir = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.16), black); mir.position.set(sx * 0.7, 0.08, 0.6); mir.rotation.y = sx * 0.12; group.add(mir);
   }
   // full-width tail light bar
   const tailMat = new THREE.MeshStandardMaterial({ color: 0x330000, emissive: 0xff1020, emissiveIntensity: 2.2 });

@@ -11,7 +11,7 @@ const PLANET_ENV = { earth: 'day', moon: 'moon', mars: 'mars' };
 const GROUND = { earth: 0x8a7a5a, moon: 0x6a6a6c, mars: 0x9a4a2a };
 
 function groundDisc(planet, r = 220) {
-  const g = new THREE.CircleGeometry(r, 96); g.rotateX(-Math.PI / 2);
+  const g = new THREE.RingGeometry(0.01, r, 96, 40); g.rotateX(-Math.PI / 2); // B21: radial rings so the flat 40 m centre stays flat (a fan disc interpolated rim height straight through the plots)
   const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); const d = Math.hypot(x, z); p.setY(i, d > 40 ? fbm(x / 60, z / 60, 4) * (d - 40) * 0.25 : 0); }
   g.computeVertexNormals();
   const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: GROUND[planet], roughness: 0.95 })); m.receiveShadow = true; return m;

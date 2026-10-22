@@ -215,3 +215,20 @@ body.photo #toasts { display: none; }
 .tc-right .boost { width: 16vh; height: 16vh; min-width: 60px; min-height: 60px; right: 22vh; bottom: 23vh; background: rgba(255, 47, 146, 0.35); }
 .tc-right .drift { width: 13vh; height: 13vh; min-width: 50px; min-height: 50px; right: 48vh; bottom: 3vh; font-size: 0.6rem; }
 body.lefty .tc-left { left: auto; right: calc(var(--sr) + 1.5vw); } body.lefty .tc-right { right: auto; left: calc(var(--sl) + 1.5vw); transform: scaleX(-1); } body.lefty .tc-right .tbtn { transform: scaleX(-1); }
+/* B17: HUD labels readable at arm's length on bright skies (min ~11 CSS px, full white, dark halo) */
+#hud { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 0 6px rgba(0, 0, 0, 0.55); }
+#hud-level { font-size: max(11px, 0.8rem); opacity: 1; font-weight: 700; }
+.unit { font-size: max(11px, 0.78rem); opacity: 0.95; font-weight: 700; }
+.mb i { font-size: max(10.5px, 0.7rem); opacity: 1; font-weight: 800; }
+#quest-line { font-size: max(11px, 0.8rem); font-weight: 600; }
+#hud-time { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); }
+/* B19: while the results / finish screen is up, toasts drop to the bottom so they never cover the headline */
+body[data-screen="results"] #toasts { top: auto; bottom: calc(var(--sb) + 4vh); }
+/* HUD horizon indicator (airborne only) */
+#horizon { position: absolute; left: 50%; top: 58%; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.55); background: radial-gradient(rgba(6, 10, 20, 0.35), rgba(6, 10, 20, 0.15)); overflow: hidden; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+#horizon.on { opacity: 1; }
+#horizon .hz-bar { position: absolute; left: -30%; right: -30%; top: 50%; height: 200%; margin-top: -1px; border-top: 2px solid #fff; background: rgba(160, 110, 60, 0.35); will-change: transform; }
+#horizon .hz-wings { position: absolute; left: 22%; right: 22%; top: 50%; height: 0; border-top: 3px solid #ffd23f; margin-top: -1px; }
+#horizon .hz-dot { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: #ffd23f; }
+#horizon[data-v="pad"] { border-color: #39ff6a; } #horizon[data-v="pad"] .hz-dot { background: #39ff6a; }
+#horizon[data-v="bad"] { border-color: #ff3b3b; } #horizon[data-v="bad"] .hz-dot { background: #ff3b3b; }
