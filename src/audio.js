@@ -34,7 +34,7 @@ export class Audio {
     this.wind = mk('bandpass', 700, 0.4); this.tyre = mk('bandpass', 2400, 6); this.thrustN = mk('lowpass', 500, 0.7); this.hiss = mk('highpass', 5200, 0.8);
   }
   engine(speed, throttle, boost, slip, thrust, on) {
-    if (!this.ctx) return; const t = this.ctx.currentTime;
+    if (!this.ctx) return; /* B40: never feed NaN/Infinity to AudioParams */ const fin = (x, d = 0) => Number.isFinite(x) ? x : d; speed = Math.min(400, Math.max(0, fin(speed))); throttle = Math.min(1, Math.max(0, fin(throttle))); slip = Math.max(0, fin(slip)); const t = this.ctx.currentTime;
     const f = 40 + speed * 3.2; this.o1.frequency.setTargetAtTime(f, t, 0.05); this.o2.frequency.setTargetAtTime(f * 1.5, t, 0.05); this.o3.frequency.setTargetAtTime(300 + speed * 26 + (boost ? 300 : 0), t, 0.05);
     this.engLP.frequency.setTargetAtTime(500 + throttle * 1500 + speed * 20, t, 0.08);
     this.eng.gain.setTargetAtTime(on ? 0.05 + throttle * 0.08 + (boost ? 0.06 : 0) : 0, t, 0.1);
@@ -43,7 +43,7 @@ export class Audio {
     this.thrustN.gain.setTargetAtTime(on && thrust && !this.coldGas ? 0.5 : 0, t, 0.05);
   }
   // cold-gas RCS hiss (pickup): k = 0..1 intensity
-  rcs(k) { if (!this.ctx || !this.hiss) return; this.hiss.gain.setTargetAtTime(Math.min(0.55, k * 0.5), this.ctx.currentTime, k > 0 ? 0.02 : 0.06); }
+  rcs(k) { if (!this.ctx || !this.hiss) return; k = Number.isFinite(k) ? Math.max(0, k) : 0; /* B40 */ this.hiss.gain.setTargetAtTime(Math.min(0.55, k * 0.5), this.ctx.currentTime, k > 0 ? 0.02 : 0.06); }
   rcsPuff() { this.noiseHit(0.12, 7000, 0.18, 'highpass'); }
   // procedural horns (all original synth patches)
   horn(id = 'beep') {

@@ -179,7 +179,13 @@ for (const veh of ['hauler', 'roadster']) { const s = await mk('m1', veh); s.bat
 }
 { /* B36: full run-up through the last pre-finish jump, upgrade levels 0/3/5, both vehicles, all levels */
   const { finishRuns } = await import('../tools/finishrun.mjs'); const R2 = await finishRuns(); const bad = R2.filter(r => !r.ok);
-  ok('B36 pre-finish jump run-up: grounded at finish, peak g<=4 after line, stops on road (0/3/5 x 2 vehicles x all levels)', !bad.length && !R2.some(r => r.airAtFin), { runs: R2.length, bad: bad.slice(0, 3), maxG: Math.max(...R2.map(r => r.peakG)), air: R2.filter(r => r.airAtFin).length });
+  ok('B36/B38/B39 run-up from 500 m before every jump in the last 2 km: grounded at finish, no wall hit/crash/hit within 1 s of air braking, peak g<=4 after line, stops on road (0/3/5 x 2 vehicles x all levels)', !bad.length && !R2.some(r => r.airAtFin), { runs: R2.length, bad: bad.slice(0, 3), maxG: Math.max(...R2.map(r => r.peakG)), air: R2.filter(r => r.airAtFin).length });
+}
+{ /* B40: engine audio never passes non-finite values to AudioParams */
+  const { Audio } = await import('../src/audio.js'); const vals = []; const prm = () => ({ setTargetAtTime: (v) => vals.push(v) });
+  const A = Object.create(Audio.prototype); A.ctx = { currentTime: 0 }; for (const k of ['o1', 'o2', 'o3', 'engLP']) A[k] = { frequency: prm() }; for (const k of ['eng', 'wind', 'tyre', 'thrustN', 'hiss']) A[k] = { gain: prm() };
+  A.engine(NaN, Infinity, true, NaN, true, true); A.engine(-Infinity, NaN, false, Infinity, false, true); A.rcs(NaN);
+  ok('B40 engine/rcs audio params stay finite with NaN/Infinity inputs', vals.length > 0 && vals.every(Number.isFinite), { n: vals.length, bad: vals.filter(v => !Number.isFinite(v)) });
 }
 console.log(`\n${res.length - fail}/${res.length} passed`);
 import('fs').then(fs => fs.writeFileSync(new URL('./drive-results.json', import.meta.url), JSON.stringify(res, null, 1)));

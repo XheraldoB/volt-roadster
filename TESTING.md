@@ -483,3 +483,34 @@ Verdict: **CONDITIONAL PASS.** B34 is fixed for ground finishes, and B35 and the
 - New sim test (tools/finishrun.mjs, in drive.test): full run-up through the last pre-finish jump, upgrades 0/3/5 × roadster/hauler × 23 levels = 138 runs: 138/138 ok, 0 airborne at finish, max post-finish 2.4 g, all stopped on the road. Existing barriers proved sufficient.
 - B37: gear badge shows N during countdown and below 1 km/h.
 - Suites: drive 77/77, quests 15/15, simtest roadster 23/23, hauler 23/23, qa local 31/31, player.browser 24/24.
+
+## Regression (commit db99eda)
+Build: fresh worktree /workspace/volt-roadster-qa-db99eda -> /workspace/vr-dist-db99eda, preview :4173 (old one stopped). Asset hashes are identical to live (index-DVgCHjXc.js, index-CMXZabts.css, three-zySor9gr.js, rapier-BYHDSJ8_.js). Zero live writes: the only live API call was GET /api/load?code=VOLT-QPM5-VG64-XXS9. No commits or source edits. Scripts and results: qa/b34-stress.mjs, b36-ramp.mjs, b36-dbg.mjs, b36-rivals*.mjs, p12.mjs, p12r1.mjs, p13.mjs, p11b.mjs, p11c.mjs, fallstress.mjs, p12-live.mjs (all in the worktree's qa/).
+
+| Item | Result |
+|---|---|
+| B36 Node stress (b34-stress, 138 runs, run-up from finish -1500 m) | **FIXED for r1/r6**: all 12 r1/r6 runs are grounded at the line, 0 end-wall/barrier hits, \|x\| <= 0.97 m, peak <= 1.04 g, >= 389 m of road left. Overall 133/138 clean: 4 are jerk-only (201-267 g/s at ~1 g, same as before). 1 harness miss (e4 hauler stock, same as before). r6 roadster Lv5 finishes at only 135 km/h because of B38 |
+| Dev tools/finishrun.mjs | 138/138 ok (matches the dev). Its run-up starts after the second-to-last jump on r6, so it misses B38 |
+| Take-off cap clears the last jump | PASS. r6 (gap ends at 2578 m): stock 146 km/h -> lands at 2645 m, Lv3 151 -> 2663, Lv5 roadster 165 -> 2760 (hard landing, 22 m past the pad), Lv5 hauler 165 -> 2738. r1 (gap ends at 1656 m): stock 144 -> 1696, Lv3 163 -> 1782, Lv5 163 -> 1799-1811. Every landing is on the centreline (x = 0) |
+| Governor feel | **FAIL, B39**: boosting cars scrub from 340 to 165 km/h in about 35 m before the ramp |
+| B36 browser (DPR 3, race mode, Lv5, boost held) | r6 roadster: take-off 166 km/h, lands at 2762 m x 0, grounded at the line at 235 km/h, height 0.7 m, peak 1.01 g, 0 crashes. r6 hauler: 165 km/h, lands at 2736 m, 229 km/h at the line, 1.00 g. r1 roadster: 163 km/h, lands at 1815 m x 0, 256 km/h at the line, max \|x\| 2.5 m. r1 hauler: 163 km/h, lands at 1804 m (it then ran out of battery from the forced boost, a harness artefact). Stop distance from Node: 223-351 m |
+| Finished rivals | PASS. They coast to the shoulder (\|x\| = 5.7 m), become sensors and show as translucent ghosts (r12-finish-r1_hauler_lv5.png). Steering the player into them got within 0.7 m with 0 contact events. Normal finishes: peak 1.01-1.04 g |
+| B37 gear badge | FIXED. Shows N in the countdown after the tutorial (?tut=1, fresh save) and on a normal start (r12-tutorial.png) |
+| B34/B35 browser ground finishes | PASS, same as 56ae92f. e1/m6 Lv5 at 319-321 km/h: 1.05-1.06 g, lateral <= 0.08 m. Stock: stops in 133-155 m, <= 1.0 g |
+| Cameras / tutorial (p11c) | PASS: chase 10.5/3.0/68, close 5.2/1.7/62, hood; setting saved across reload; 0 page errors |
+| Kill-plane stress | PASS: identical to 56ae92f (414 scenarios; backwall 0, after-finish 0, 0 NaN; same free-roam edge counts) |
+| RP12/RP13 touch | PASS. Classic layout, 0 overlaps, smallest control 54 CSS px (cam/pause/respawn). R pedal -> R badge, -14.7 km/h after 3 s; GAS -> D. Time to first reverse in the harness was 2.0 s (slow software render; no input code changed) |
+| Live boot | PASS: 2.9 s, 0 errors, 0 console errors, 0 writes, only the restore GET (coins 4242, gold paint) |
+
+New bugs:
+- **B38 (Major): r6 Lv5 roadster crash-lands just before the finish.** Boosting off the second-to-last jump (gap 1734-1921, take-off about 341 km/h) flies about 1160 m. That jump isn't governed. The car sails over the governed last jump and crash-lands 21 m before the line at 274 km/h, then respawns at 2739 m and finishes at about 80-135 km/h. The same happens on 56ae92f, where the B36 airborne finish hid it. Suggested fix: govern any jump whose flight can reach within 700 m of the finish (by projected range, not only the last gap), or cap the airborne range.
+- **B39 (Major, feel): the governor counts as a wall hit.** It is an invisible brake: 340 -> 165 km/h in 0.6 s, up to about 30 g per step, on r6 (from 2336 m) and r1 (from 1486 m) at Lv3/Lv5 while boosting. The speed loss trips the B12 wall-hit penalty: crash sound, haptic, "WALL HIT -250", combo reset and -1 s battery. It also fires a stream of hit events. Suggested fix: exempt governor deceleration from lossWin/hit, and spread the slowdown over a longer approach (about 1-1.5 g) or show it clearly (for example a limiter or "speed trap" cue).
+- **B40 (Minor): one uncaught page error "Failed to execute 'setTargetAtTime' on 'AudioParam': non-finite value"** (audio.engine, from main.js:569). Seen once in p13 (fresh save with ?tut=1, then a level switch). Not seen in p11c or live. Suggested fix: guard the engine() inputs (speed and throttle are NaN or undefined for a frame).
+
+Verdict: **CONDITIONAL PASS.** B36 (airborne finish) and B37 are fixed, and nothing has regressed. B38 and B39 are new Major issues around the r1/r6 finish jumps at upgraded speed. Fix both before release.
+
+## Fix round 13 (B38, B39, B40)
+- B39: removed the boost take-off cap added in round 12 (felt like a wall). The ordinary non-boost take-off limit is back to how it was before round 12. Replaced by an invisible air brake: while airborne in a race the sim predicts the landing point along the track (ballistic, every 0.05 s); if the landing would be past the finish or within 80 m of it, a smooth horizontal drag (1.25 g, eased in over 0.3 s / out over 0.2 s) brings the landing before the line. It never slows a car short of the landing pad of the gap being cleared, and never acts on earlier jumps (loops etc. keep their speed). Airborne only, 12 m/s² < the 90 m/s² impact threshold, so no wall hit, crash sound, haptic, penalty, combo reset or battery loss. No ground approach limit was needed.
+- B38: finishrun.mjs now starts 500 m before EVERY jump in the last 2 km (r6 Hop Three and Hop Four, r1 Rust Rift and Dust Devil Gap, ...), upgrades 0/3/5 × both vehicles × 23 levels = 198 runs: 198/198 ok. None crossed the finish more than 2 m in the air. Max g after the line was 2.3. There was no wall hit, hit or crash within 1 s of air braking. Air brake was active for 0.6–7.5 s on r1/r4/r6.
+- B40: engine() and rcs() clamp and sanitise inputs, so AudioParam.setTargetAtTime never gets NaN/Infinity. New drive test.
+- Suites: drive 78/78, quests 15/15, simtest roadster 23/23, hauler 23/23, qa local 31/31, player.browser 24/24.

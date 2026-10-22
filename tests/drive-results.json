@@ -582,13 +582,21 @@
   "pass": true
  },
  {
-  "id": "B36 pre-finish jump run-up: grounded at finish, peak g<=4 after line, stops on road (0/3/5 x 2 vehicles x all levels)",
+  "id": "B36/B38/B39 run-up from 500 m before every jump in the last 2 km: grounded at finish, no wall hit/crash/hit within 1 s of air braking, peak g<=4 after line, stops on road (0/3/5 x 2 vehicles x all levels)",
   "pass": true,
   "info": {
-   "runs": 138,
+   "runs": 198,
    "bad": [],
-   "maxG": 2.4,
+   "maxG": 2.3,
    "air": 0
+  }
+ },
+ {
+  "id": "B40 engine/rcs audio params stay finite with NaN/Infinity inputs",
+  "pass": true,
+  "info": {
+   "n": 17,
+   "bad": []
   }
  }
 ]

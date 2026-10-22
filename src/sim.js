@@ -19,6 +19,7 @@ export const ESC = { yawGain: 1.15, yawSlack: 0.12, rate: 7, slide: 2.2 };
 export const AUTO_RIGHT_T = 0.9;
 export const LAND_CLEAN = 9, LAND_HARD = 14, LAND_CRASH = 23; // m/s along the surface normal, scaled by sqrt(toughness)
 export const WALL_LOSS = 13, WALL_PENALTY = 250;
+export const AIR_BRAKE_DEC = 1.25 * 9.81, AIR_BRAKE_MARGIN = 80; /* B39: ~1.25 g air drag; aim to land >= 80 m before the line */
 export const FINISH_AIR_SAFE = 30, FINISH_AIR_DEC = 14, FINISH_AIR_SINK = -7; /* B36: post-finish airborne assist (m/s, m/s², m/s) */
 export const FINISH_DEC = 8.6, FINISH_MAX_DEC = 10.2; /* applied brake; rolling + air drag add ~1-2 m/s² on top */ /* finish auto-stop: target ~1 g, cap 1.2 g */
 export const KILL_MARGIN = 60, MAX_LINVEL = 160, MAX_ANGVEL = 40; /* kill plane margin (m), runaway caps (m/s, rad/s) */
@@ -324,6 +325,24 @@ export class Sim {
     const w = b.angvel(), ws = Math.hypot(w.x, w.y, w.z); if (!(ws <= MAX_ANGVEL)) { const k = Number.isFinite(ws) && ws > 0 ? MAX_ANGVEL / ws : 0; b.setAngvel({ x: w.x * k, y: w.y * k, z: w.z * k }, true); }
   }
   /* B34: finish auto-stop steering: aim at the run-off centreline ~20 m ahead so the car straightens and centres while it brakes */
+  predictLandS(b) {
+    const tr = this.tr, S = tr.samples, p = b.translation(), v = b.linvel(); let x = p.x, y = p.y, z = p.z, vx = v.x, vy = v.y, vz = v.z, i = this.prog.i;
+    const dt = 1 / 20; for (let k = 0; k < 240; k++) { vy -= this.g * dt; x += vx * dt; y += vy * dt; z += vz * dt;
+      let sm = S[i]; for (let n = 0; n < 40; n++) { const d = (x - sm.p.x) * sm.T.x + (y - sm.p.y) * sm.T.y + (z - sm.p.z) * sm.T.z; if (d > 0.5 && i < S.length - 1) sm = S[++i]; else if (d < -0.5 && i > 0) sm = S[--i]; else break; }
+      if (!sm.gap && (x - sm.p.x) * sm.U.x + (y - sm.p.y) * sm.U.y + (z - sm.p.z) * sm.U.z < 0.6) return { s: sm.s, t: (k + 1) * dt }; }
+    return { s: S[i].s, t: 12 };
+  }
+  airBrake(b, h) {
+    const tr = this.tr; this.abT = (this.abT || 0) - h;
+    if (this.abT <= 0) { this.abT = 0.05; this.abPred = this.predictLandS(b); }
+    const L = this.abPred, v = b.linvel(), hs = Math.hypot(v.x, v.z); if (!L || hs < 1) { this.abK = 0; return; }
+    const f = tr.features.find(f => f.type === 'gap' && this.prog.s > f.s0 - 5 && this.prog.s < f.land1 + 5);
+        const smin = f ? f.land0 + Math.max(15, (f.padR || 9) * 2) : -1e9;
+    const want = L.s > smin && L.s > tr.finishS - AIR_BRAKE_MARGIN; /* only when the flight would otherwise carry over (or to within a few car lengths of) the line; earlier jumps keep their speed for loops etc. */
+    this.abK = want ? Math.min(1, (this.abK || 0) + h / 0.3) : Math.max(0, (this.abK || 0) - h / 0.2);
+    if (this.abK <= 0) return; const dv = AIR_BRAKE_DEC * this.abK * h, k = Math.max(0, hs - dv) / hs;
+    b.setLinvel({ x: v.x * k, y: v.y, z: v.z * k }, true); this.stat.airBrake = (this.stat.airBrake || 0) + h;
+  }
   finishSteer(left) { const sm = this.tr.samples, i = Math.min(sm.length - 1, this.prog.i + 20 + Math.round(this.speed * 0.3)), d = sm[i].p.clone().sub(this.pose.p).dot(left);
     return Math.max(-0.6, Math.min(0.6, -d * 0.12)); }
   respawnAt(s, v = 22) {
@@ -412,6 +431,10 @@ export class Sim {
     }
     // ---- driving forces ----
     const thr = control ? (inp.throttle || 0) : (this.state === 'countdown' ? 0 : 0);
+    /* B39: invisible pre-finish air brake. While airborne in the race, predict the landing point; if it is past the finish or within ~700 m of it
+       at an excessive speed, ease on a smooth ~1.25 g horizontal drag (never below the landing pad of the gap being cleared). Airborne only, so it can
+       never register as a wall hit / impact (those need ground contact or >90 m/s²). */
+    if (this.state === 'race' && !grounded && this.air > 0.05) this.airBrake(b, h); else this.abK = 0;
     /* B36: finished while airborne (late jump): bleed horizontal speed toward a safe speed, drift onto the centreline, and cap the sink rate so the landing is soft */
     if (this.state === 'finished' && !grounded) { const v = b.linvel(), hs = Math.hypot(v.x, v.z), sm2 = this.tr.samples[this.prog.i];
       let nx = v.x, nz = v.z; if (hs > FINISH_AIR_SAFE) { const k = Math.max(FINISH_AIR_SAFE, hs - FINISH_AIR_DEC * h) / hs; nx *= k; nz *= k; }
@@ -442,7 +465,7 @@ export class Sim {
       const req = f ? (this.tr.def.segments.find(sg => sg.t === 'gap' && sg.name === f.name)?.speed ?? 40) * 1.04 : 0;
       if (req && fspeed < req) drive = Math.max(drive, this.mass * Math.min(14, (req - fspeed) * 2.2));
       // speed governor on take-off (unless boosting): arrive at the design speed so the landing pad is reachable with air control
-      else if (req && (!boosting || (f && this.tr.finishS - f.land1 < 700 && fspeed > req * 1.2)) && fspeed > req * 1.06) { /* B36: the last jump before the finish is governed even when boosting, so the finish is never crossed high in the air */ const lv = b.linvel(), k = Math.max(0.9, 1 - (fspeed - req * 1.05) / Math.max(1, fspeed) * Math.min(1, 6 * h)); b.setLinvel({ x: lv.x * k, y: lv.y * k, z: lv.z * k }, true); }
+      else if (req && !boosting && fspeed > req * 1.06) { const lv = b.linvel(), k = Math.max(0.9, 1 - (fspeed - req * 1.05) / Math.max(1, fspeed) * Math.min(1, 6 * h)); b.setLinvel({ x: lv.x * k, y: lv.y * k, z: lv.z * k }, true); }
     }
     let braking = 0;
     // brake / reverse: BRAKE slows the car; once (nearly) stopped, keeping BRAKE held engages reverse (capped speed).
