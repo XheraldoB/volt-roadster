@@ -337,3 +337,16 @@ B30 | Trivial | P2 | Landing score popups stack over the car | Real m1 full-hold
 | Camera vs track | DONE | Camera pull-in now also raycasts track pieces: Rapier ray against static colliders (road, walls, loops, ramps, kickers; ~3.5 µs/call) plus a three.js ray against the arches. New drive.test check: road blocks the ray, open sky clear |
 
 Suites: drive 63/63, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 17/17.
+
+## Fix round 8 (Game Dev, 2026-10-22): fall-through-world (y ≈ −19 000 on m1)
+
+Root cause (reproduced headless, scratch/rev.mjs): after the race ends on battery the car can still roll/reverse back past the start line, off the end of the road into the void, and nothing respawned it outside the `race` state (crash() is race-only, the −400 m check only ran there too). 120 s of reversing reached y −7 900.
+
+| Fix | Notes |
+|---|---|
+| Kill plane | `guardWorld()` runs after every physics step in every state (countdown, race, finished/out of battery/results, free roam). Below (lowest terrain/track point − 60 m), outside terrain bounds + 300 m, or a non-finite position → respawn at the last checkpoint with zero velocity, `killplane` event, `stat.killPlane` count |
+| Runaway clamp | Linear speed capped at 160 m/s, angular at 40 rad/s (NaN → 0) |
+| Back-stop | Invisible wall across the road at s=2 so the car can't reverse off the start end at all |
+| Tests | drive.test +9: missed m1 canyon jump + battery-out over 120 s stays above the plane; respawn in countdown/race/finished/free roam; out-of-bounds respawn; velocity clamp; reverse-past-start (both vehicles) stays on the track |
+
+Suites: drive 72/72, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 17/17.
