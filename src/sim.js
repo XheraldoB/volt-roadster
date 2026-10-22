@@ -295,6 +295,13 @@ export class Sim {
     this.combo.chain = 0; this.combo.mult = 1; this.combo.pts = 0; this.reversing = false;
     this.stat.resets = (this.stat.resets || 0) + 1; this.emit('respawn', { reason }); return true;
   }
+  /* camera collision: fraction (0..1) of the segment a->b that is clear of static track geometry (road, walls, loops, ramps, kickers) */
+  camClear(a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z, L = Math.hypot(dx, dy, dz); if (L < 1e-3) return 1;
+    const ray = new RAPIER.Ray({ x: a.x, y: a.y, z: a.z }, { x: dx / L, y: dy / L, z: dz / L });
+    const hit = this.world.castRay(ray, L, true, RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_KINEMATIC);
+    return hit ? hit.timeOfImpact / L : 1;
+  }
   respawnAt(s, v = 22) {
     // never respawn inside (or on the lip of) a jump: go back to a proper run-up before it, so a respawn can't loop
     const inGap = this.tr.features.find(f => f.type === 'gap' && s > f.s0 - 40 && s < f.s1 + 2);

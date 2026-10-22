@@ -452,6 +452,14 @@
   }
  },
  {
+  "id": "camera ray: road blocks, open sky clear",
+  "pass": true,
+  "info": {
+   "f1": 0.5,
+   "f2": 1
+  }
+ },
+ {
   "id": "B7 fresh save cannot select the pickup",
   "pass": true
  },

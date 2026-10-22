@@ -100,9 +100,10 @@ export class LevelView {
     this.scene.add(new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ color: stripCol, side: THREE.DoubleSide, toneMapped: false })));
     // arches, pads, kickers
     const place = (obj, s, x = 0, h = 0) => { const P = poseAt(this.tr, s, x, h); obj.position.copy(P.p); obj.quaternion.copy(P.q); mergeStatic(obj); this.scene.add(obj); return obj; };
-    place(buildArch('START', '#39ff6a'), this.sim.startS + 6);
-    place(buildArch('FINISH', '#ffd23f'), this.tr.finishS);
-    this.tr.checkpoints.slice(1).forEach((s, i) => place(buildArch('CHECKPOINT ' + (i + 1), '#00e5ff'), s));
+    this.camBlockers = []; /* arches have no physics collider, so the camera raycasts them directly */
+    this.camBlockers.push(place(buildArch('START', '#39ff6a'), this.sim.startS + 6));
+    this.camBlockers.push(place(buildArch('FINISH', '#ffd23f'), this.tr.finishS));
+    this.tr.checkpoints.slice(1).forEach((s, i) => this.camBlockers.push(place(buildArch('CHECKPOINT ' + (i + 1), '#00e5ff'), s)));
     for (const f of this.tr.features) if (f.type === 'gap') { const pad = buildPad(f.padR); place(pad, f.padS, 0, 0.04); }
     for (const k of this.sim.kickers) { const m = buildKicker(); m.position.copy(k.p); m.quaternion.copy(k.q); mergeStatic(m); this.scene.add(m); }
     // spaceport finale rocket
@@ -372,6 +373,11 @@ export class LevelView {
     if (mode !== 'hood' && sim.terrain?.heightAt) { /* camera collision: pull in toward the car when terrain sits between them, and never sink below the ground */
       const T = sim.terrain, cp = car.position, tmp = new THREE.Vector3(); let keep = 1;
       for (let k = 3; k <= 10; k++) { const t = k / 10; tmp.lerpVectors(cp, c.pos, t); if (T.heightAt(tmp.x, tmp.z) > tmp.y + 0.2) { keep = Math.max(0.25, (k - 1) / 10); break; } }
+      /* track pieces: Rapier ray against static colliders (road, walls, loops, ramps, kickers) + three.js ray against arches, from just above the car */
+      const org = cp.clone().addScaledVector(c.up, 1.0), toCam = c.pos.clone().sub(org), dl = toCam.length();
+      if (dl > 0.5) { let f = sim.camClear ? sim.camClear(org, c.pos) : 1;
+        if (this.camBlockers?.length) { this._rc ??= new THREE.Raycaster(); this._rc.camera = this.gfx.camera; this._rc.set(org, toCam.clone().divideScalar(dl)); this._rc.far = dl; const h = this._rc.intersectObjects(this.camBlockers, true)[0]; if (h) f = Math.min(f, h.distance / dl); }
+        if (f < 1) { const k2 = Math.max(0.2, f - 0.6 / dl); const np = org.clone().addScaledVector(toCam, k2); c.pos.copy(np); } }
       if (keep < 1) c.pos.lerpVectors(cp, c.pos, keep);
       const gy = T.heightAt(c.pos.x, c.pos.z) + 0.8; if (c.pos.y < gy) c.pos.y = gy; }
     if (!c.init) { c.look.copy(look); c.init = true; }

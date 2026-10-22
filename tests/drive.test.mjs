@@ -117,6 +117,9 @@ for (const veh of ['roadster', 'hauler']) {
   { const s = await mk('r1', veh); const d = s.devils[0]; if (d) { s.respawnAt(d.s - 60, 20); let airT = 0, maxAir = 0; run(s, (s) => { const left = new Vector3(1, 0, 0).applyQuaternion(s.pose.q); return I({ throttle: 0.6, steer: Math.max(-1, Math.min(1, (s.prog.x - d.x) * 0.1)) }); }, 6, s => { maxAir = Math.max(maxAir, s.air); });
       ok(`${veh} Mars dust devil gives a short hop (< 2 s air)`, maxAir < 2, { maxAir: maxAir.toFixed(2), used: d.used }); } else ok(`${veh} dust devil present on r1`, false, 'none'); }
 }
+// camera collision against track pieces: a ray from above the road down through it is blocked, a ray in clear sky is not
+{ const s = await mk('e1', 'roadster'); s.fixed(H, I({})); const P = s.tr.samples[60].p; const a = { x: P.x, y: P.y + 6, z: P.z }, b = { x: P.x, y: P.y - 6, z: P.z }, c = { x: P.x, y: P.y + 30, z: P.z };
+  const f1 = s.camClear(a, b), f2 = s.camClear(a, c); ok('camera ray: road blocks, open sky clear', f1 < 0.7 && f2 === 1, { f1: +f1.toFixed(2), f2 }); }
 // B7 vehicle ownership (progress layer)
 { const P = await import('../src/progress.js'); const { VEHICLES } = await import('../src/vehicles.js'); const s = P.defaultSave();
   ok('B7 fresh save cannot select the pickup', !P.selectVehicle(s, 'hauler') && s.vehicle === 'roadster');
