@@ -1,3 +1,4 @@
+import { disposeScene } from './dispose.js';
 // Non-race 3D scenes: garage turntable, planet bases with robots, trophy room, rocket-launch cutscene, menu backdrop.
 import * as THREE from 'three';
 import { buildEnvironment } from './env.js';
@@ -18,7 +19,7 @@ function groundDisc(planet, r = 220) {
 
 export class Showroom {
   constructor(gfx) { this.gfx = gfx; this.scene = null; this.t = 0; this.kind = null; }
-  clear() { if (this.scene) this.scene.traverse(o => { o.geometry?.dispose(); }); this.scene = null; this.robots = []; this.picks = []; }
+  clear() { if (this.scene) { this.car?.userData.dispose?.(); disposeScene(this.scene, [this._trophyRT]); this._trophyRT = null; this.env?.envRT?.dispose?.(); if (this.env) this.env.envRT = null; } this.scene = null; this.car = null; this.robots = []; this.picks = []; }
 
   menu(custom, planet = 'earth', vehicle = 'roadster') { // title backdrop: car on a hill at sunset-ish
     this.garage(custom, planet, true, vehicle); this.kind = 'menu';
@@ -89,7 +90,7 @@ export class Showroom {
     s.environment = null; s.background = new THREE.Color(0x07080c); s.fog = new THREE.Fog(0x07080c, 20, 60);
     const pm = new THREE.PMREMGenerator(this.gfx.renderer); const es = new THREE.Scene(); es.add(new THREE.Mesh(new THREE.SphereGeometry(10, 16, 8), new THREE.MeshBasicMaterial({ color: 0x404050, side: THREE.BackSide })));
     for (let k = 0; k < 6; k++) { const l = new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 6), new THREE.MeshBasicMaterial({ color: 0xffffff })); l.position.set(-6 + k * 2.4, 8, 0); es.add(l); }
-    s.environment = pm.fromScene(es, 0.04).texture; pm.dispose();
+    this._trophyRT = pm.fromScene(es, 0.04); s.environment = this._trophyRT.texture; pm.dispose(); es.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); });
     s.add(new THREE.HemisphereLight(0x8090b0, 0x101015, 0.6));
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: 0x14151c, roughness: 0.2, metalness: 0.4, clearcoat: 1 })); floor.receiveShadow = true; s.add(floor);
     const N = ACHIEVEMENTS.length, cols = 7;

@@ -41,10 +41,10 @@ export function defaultSave() {
     v: 2, coins: 300, gems: 5, totalGems: 5, totalCoins: 0, upgrades: {}, vehicle: 'roadster',
     custom: { paint: 'red', finish: 'metallic', wrap: 'none', wrapColor: '#111111', rims: 'aero', rimColor: '#c8ccd2', caliper: '#d01818', underglow: 'none', spoiler: 'none', flame: 'ion', trail: 'none', horn: 'beep' },
     truckCustom: { paint: 'steel', finish: 'brushed', wrap: 'none', wrapColor: '#111111', rims: 'aero', rimColor: '#c8ccd2', caliper: '#ff5a1f', underglow: 'none', spoiler: 'none', flame: 'ion', trail: 'none', horn: 'air' },
-    owned: { paints: [], finishes: [], wraps: [], rims: [], spoilers: [], underglow: [], flames: [], trails: [], horns: ['air'] }, levels: {}, achievements: {},
+    owned: { paints: [], finishes: [], wraps: [], rims: [], spoilers: [], underglow: [], flames: [], trails: [], horns: ['air'], vehicles: ['roadster'] }, levels: {}, achievements: {},
     stats: { loops: 0, flips: 0, carJumps: 0, perfect: 0, quests: 0, dodges: 0, nearMiss: 0, races: 0, photos: 0 },
     bases: { earth: { plots: Array(6).fill(null), last: Date.now() }, moon: { plots: Array(6).fill(null), last: Date.now() }, mars: { plots: Array(6).fill(null), last: Date.now() } },
-    settings: { quality: 'auto', fpsCap: 0, showFps: false, music: 0.45, sfx: 0.8, haptics: true, autoGas: touch, steer: 'buttons', camMode: 'chase', shake: true, bulletTime: true, assist: true, ghosts: true, airRoll: false, left: false },
+    settings: { quality: 'auto', fpsCap: 0, showFps: false, music: 0.45, sfx: 0.8, haptics: true, autoGas: touch, steer: 'drag', sens: 1, esc: true, extraAO: false, ctlV: 2, camMode: 'chase', shake: true, bulletTime: true, assist: true, ghosts: true, airRoll: false, left: false },
     daily: { date: '', done: [], streak: 0, lastDate: '' }, planet: 'earth', seenIntro: false,
     cloud: null, updatedAt: Date.now(),
   };
@@ -54,7 +54,7 @@ export function loadLocal() {
   try { const raw = localStorage.getItem(KEY); if (raw) return migrate(JSON.parse(raw)); } catch (e) {}
   return defaultSave();
 }
-function migrate(s) { const d = defaultSave(); const out = { ...d, ...s }; out.settings = { ...d.settings, ...(s.settings || {}) }; out.stats = { ...d.stats, ...(s.stats || {}) }; out.custom = { ...d.custom, ...(s.custom || {}) }; out.truckCustom = { ...d.truckCustom, ...(s.truckCustom || {}) }; out.owned = { ...d.owned, ...(s.owned || {}) }; for (const k of Object.keys(d.owned)) if (!Array.isArray(out.owned[k])) out.owned[k] = d.owned[k].slice(); if (s.owned && s.owned.underglow === true) out.owned.underglow = ['#00e5ff', '#ff2f92', '#39ff6a', '#7a2cff', '#ffb000']; if (!out.custom.underglow) out.custom.underglow = 'none'; if (typeof out.gems !== 'number') out.gems = 5; out.bases = { ...d.bases, ...(s.bases || {}) }; out.daily = { ...d.daily, ...(s.daily || {}) }; return out; }
+function migrate(s) { const d = defaultSave(); const out = { ...d, ...s }; out.settings = { ...d.settings, ...(s.settings || {}) }; out.stats = { ...d.stats, ...(s.stats || {}) }; out.custom = { ...d.custom, ...(s.custom || {}) }; out.truckCustom = { ...d.truckCustom, ...(s.truckCustom || {}) }; out.owned = { ...d.owned, ...(s.owned || {}) }; for (const k of Object.keys(d.owned)) if (!Array.isArray(out.owned[k])) out.owned[k] = d.owned[k].slice(); if (s.owned && s.owned.underglow === true) out.owned.underglow = ['#00e5ff', '#ff2f92', '#39ff6a', '#7a2cff', '#ffb000']; if ((out.settings.ctlV || 0) < 2) { out.settings.ctlV = 2; if (out.settings.steer === 'buttons') out.settings.steer = 'drag'; out.settings.esc = true; out.settings.sens = out.settings.sens || 1; } if (out.settings.quality === 'ultra' && !out.settings.perfV) { out.settings.perfV = 1; } if (!out.custom.underglow) out.custom.underglow = 'none'; if (typeof out.gems !== 'number') out.gems = 5; if (!out.owned.vehicles.includes('roadster')) out.owned.vehicles.unshift('roadster'); if (!out.owned.vehicles.includes(out.vehicle)) out.vehicle = 'roadster'; out.bases = { ...d.bases, ...(s.bases || {}) }; out.daily = { ...d.daily, ...(s.daily || {}) }; return out; }
 let saveTimer = null;
 export function saveLocal(s, immediate = false) {
   s.updatedAt = Date.now();
@@ -178,3 +178,15 @@ export async function cloudRestore(code) {
 export function mergeCloud(local, remote) { // newest wins
   if (!remote || !remote.updatedAt) return local; if (remote.updatedAt > local.updatedAt) { const m = migrate(remote); m.cloud = local.cloud; return m; } return local;
 }
+
+// ---- vehicles: ownership is enforced here and again when a run starts (never trust save.vehicle alone)
+export function ownsVehicle(s, id) { return Array.isArray(s.owned && s.owned.vehicles) && s.owned.vehicles.includes(id); }
+export function buyVehicle(s, V) {
+  if (!V) return { ok: false, why: 'unknown' };
+  if (ownsVehicle(s, V.id)) return { ok: true, already: true };
+  const coins = (V.price && V.price.coins) || 0, gems = (V.price && V.price.gems) || 0;
+  if (s.coins < coins) return { ok: false, why: 'coins', need: coins - s.coins };
+  if (s.gems < gems) return { ok: false, why: 'gems', need: gems - s.gems };
+  s.coins -= coins; s.gems -= gems; s.owned.vehicles.push(V.id); return { ok: true };
+}
+export function selectVehicle(s, id) { if (!ownsVehicle(s, id)) return false; s.vehicle = id; return true; }

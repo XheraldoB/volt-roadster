@@ -34,7 +34,7 @@ applySettings();
 
 function applySettings() {
   const st = save.settings;
-  input.settings = { autoGas: st.autoGas, steer: st.steer, airRoll: st.airRoll, assist: st.assist };
+  input.settings = { autoGas: st.autoGas, steer: st.steer, airRoll: st.airRoll, assist: st.assist, esc: st.esc !== false, sens: st.sens || 1 }; gfx.extraAO = !!st.extraAO;
   audio.setVolumes(st.music, st.sfx);
   document.body.classList.toggle('lefty', !!st.left);
   $('#fps').style.display = st.showFps ? 'block' : 'none';
@@ -124,6 +124,15 @@ function rocketCutscene(from, to, done) {
 
 // ---------- garage + customization shop ----------
 let garageTab = 'vehicle', shopCat = 'paints';
+let vehConfirm = null;
+function vehBtn(V) {
+  if (save.vehicle === V.id) return `<button class="buy" data-veh="${V.id}" disabled>SELECTED</button>`;
+  if (P.ownsVehicle(save, V.id)) return `<button class="buy" data-veh="${V.id}">SELECT</button>`;
+  const cost = V.price?.coins || 0, gems = V.price?.gems || 0, can = save.coins >= cost && (save.gems || 0) >= gems;
+  const lbl = (cost ? '🪙 ' + nf(cost) : '') + (gems ? ' 💎 ' + nf(gems) : '');
+  if (!can) return `<button class="buy" data-veh="${V.id}" disabled title="Not enough coins">🔒 ${lbl}</button>`;
+  return `<button class="buy${vehConfirm === V.id ? ' confirm' : ''}" data-veh="${V.id}">${vehConfirm === V.id ? 'CONFIRM ' + lbl : 'BUY ' + lbl}</button>`;
+}
 function toGarage() { show.garage(curCustom(), undefined, undefined, save.vehicle); go('garage'); renderGarage(); coinsBar(); }
 $$('#garage-tabs button').forEach(b => b.onclick = () => { click(); garageTab = b.dataset.t; renderGarage(); });
 function statBars(id) {
@@ -137,7 +146,7 @@ function renderGarage() {
   const box = $('#garage-body'); const c = curCustom(); let html = '';
   if (garageTab === 'vehicle') {
     html = Object.values(VEHICLES).map(V => `<div class="vcard ${save.vehicle === V.id ? 'on' : ''}"><div class="vhead"><span class="vic">${V.icon}</span><div class="grow"><b>${esc(V.name)}</b><small>${esc(V.blurb)}</small></div>
-      <button class="buy" data-veh="${V.id}" ${save.vehicle === V.id ? 'disabled' : ''}>${save.vehicle === V.id ? 'SELECTED' : 'SELECT'}</button></div>${statBars(V.id)}
+      ${vehBtn(V)}</div>${statBars(V.id)}
       ${V.rcs ? '<div class="note">In the air: hold JUMP to hover / soft-land, steer + gas/brake to fire attitude jets. Gas refills on the ground and from battery pickups.</div>' : '<div class="note">In the air: hold JUMP for the battery thruster, gas/brake to flip.</div>'}</div>`).join('')
       + '<p class="note">Both vehicles drive on Earth, the Moon and Mars. Upgrades are shared; each vehicle keeps its own look.</p>';
   } else if (garageTab === 'upgrades') {
@@ -170,7 +179,17 @@ function renderGarage() {
       <p class="note">${PAYMENTS.enabled ? 'Secure checkout by Stripe. Gems are credited after payment is confirmed.' : 'Real-money purchases are not available yet: no payment provider is connected, so nothing can be bought or charged. Everything in the shop can be earned by playing.'}</p>`;
   }
   box.innerHTML = html;
-  $$('[data-veh]', box).forEach(b => b.onclick = () => { save.vehicle = b.dataset.veh; click(); persist(); show.setCar(curCustom(), save.vehicle); toast(`${VEHICLES[save.vehicle].icon} <b>${esc(VEHICLES[save.vehicle].name)}</b> selected`); renderGarage(); });
+  $$('[data-veh]', box).forEach(b => b.onclick = () => {
+    const V = VEHICLES[b.dataset.veh]; if (!V) return;
+    if (!P.ownsVehicle(save, V.id)) { // two-tap purchase: first tap arms, second tap buys (only if affordable)
+      if (vehConfirm !== V.id) { vehConfirm = V.id; click(); renderGarage(); return; }
+      const r = P.buyVehicle(save, V); vehConfirm = null;
+      if (!r.ok) { toast(`Not enough ${r.why === 'gems' ? 'gems' : 'coins'}: need ${nf(r.need)} more`); renderGarage(); return; }
+      audio.play('buy'); haptic(save.settings.haptics, 20); toast(`${V.icon} <b>${esc(V.name)}</b> unlocked!`);
+    } else click();
+    if (!P.selectVehicle(save, V.id)) return;
+    persist(true); show.setCar(curCustom(), save.vehicle); coinsBar(); toast(`${V.icon} <b>${esc(V.name)}</b> selected`); renderGarage();
+  });
   $$('[data-up]', box).forEach(b => b.onclick = () => { const id = b.dataset.up, lvl = save.upgrades[id] || 0, cost = P.upgradeCost(save, id, lvl); if (save.coins < cost || lvl >= P.maxTier(id)) return; save.coins -= cost; save.upgrades[id] = lvl + 1; audio.play('buy'); haptic(save.settings.haptics, 20); afterBuy(); });
   $$('[data-cat]', box).forEach(b => b.onclick = () => { click(); shopCat = b.dataset.cat; renderGarage(); });
   const setC = (k, v) => { curCustom()[k] = v; show.setCar(curCustom(), save.vehicle); persist(); renderGarage(); };
@@ -253,16 +272,16 @@ function renderSettings() {
   const sel = (k, opts) => `<div class="seg" data-k="${k}">${opts.map(([v, l]) => `<button data-v="${v}" class="${String(st[k]) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   const tog = (k, l) => `<label class="tog"><input type="checkbox" data-t="${k}" ${st[k] ? 'checked' : ''}><span></span>${l}</label>`;
   $('#set-body').innerHTML = `
-    <h4>Graphics <small>(detected: ${esc(gfx.info.tier)} · ${esc((gfx.info.gpu || '').slice(0, 40))})</small></h4>${sel('quality', [['auto', 'Auto'], ['low', 'Low'], ['medium', 'Med'], ['high', 'High'], ['ultra', 'Ultra']])}
+    <h4>Graphics <small>(detected: ${esc(gfx.info.tier)} · ${esc((gfx.info.gpu || '').slice(0, 40))})</small></h4>${sel('quality', [['auto', 'Auto'], ['performance', 'Perf'], ['low', 'Low'], ['medium', 'Med'], ['high', 'High'], ['ultra', 'Ultra']])}<small class="muted">Performance = smoothest frame rate. Ultra = native resolution, light post. Resolution adapts automatically to hold a steady frame time.</small>${tog('extraAO', 'Extra: ambient occlusion (costly)')}
     <h4>Frame rate</h4>${sel('fpsCap', [[60, '60'], [120, '120'], [0, 'Unlimited']])}${tog('showFps', 'Show FPS counter')}
-    <h4>Controls</h4>${sel('steer', [['buttons', 'Steer buttons'], ['tilt', 'Tilt phone']])}${tog('autoGas', 'Auto-accelerate (touch)')}${tog('left', 'Left-handed layout')}${tog('assist', 'Air stability assist')}${tog('airRoll', 'Steer = barrel roll in air')}${tog('haptics', 'Haptics (vibration)')}
+    <h4>Controls</h4>${sel('steer', [['drag', 'Analog pad'], ['buttons', '◀ ▶ buttons'], ['tilt', 'Tilt phone']])}<label class="sl">Steering sensitivity <input type="range" min="0.5" max="1.6" step="0.05" data-r="sens" value="${st.sens ?? 1}"><b id="sens-v">${Math.round((st.sens ?? 1) * 100)}%</b></label>${tog('esc', 'Stability control / traction assist')}${tog('autoGas', 'Auto-accelerate (touch)')}${tog('left', 'Left-handed layout')}${tog('assist', 'Air auto-level + landing assist')}${tog('airRoll', 'Steer = barrel roll in air')}${tog('haptics', 'Haptics (vibration)')}
     <h4>Camera & effects</h4>${sel('camMode', [['chase', 'Chase'], ['close', 'Close'], ['hood', 'Hood'], ['drone', 'Drone']])}${tog('shake', 'Camera shake')}${tog('bulletTime', 'Bullet-time on big jumps / near misses')}${tog('ghosts', 'Ghost replays')}
     <h4>Audio</h4><label class="sl">Music <input type="range" min="0" max="1" step="0.05" data-r="music" value="${st.music}"></label><label class="sl">SFX <input type="range" min="0" max="1" step="0.05" data-r="sfx" value="${st.sfx}"></label>
     <h4>Cloud save</h4><div id="cloud-box"></div>
     <h4>Data</h4><button class="btn small danger" id="btn-reset">Reset progress</button>`;
   $$('#set-body .seg').forEach(seg => $$('button', seg).forEach(b => b.onclick = () => { click(); let v = b.dataset.v; if (seg.dataset.k === 'fpsCap') v = +v; st[seg.dataset.k] = v; if (seg.dataset.k === 'quality') { gfx.setQuality(tierName()); if (G.view) toast('Quality changes fully apply on the next level'); else refreshShow(); } persist(); applySettings(); renderSettings(); }));
-  $$('#set-body [data-t]').forEach(c => c.onchange = () => { st[c.dataset.t] = c.checked; persist(); applySettings(); if (G.view) G.view.opts.shake = st.shake; layoutTouch(); });
-  $$('#set-body [data-r]').forEach(r => r.oninput = () => { st[r.dataset.r] = +r.value; applySettings(); persist(); });
+  $$('#set-body [data-t]').forEach(c => c.onchange = () => { st[c.dataset.t] = c.checked; if (c.dataset.t === 'extraAO') { gfx.extraAO = c.checked; gfx.setQuality(tierName()); } persist(); applySettings(); if (G.view) G.view.opts.shake = st.shake; layoutTouch(); });
+  $$('#set-body [data-r]').forEach(r => r.oninput = () => { st[r.dataset.r] = +r.value; if (r.dataset.r === 'sens') $('#sens-v').textContent = Math.round(st.sens * 100) + '%'; applySettings(); persist(); });
   $('#btn-reset').onclick = () => { if (!confirm('Erase all local progress? (Cloud copy stays restorable with your code)')) return; const cloud = save.cloud; save = P.defaultSave(); save.cloud = cloud; persist(true); hideModal(); toTitle(); };
   renderCloud();
 }
@@ -287,7 +306,7 @@ async function startLevel(level, mode) {
   $('#loading-text').textContent = `Building ${level.name}…`; go('loading');
   await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
   try {
-    const sim = new Sim(level, { mode, vehicle: save.vehicle, upgrades: save.upgrades, bonus: P.runBonus(save, level.planet), robots: P.robotCount(save) });
+    const sim = new Sim(level, { mode, vehicle: P.ownsVehicle(save, save.vehicle) ? save.vehicle : 'roadster', upgrades: save.upgrades, bonus: P.runBonus(save, level.planet), robots: P.robotCount(save) });
     await sim.init();
     G.ghostPrev = save.settings.ghosts ? P.loadGhost(level.id, mode) : null; if (G.ghostPrev) sim.setGhost(G.ghostPrev);
     const view = new LevelView(gfx, sim, { custom: curCustom(), camMode: save.settings.camMode, shake: save.settings.shake });
@@ -309,7 +328,7 @@ function stopRace() {
   G.paused = false; G.photo = null; document.body.classList.remove('photo');
 }
 function pause(on = true) {
-  if (!G.sim || G.sim.state === 'finished') return; G.paused = on; go(on ? 'pause' : 'race');
+  if (!G.sim || G.sim.state === 'finished') return; if (!on && blockedReason()) return; G.paused = on; go(on ? 'pause' : 'race'); last = performance.now(); if (!on) input.releaseAll(); if (on) $('#p-quality').textContent = qualityLabel();
   audio.engine(0, 0, false, 0, false, !on); audio.rcs(0);
   if (on) { const s = G.sim; $('#pause-stats').innerHTML = `Score <b>${nf(s.score)}</b> · Coins <b>${s.coins}</b> · Time <b>${fmtT(s.raceTime)}</b>`; persist(true); }
 }
@@ -320,6 +339,9 @@ $('#p-map').onclick = () => { click(); toMap(G.level.planet); };
 $('#p-settings').onclick = () => { click(); toSettings(); };
 $('#p-photo').onclick = () => { click(); photoMode(true); };
 $('#btn-cam').onclick = () => { click(); cycleCam(); };
+const QCYCLE = ['performance', 'high', 'ultra'];
+function qualityLabel() { return `⚙ Graphics: ${PRESETS[tierName()]?.name || tierName()}${save.settings.quality === 'auto' ? ' (auto)' : ''}`; }
+$('#p-quality').onclick = () => { click(); const cur = tierName(); save.settings.quality = QCYCLE[(QCYCLE.indexOf(cur) + 1) % QCYCLE.length]; gfx.setQuality(tierName()); persist(); $('#p-quality').textContent = qualityLabel(); toast(`Graphics: <b>${PRESETS[tierName()].name}</b> (scene detail applies on restart)`); };
 $('#btn-respawn').onclick = () => { click(); manualRespawn(); };
 $('#btn-radio').onclick = () => { click(); if (!audio.radio) audio.startRadio(); else audio.nextTrack(); };
 function honk() {
@@ -331,7 +353,7 @@ function honk() {
 }
 $('#btn-horn').onclick = () => { honk(); };
 function cycleCam() { if (!G.view) return; const modes = ['chase', 'close', 'hood', 'drone']; const c = G.view.cam; c.mode = modes[(modes.indexOf(c.mode) + 1) % modes.length]; c.init = false; save.settings.camMode = c.mode; persist(); toast('Camera: ' + c.mode, 900); }
-function manualRespawn() { const s = G.sim; if (!s || s.state !== 'race' || s.crashT > 0) return; s.respawnAt(s.lastCpS ?? 0); s.emit('respawn'); }
+function manualRespawn() { const s = G.sim; if (!s) return; s.softReset('button'); }
 input.onKey = code => {
   if (code === 'KeyP' || code === 'Escape') { if (G.photo) photoMode(false); else if (G.screen === 'race') pause(true); else if (G.screen === 'pause') pause(false); else if ($('.modal.on')) hideModal(); }
   if (G.screen !== 'race') return;
@@ -354,6 +376,9 @@ function handleEvents(evs) {
     case 'nitro': audio.play('nitro'); haptic(hp, 20); popup('NITRO FULL'); break;
     case 'score': popup(e.text, e.pts, e.kind); if (['flip', 'pad', 'loop', 'gap', 'egg'].includes(e.kind)) audio.play(e.kind === 'pad' ? 'perfect' : 'trick'); break;
     case 'land': audio.play('land', e.strength); haptic(hp, Math.round(15 + e.strength * 60)); break;
+    case 'popup': popup(e.text, 0, e.kind); break;
+    case 'wallHit': audio.play('crash'); haptic(hp, [40, 30, 40]); break;
+    case 'hardLanding': haptic(hp, [60, 30, 60]); break;
     case 'crash': audio.play('crash'); haptic(hp, [70, 40, 140]); bigText({ flip: 'FLIPPED!', fall: 'WIPEOUT!', off: 'OFF TRACK!', stuck: 'STUCK!', traffic: 'CRASH!', landing: 'BAD LANDING!', meteor: 'METEOR HIT!' }[e.reason] || 'CRASH!', 1300, 'bad'); break;
     case 'hit': audio.play('hit', e.strength); haptic(hp, Math.round(10 + e.strength * 40)); break;
     case 'checkpoint': audio.play('checkpoint'); haptic(hp, 15); popup(`CHECKPOINT +${e.bonus}s`, 0, 'cp'); persist(); if (Date.now() - G.lastCloud > 20000) cloudSync(); break;
@@ -485,11 +510,19 @@ function updateHud() {
 
 // ---------------- main loop ----------------
 let last = performance.now(), acc = 0, fpsAcc = 0, fpsN = 0, lastFrame = 0;
+const FT = { buf: new Float32Array(1200), i: 0, count: 0 }; // per-frame time ring buffer (ms) for QA / RP10
+const portraitMQ = matchMedia('(orientation: portrait) and (pointer: coarse)');
+// B10/B18: anything that makes the game unplayable freezes the race clock, battery and physics (and opens the pause menu)
+function blockedReason() { return document.hidden ? 'hidden' : G.ctxLost ? 'context' : portraitMQ.matches ? 'portrait' : null; }
+function checkBlocked() { const r = blockedReason(); if (r && G.screen === 'race' && G.sim && G.sim.state !== 'finished') pause(true); return r; }
+portraitMQ.addEventListener?.('change', checkBlocked);
 function frame(now) {
   requestAnimationFrame(frame);
   const cap = save.settings.fpsCap; if (cap && now - lastFrame < 1000 / cap - 1.5) return; lastFrame = now;
-  let dt = Math.min(0.1, (now - last) / 1000); last = now;
-  fpsAcc += dt; fpsN++; if (fpsAcc > 0.5) { G.fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; if (save.settings.showFps) $('#fps').textContent = `${G.fps.toFixed(0)} fps · ${gfx.qName}${gfx.dynScale < 1 ? ' ' + Math.round(gfx.dynScale * 100) + '%' : ''}`; }
+  const rawDt = Math.max(0, (now - last) / 1000); let dt = Math.min(0.1, rawDt); last = now;
+  FT.buf[FT.i] = rawDt * 1000; FT.i = (FT.i + 1) % FT.buf.length; FT.count = Math.min(FT.buf.length, FT.count + 1);
+  const blocked = checkBlocked(); if (G.ctxLost) return;
+  fpsAcc += rawDt; fpsN++; if (fpsAcc > 0.5) { G.fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; if (save.settings.showFps) $('#fps').textContent = `${G.fps.toFixed(0)} fps · ${gfx.qName}${gfx.dynScale < 1 ? ' ' + Math.round(gfx.dynScale * 100) + '%' : ''}`; }
   const cam = gfx.camera;
   if (G.sim && G.view && ['race', 'pause', 'photo', 'results'].includes(G.screen)) {
     const s = G.sim, v = G.view;
@@ -499,7 +532,7 @@ function frame(now) {
     if (s.overGap && !s.grounded && s.air > 0.35 && !G.gapSlow.has(s.overGap)) { G.gapSlow.add(s.overGap); slowmo(1.3); }
     v.slowmo = G.slowT > 0 && save.settings.bulletTime;
     const inp = input.state(!s.grounded, dt);
-    const running = G.screen === 'race' && !G.paused;
+    const running = G.screen === 'race' && !G.paused && !blocked;
     const sdt = running ? dt * G.timeScale : 0;
     if (running) s.update(sdt, inp); else if (G.screen === 'results') s.update(dt * 0.5, { steer: 0, throttle: 0, brake: 1, boost: false, jump: false, pitch: 0 });
     const evs = s.events.splice(0); handleEvents(evs);
@@ -519,15 +552,19 @@ function frame(now) {
 addEventListener('resize', () => { gfx.resize(); if (G.screen === 'map') renderMap(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { if (G.screen === 'race') pause(true); persist(true); cloudSync(true); } });
 addEventListener('pagehide', () => { persist(true); cloudSync(true); });
-canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); toast('Graphics context lost — recovering…'); });
-canvas.addEventListener('webglcontextrestored', () => { gfx.setQuality(gfx.qName); refreshShow(); });
+canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); G.ctxLost = true; if (G.screen === 'race') pause(true); audio.engine(0, 0, false, 0, false, false); toast('Graphics context lost: game paused while it recovers…'); });
+canvas.addEventListener('webglcontextrestored', () => { G.ctxLost = false; gfx.contextRestored(); if (!G.view) refreshShow(); last = performance.now(); toast('Graphics restored. Tap Resume to continue.'); });
 
 // ---------------- debug / QA hook ----------------
 window.__game = {
   get fps() { return G.fps; }, get screen() { return G.screen; }, get quality() { return gfx.qName; }, get gpu() { return gfx.info; },
   get world() { return G.level ? G.level.planet : G.planet; }, get level() { return G.level ? G.level.id : null; },
   get car() { const s = G.sim; if (!s) return null; return { speed: s.speed, kmh: s.speed * 3.6, s: s.prog.s, x: s.prog.x, battery: s.battery, boost: s.boost, grounded: s.grounded, state: s.state, score: s.score, coins: s.coins, pos: s.pose.p.toArray(), raceTime: s.raceTime, crashes: s.stat.crashes, vehicle: s.veh.id, gas: s.gas, rcs: { ...s.rcs }, thrust: s.thrust }; },
-  get vehicle() { return save.vehicle; }, setVehicle: id => { if (!VEHICLES[id]) throw new Error('no vehicle ' + id); save.vehicle = id; persist(true); return id; }, get gems() { return save.gems; },
+  get vehicle() { return save.vehicle; }, setVehicle: id => { if (!VEHICLES[id]) throw new Error('no vehicle ' + id); if (!P.selectVehicle(save, id)) throw new Error('vehicle not owned: ' + id); persist(true); return id; }, ownsVehicle: id => P.ownsVehicle(save, id),
+  grantVehicle: id => { if (!VEHICLES[id]) throw new Error('no vehicle ' + id); if (!save.owned.vehicles.includes(id)) save.owned.vehicles.push(id); persist(true); return id; }, /* QA/dev helper */ get gems() { return save.gems; },
+  get pixelRatio() { return gfx.renderer.getPixelRatio(); }, get drawingBuffer() { const v = gfx.renderer.getDrawingBufferSize(new THREE.Vector2()); return { w: v.x, h: v.y, css: { w: innerWidth, h: innerHeight }, dpr: devicePixelRatio, dynScale: gfx.dynScale }; },
+  frameTimes: (n = 600) => { const out = []; const N = Math.min(n, FT.count); for (let i = N; i > 0; i--) out.push(+FT.buf[(FT.i - i + FT.buf.length) % FT.buf.length].toFixed(2)); return out; }, // ms, most recent last
+  get blocked() { return blockedReason(); },
   levels: () => LEVELS.map(l => ({ id: l.id, planet: l.planet, name: l.name, diff: l.diff })),
   loadLevel: (id, mode = 'race') => { const l = levelById(id); if (!l) throw new Error('no level ' + id); return startLevel(l, mode); },
   save: () => { persist(true); return JSON.parse(JSON.stringify(save)); }, load: () => { save = P.loadLocal(); applySettings(); return save; },

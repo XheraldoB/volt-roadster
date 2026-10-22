@@ -1,3 +1,5 @@
+import { disposeScene } from './dispose.js';
+const _UP = new THREE.Vector3(0, 1, 0);
 // Builds and animates the 3D scene for a running level.
 import * as THREE from 'three';
 import { createMoonMaterial } from '../../art/terrain/moonMaterial.js';
@@ -40,6 +42,7 @@ export class LevelView {
     scene.add(this.addP.points, this.norP.points);
     this.cam = { mode: opts.camMode || 'chase', pos: new THREE.Vector3(), look: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0), shake: 0, fov: 62, init: false, droneT: 0 };
     this.time = 0;
+    try { gfx.renderer.compile(scene, gfx.camera); } catch (e) { console.warn('precompile skipped', e); } // art/perf: compile all level shaders at load, not mid-race (stutter)
   }
 
   // ---------- terrain ----------
@@ -178,6 +181,11 @@ export class LevelView {
   buildEntities() {
     const sim = this.sim, sc = this.scene;
     this.car = buildVehicle(sim.veh.id, this.opts.custom || {}, { wheelPos: sim.wheelPos, quality: this.gfx.qName || 'high' });
+    { // landing-target marker: where the car will touch down (ballistic prediction from the sim)
+      const g = new THREE.RingGeometry(1.5, 2.1, 40); g.rotateX(-Math.PI / 2); const gi = new THREE.CircleGeometry(0.35, 16); gi.rotateX(-Math.PI / 2);
+      const mat = new THREE.MeshBasicMaterial({ color: 0x40e0ff, transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -4 });
+      this.landMark = new THREE.Group(); this.landMark.add(new THREE.Mesh(g, mat), new THREE.Mesh(gi, mat)); this.landMark.visible = false; this.landMark.renderOrder = 5; this.landMat = mat; sc.add(this.landMark);
+    }
     if (sim.veh.rcs) { try { this.coldGas = createColdGasThrusters(this.car, { quality: this.gfx.qName || 'high', scene: sc }); } catch (e) { console.warn('cold-gas fx fallback', e); } }
     this.flame = FLAME_LIST.find(f => f.id === (this.opts.custom || {}).flame) || FLAME_LIST[0];
     try { const hauler = sim.veh.id === 'hauler'; this.flameFx = createBoostFlame(this.car, { quality: this.gfx.qName || 'high', mounts: this.car.userData.nozzles, radius: hauler ? 0.13 : 0.11, length: hauler ? 1.6 : 1.4 }); this.flameCol = [new THREE.Color(), new THREE.Color(), new THREE.Color()]; } catch (e) { console.warn('boost flame fx fallback', e); } // art: shaped plasma jet
@@ -257,6 +265,10 @@ export class LevelView {
     for (const [m, v] of this.meteorMeshes) if (!live.has(m)) { this.scene.remove(v.rock, v.ring); this.meteorMeshes.delete(m); }
     // dust devils
     sim.devils.forEach((d, k) => { if (Math.abs(d.s - ps) > 350) return; for (let i = 0; i < 4; i++) { const a = t * 6 + i * 1.6 + k, hgt = Math.random() * 24, r = 1.5 + hgt * 0.25; const p = d.p.clone().add(new THREE.Vector3(Math.cos(a) * r, hgt, Math.sin(a) * r)); this.norP.emit(p, new THREE.Vector3(-Math.sin(a) * 8, 3, Math.cos(a) * 8), { color: [0.75, 0.45, 0.28], size: 2.2 + hgt * 0.1, life: 1.2, alpha: d.used ? 0.25 : 0.55, drag: 0.3 }); } });
+    { const L = sim.landing, lm = this.landMark;
+      if (lm) { lm.visible = !!(L && !sim.grounded && sim.air > 0.25 && L.t > 0.08);
+        if (lm.visible) { lm.position.copy(L.p).addScaledVector(L.n, 0.08); lm.quaternion.setFromUnitVectors(_UP, L.n); const k = 1 + Math.min(1.5, L.t * 0.5); lm.scale.set(k, 1, k);
+          this.landMat.color.setHex(L.vImp > 14 * Math.sqrt(sim.veh.tough) ? 0xff3030 : L.onPad ? 0x39ff6a : 0x40e0ff); this.landMat.opacity = 0.55 + 0.35 * Math.sin(this.time * 10) ** 2; } } }
     this.effects(dt, input, fx);
     if (this.env.update) this.env.update(dt, t);
     this.env.follow(this.car.position);
@@ -330,7 +342,7 @@ export class LevelView {
     const wantUp = (sm.magnet || sim.rail) && sim.grounded ? sm.U.clone() : new THREE.Vector3(0, 1, 0);
     c.up.lerp(wantUp, 1 - Math.exp(-dt * 5)).normalize();
     // heading: use velocity direction when fast (smoother in air), else car forward
-    const vel = sim.prevVel.clone(); const hv = vel.length() > 8 ? vel.normalize() : fwd.clone();
+    const vel = sim.prevVel.clone(); const hv = vel.length() > 8 && vel.dot(fwd) > 0 && !sim.reversing ? vel.normalize() : fwd.clone(); // reversing: stay behind the car, never swing round to face it
     if (!sim.grounded) hv.lerp(fwd, 0.2).normalize();
     const speedK = Math.min(1, sim.speed / 60);
     let pos, look, fovT = 62 + speedK * 14 + (sim.boosting ? 8 : 0);
@@ -359,7 +371,7 @@ export class LevelView {
     cam.position.copy(c.pos).add(new THREE.Vector3((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh));
     cam.up.copy(c.up); cam.lookAt(c.look);
     c.fov += (fovT - c.fov) * (1 - Math.exp(-dt * 4)); cam.fov = c.fov; cam.updateProjectionMatrix();
-    if (this.gfx.vig) { this.gfx.vig.uniforms.speedLines.value = sim.boosting ? 1 : Math.max(0, speedK - 0.75) * 2; this.gfx.vig.uniforms.chroma.value = sim.boosting ? 1 : this.slowmo ? 0.6 : 0; this.gfx.vig.uniforms.time.value = this.time; }
+    if (this.gfx.vig) { this.gfx.vig.uniforms.speedLines.value = sim.boosting ? 1 : Math.max(0, speedK - 0.75) * 2; this.gfx.vig.uniforms.chroma.value = 0; /* art: no chromatic aberration (blur on device) */ this.gfx.vig.uniforms.time.value = this.time; }
   }
 
   // photo mode free camera
@@ -370,8 +382,9 @@ export class LevelView {
   }
 
   dispose() {
-    this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.dispose(); }); } });
-    this.env.envRT?.dispose();
+    if (this._disposed) return; this._disposed = true;
+    this.thrusters?.dispose?.();
+    disposeScene(this.scene, [this.env.envRT]); this.env.envRT = null;
   }
 }
 
