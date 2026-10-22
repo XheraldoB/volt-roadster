@@ -69,14 +69,14 @@
     <div id="pops"></div><div id="big"></div><div id="radio"></div>
   </div>
   <div id="touch">
-    <div class="tc-left"><button class="tbtn steer" data-ctl="left">◀</button><button class="tbtn steer" data-ctl="right">▶</button></div>
-    <div class="tc-right"><button class="tbtn small" data-ctl="brake">BRAKE</button><button class="tbtn" data-ctl="gas" id="t-gas">GAS</button><button class="tbtn boost" data-ctl="boost">🔥</button><button class="tbtn jump" data-ctl="jump">⬆</button></div>
+    <div class="tc-left"><div class="tpad" data-ctl="steer"><span class="tl">◀</span><span class="knob"></span><span class="tr">▶</span></div></div>
+    <div class="tc-right"><button class="tbtn brake" data-ctl="brake">BRAKE<small>REV</small></button><button class="tbtn gas" data-ctl="gas" id="t-gas">GAS</button><button class="tbtn boost" data-ctl="boost">🔥</button><button class="tbtn jump" data-ctl="jump">⬆<small id="t-jump-lbl">JUMP</small></button><button class="tbtn drift" data-ctl="drift">DRIFT</button></div>
   </div>
 </section>
 
 <!-- pause -->
 <section class="scr dim" id="scr-pause"><div class="panel center-panel"><h1>PAUSED</h1><div id="pause-stats"></div>
-  <div class="col-btns"><button class="btn primary" id="p-resume">Resume</button><button class="btn" id="p-restart">Restart</button><button class="btn" id="p-photo">📸 Photo mode</button><button class="btn" id="p-settings">Settings</button><button class="btn" id="p-map">Quit to map</button></div></div></section>
+  <div class="col-btns"><button class="btn primary" id="p-resume">Resume</button><button class="btn" id="p-restart">Restart</button><button class="btn" id="p-photo">📸 Photo mode</button><button class="btn" id="p-quality">⚙ Graphics</button><button class="btn" id="p-settings">Settings</button><button class="btn" id="p-map">Quit to map</button></div></div></section>
 
 <!-- photo mode -->
 <section class="scr" id="scr-photo"><div class="ph-top"><button class="btn icon" id="ph-close">✕</button><div id="ph-filters" class="tabs small"></div></div>

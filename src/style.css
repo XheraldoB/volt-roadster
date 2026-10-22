@@ -127,15 +127,6 @@ h4 { margin: 1em 0 0.3em; font-size: 0.85rem; letter-spacing: 0.08em; text-trans
 body.touch #touch { display: block; }
 #touch .tbtn { pointer-events: auto; position: relative; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.28); background: rgba(10, 16, 28, 0.38); color: #fff; font-size: 1.6rem; font-weight: 900; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); touch-action: none; }
 #touch .tbtn.on { background: rgba(0, 229, 255, 0.45); border-color: var(--c); transform: scale(0.94); }
-.tc-left { position: absolute; left: calc(var(--sl) + 2.5vw); bottom: calc(var(--sb) + 4vh); display: flex; gap: 2.2vw; }
-.tc-left .tbtn { width: 20vh; height: 20vh; max-width: 150px; max-height: 150px; }
-.tc-right { position: absolute; right: calc(var(--sr) + 2.5vw); bottom: calc(var(--sb) + 4vh); width: 40vh; height: 40vh; }
-.tc-right .tbtn { position: absolute !important; }
-.tc-right [data-ctl=boost] { width: 17vh; height: 17vh; right: 0; bottom: 0; background: rgba(255, 47, 146, 0.35); }
-.tc-right [data-ctl=jump] { width: 14vh; height: 14vh; right: 19vh; bottom: 0; }
-.tc-right [data-ctl=brake] { width: 12vh; height: 12vh; right: 34vh; bottom: 1vh; font-size: 0.75rem; }
-.tc-right [data-ctl=gas] { width: 14vh; height: 14vh; right: 2vh; bottom: 19vh; font-size: 0.9rem; }
-.tc-right .small { font-size: 0.75rem !important; }
 body.lefty .tc-left { left: auto; right: calc(var(--sr) + 2.5vw); } body.lefty .tc-right { right: auto; left: calc(var(--sl) + 2.5vw); transform: scaleX(-1); } body.lefty .tc-right .tbtn { transform: scaleX(-1); }
 body.touch .hud-bc { bottom: auto; top: 26vh; left: auto; right: 0; transform: none; }
 body.touch .hud-bc #spd { font-size: 2.3rem; }
@@ -208,3 +199,19 @@ body.photo #toasts { display: none; }
 .pack .buy { width: 100%; margin-top: 0.4em; font-size: 0.75rem; padding: 0.45em; }
 .soon { font-size: 0.6rem; background: #ff2f92; color: #fff; padding: 2px 6px; border-radius: 6px; vertical-align: middle; margin-left: 4px; letter-spacing: 0.05em; }
 #hud.rcs #thr-fill { background: linear-gradient(90deg, #e9f4ff, #9fd8ff); }
+.buy.confirm { background: linear-gradient(135deg, #39ff6a, #00c060); color: #002010; animation: pulse 0.8s ease-in-out infinite alternate; }
+
+/* ---- touch controls v3: big thumb zones (>= 12 mm), analog steering pad ---- */
+.tc-left { position: absolute; left: calc(var(--sl) + 1.5vw); bottom: calc(var(--sb) + 3vh); width: min(40vw, 420px); height: 40vh; min-height: 140px; }
+.tpad { pointer-events: auto; position: absolute; inset: 0; border-radius: 28px; border: 2px solid rgba(255, 255, 255, 0.22); background: rgba(10, 16, 28, 0.28); display: flex; align-items: center; justify-content: space-between; padding: 0 6%; color: rgba(255, 255, 255, 0.85); font-size: 2.2rem; touch-action: none; user-select: none; -webkit-user-select: none; }
+.tpad.on { border-color: var(--c); background: rgba(0, 229, 255, 0.14); }
+.tpad .knob { position: absolute; left: 50%; top: 50%; width: 22%; aspect-ratio: 1; margin: 0; translate: -50% -50%; border-radius: 50%; background: rgba(255, 255, 255, 0.18); border: 2px solid rgba(255, 255, 255, 0.5); transition: transform 0.04s linear; }
+.tc-right { position: absolute; right: calc(var(--sr) + 1.5vw); bottom: calc(var(--sb) + 3vh); width: 60vh; height: 46vh; min-width: 220px; min-height: 170px; }
+.tc-right .tbtn { position: absolute !important; display: flex; flex-direction: column; align-items: center; justify-content: center; touch-action: none; }
+.tc-right .tbtn small { font-size: 0.55rem; opacity: 0.8; letter-spacing: 0.1em; }
+.tc-right .gas { width: 24vh; height: 24vh; min-width: 88px; min-height: 88px; right: 0; bottom: 0; font-size: 1rem; background: rgba(57, 255, 106, 0.22); }
+.tc-right .brake { width: 20vh; height: 20vh; min-width: 74px; min-height: 74px; right: 26vh; bottom: 0; font-size: 0.85rem; background: rgba(255, 60, 60, 0.22); }
+.tc-right .jump { width: 19vh; height: 19vh; min-width: 70px; min-height: 70px; right: 1vh; bottom: 26vh; }
+.tc-right .boost { width: 16vh; height: 16vh; min-width: 60px; min-height: 60px; right: 22vh; bottom: 23vh; background: rgba(255, 47, 146, 0.35); }
+.tc-right .drift { width: 13vh; height: 13vh; min-width: 50px; min-height: 50px; right: 48vh; bottom: 3vh; font-size: 0.6rem; }
+body.lefty .tc-left { left: auto; right: calc(var(--sr) + 1.5vw); } body.lefty .tc-right { right: auto; left: calc(var(--sl) + 1.5vw); transform: scaleX(-1); } body.lefty .tc-right .tbtn { transform: scaleX(-1); }
