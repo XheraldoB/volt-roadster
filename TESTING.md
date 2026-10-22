@@ -311,3 +311,29 @@ B28 | Trivial | P2 | Results achievement toasts follow into the next race after 
 | m1 camera | VERIFIED + hardened | Real drive from the start line of m1 (no teleport) with a full hold: "PAD LANDING 5.9m", camera view clear before/after touchdown (qa-shots/r6-m1-real-landing.png, tools/m1cam.mjs). Added camera terrain collision anyway: pull in toward the car when terrain sits between them, and never below ground + 0.8 m |
 
 Suites: drive 62/62, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 17/17.
+
+## Regression round 6 (commit d0e7bc6)
+Build: d0e7bc6 built in a fresh worktree (/workspace/volt-roadster-qa-d0e7bc6) to /workspace/vr-dist-d0e7bc6 and previewed on :4173 (the old preview was stopped). The live site serves identical assets (index-CqJn-fKv.js, index-BaqPYPtX.css, three-zySor9gr.js, rapier-BYHDSJ8_.js). **Zero live cloud writes.** drive.test 62/62. Scripts: qa/hover5.mjs, qa/p7.mjs, qa/p7b.mjs; results in qa/p7*-results.json.
+
+| Item | Status | Evidence |
+|---|---|---|
+| B6 e1 full hold | FIXED | Lands s=1112.0 vs pad 1115.6 = **−3.6 m**, "PAD LANDING 3.7m" + CLEAN |
+| B6 m1 | FIXED | Sim: 708.7 vs 704.8 = **+3.9 m** (claimed +3.3), "PAD LANDING 3.9m". **Real browser flight, no teleport into the gap** (respawn 150 m before the gap, autopilot + held JUMP): identical result, land s=708.7, vy −2.2 m/s, PAD LANDING 3.9m, CLEAN (r7-m1-landing-cam.png: pickup on the pink pad, camera behind it, no clipping) |
+| B6 r1 | FIXED | 645.1 vs 645.8 = **−0.7 m** (claimed −0.3), "PERFECT LANDING!" |
+| B27 reserve descent | FIXED | e1 vy after fuel-out: −1.5, −2.8, −3.5, −3.9, −4.1, −4.3, −4.4, −4.5 ×5, touchdown −4.5. r1 settles at −4.5, touchdown −4.5. m1: fuel runs out only 2.6 m up, touchdown −2.8 (still ramping toward 4.5) |
+| B28 toasts after Retry | FIXED (tiny residue) | Fresh save, finish e1, real-touch Retry. The first poll in the new race still shows "Superstar" (queued second toast); gone within 0.4 s and nothing afterwards |
+| Camera collision | PASS with notes | Autopilot 45 s each, per-frame monitor. e3: min clearance above terrain 2.05 m, cam–car 7.8–16.7 m, 1 jump >3 m/frame. m3: 1.03 m, 7.8–16.6 m, 0 jumps. r3: 3.6 m, 0 jumps. 0 frames below terrain on every level. m1 real flight over Crater Hop: clearance ≥4.4 m. r1 gap jump: camera follows down the canyon (clearance 48–66 m over the rift), no clipping. Flip: camera came within 2.1 m of the car for 1 frame, back to 7–11 m within about 1 s. Respawn: single cut (one-frame jump of about 100 m, expected for a respawn), steady afterwards. The game has **no tunnels** (none in levels.js). Collision only tests the terrain heightmap, not track meshes (arches, loops, ramps), but no occlusion showed up in the screenshots |
+| RP1–RP8 smoke | PASS | drive.test 62/62. Touch: pad + jump + brake all at once, touchCancel clears everything. No page errors |
+
+B29 | Minor | P2 | Airborne horizon indicator sits dead centre over the car | Any jump or kicker, chase cam (r7-cam-m3.png, r7-respawn-cam.png, r7-flip-cam.png) | Indicator off to the side or translucent, so the car and its landing target stay visible | A 95 px opaque-edged circle covers the car (and on m3 the landing pad ahead) during every airborne moment, which is exactly when the player needs to see the car's attitude | Open
+B30 | Trivial | P2 | Landing score popups stack over the car | Real m1 full-hold landing (r7-m1-landing-cam.png) | Popups above the car | Four lines (AIR, CLEARED, PAD LANDING, CLEAN) plus values cover the pickup for about 1 s right after touchdown | Open
+
+## Fix round 7 (Game Dev, 2026-10-22, against QA round 6)
+
+| ID | Status | Notes |
+|---|---|---|
+| B29 | FIXED | Horizon gauge 96→64 px, 60% opacity, thinner ring, moved to the left edge just above the steer pad. Never over the car or pad (qa-shots/r7-hud-air.png) |
+| B30 | FIXED | Score popups sit at 22vh (above the car), newest on top, max 3, smaller, fade in 0.9 s (was 1.5 s). e1 full-hold landing shows all lines above the car (qa-shots/r7-hud-land.png, tools/hudshot.mjs) |
+| Camera vs track | DONE | Camera pull-in now also raycasts track pieces: Rapier ray against static colliders (road, walls, loops, ramps, kickers; ~3.5 µs/call) plus a three.js ray against the arches. New drive.test check: road blocks the ray, open sky clear |
+
+Suites: drive 63/63, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 17/17.
