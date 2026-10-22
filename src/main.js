@@ -34,7 +34,8 @@ applySettings();
 
 function applySettings() {
   const st = save.settings;
-  input.settings = { autoGas: st.autoGas, steer: st.steer, airRoll: st.airRoll, assist: st.assist, esc: st.esc !== false, sens: st.sens || 1 }; gfx.extraAO = !!st.extraAO;
+  document.body.classList.toggle('classic', (st.layout || 'classic') === 'classic');
+  input.settings = { autoGas: st.autoGas, steer: st.steer, layout: st.layout || 'classic', airRoll: st.airRoll, assist: st.assist, esc: st.esc !== false, sens: st.sens || 1 }; gfx.extraAO = !!st.extraAO;
   audio.setVolumes(st.music, st.sfx);
   document.body.classList.toggle('lefty', !!st.left);
   $('#fps').style.display = st.showFps ? 'block' : 'none';
@@ -65,11 +66,11 @@ function go(name) {
   document.body.dataset.screen = name;
 }
 /* toast queue: at most TOAST_MAX on screen; extras wait their turn (their timer starts only when shown), so none are lost */
-const TOAST_Q = [], TOAST_MAX = 2;
+const TOAST_Q = [], TOAST_MAX = 2; let TOAST_GEN = 0;
 function toastPump() { const box = $('#toasts'); while (TOAST_Q.length && box.children.length < TOAST_MAX) { const { html, ms, cls } = TOAST_Q.shift(); const t = document.createElement('div'); t.className = 'toast ' + cls; t.innerHTML = html; box.appendChild(t);
   setTimeout(() => t.classList.add('out'), ms); setTimeout(() => { t.remove(); toastPump(); }, ms + 500); } }
 function toast(html, ms = 2200, cls = '') { TOAST_Q.push({ html, ms, cls }); toastPump(); }
-function clearToasts() { TOAST_Q.length = 0; $('#toasts').replaceChildren(); }
+function clearToasts() { TOAST_GEN++; TOAST_Q.length = 0; $('#toasts').replaceChildren(); }
 function coinsBar() { $$('.coinval').forEach(e => e.textContent = nf(save.coins)); $$('.gemval').forEach(e => e.textContent = nf(save.gems || 0)); }
 const curCustom = () => save.vehicle === 'hauler' ? save.truckCustom : save.custom;
 
@@ -291,14 +292,16 @@ function renderSettings() {
   $('#set-body').innerHTML = `
     <h4>Graphics <small>(detected: ${esc(gfx.info.tier)} · ${esc((gfx.info.gpu || '').slice(0, 40))})</small></h4>${sel('quality', [['auto', 'Auto'], ['performance', 'Perf'], ['low', 'Low'], ['medium', 'Med'], ['high', 'High'], ['ultra', 'Ultra']])}<small class="muted">Performance = smoothest frame rate. Ultra = native resolution, light post. Resolution adapts automatically to hold a steady frame time.</small>${tog('extraAO', 'Extra: ambient occlusion (costly)')}
     <h4>Frame rate</h4>${sel('fpsCap', [[60, '60'], [120, '120'], [0, 'Unlimited']])}${tog('showFps', 'Show FPS counter')}
-    <h4>Controls</h4>${sel('steer', [['drag', 'Analog pad'], ['buttons', '◀ ▶ buttons'], ['tilt', 'Tilt phone']])}<label class="sl">Steering sensitivity <input type="range" min="0.5" max="1.6" step="0.05" data-r="sens" value="${st.sens ?? 1}"><b id="sens-v">${Math.round((st.sens ?? 1) * 100)}%</b></label>${tog('esc', 'Stability control / traction assist')}${tog('autoGas', 'Auto-accelerate (touch)')}${tog('left', 'Left-handed layout')}${tog('assist', 'Air auto-level + landing assist')}${tog('airRoll', 'Steer = barrel roll in air')}${tog('haptics', 'Haptics (vibration)')}
-    <h4>Camera & effects</h4>${sel('camMode', [['chase', 'Chase'], ['close', 'Close'], ['hood', 'Hood'], ['drone', 'Drone']])}${tog('shake', 'Camera shake')}${tog('bulletTime', 'Bullet-time on big jumps / near misses')}${tog('ghosts', 'Ghost replays')}
+    <h4>Controls</h4>${sel('layout', [['classic', 'Classic (◀ ▶ + pedals)'], ['pad', 'Analog pad']])}${(st.layout || 'classic') === 'pad' ? sel('steer', [['drag', 'Analog pad'], ['buttons', '◀ ▶ halves'], ['tilt', 'Tilt phone']]) : ''}<label class="sl">Steering sensitivity <input type="range" min="0.5" max="1.6" step="0.05" data-r="sens" value="${st.sens ?? 1}"><b id="sens-v">${Math.round((st.sens ?? 1) * 100)}%</b></label>${tog('esc', 'Stability control / traction assist')}${tog('autoGas', 'Auto-accelerate (touch)')}${tog('left', 'Left-handed layout')}${tog('assist', 'Air auto-level + landing assist')}${tog('airRoll', 'Steer = barrel roll in air')}${tog('haptics', 'Haptics (vibration)')}
+    <h4>Camera & effects</h4>${sel('camMode', [['close', 'Close chase'], ['chase', 'Far chase'], ['hood', 'Hood']])}${tog('shake', 'Camera shake')}${tog('bulletTime', 'Bullet-time on big jumps / near misses')}${tog('ghosts', 'Ghost replays')}
     <h4>Audio</h4><label class="sl">Music <input type="range" min="0" max="1" step="0.05" data-r="music" value="${st.music}"></label><label class="sl">SFX <input type="range" min="0" max="1" step="0.05" data-r="sfx" value="${st.sfx}"></label>
     <h4>Cloud save</h4><div id="cloud-box"></div>
+    <h4>Help</h4><button class="btn small" id="btn-tut">Show controls tutorial</button>
     <h4>Data</h4><button class="btn small danger" id="btn-reset">Reset progress</button>`;
   $$('#set-body .seg').forEach(seg => $$('button', seg).forEach(b => b.onclick = () => { click(); let v = b.dataset.v; if (seg.dataset.k === 'fpsCap') v = +v; st[seg.dataset.k] = v; if (seg.dataset.k === 'quality') { gfx.setQuality(tierName()); if (G.view) toast('Quality changes fully apply on the next level'); else refreshShow(); } persist(); applySettings(); renderSettings(); }));
   $$('#set-body [data-t]').forEach(c => c.onchange = () => { st[c.dataset.t] = c.checked; if (c.dataset.t === 'extraAO') { gfx.extraAO = c.checked; gfx.setQuality(tierName()); } persist(); applySettings(); if (G.view) G.view.opts.shake = st.shake; layoutTouch(); });
   $$('#set-body [data-r]').forEach(r => r.oninput = () => { st[r.dataset.r] = +r.value; if (r.dataset.r === 'sens') $('#sens-v').textContent = Math.round(st.sens * 100) + '%'; applySettings(); persist(); });
+  $('#btn-tut').onclick = () => { click(); save.settings.tutSeen = false; persist(); hideModal?.(); if (G.screen === 'race' || G.screen === 'pause') showTut(); else toast('The controls tutorial will show at your next race'); };
   $('#btn-reset').onclick = () => { if (!confirm('Erase all local progress? (Cloud copy stays restorable with your code)')) return; const cloud = save.cloud; save = P.defaultSave(); save.cloud = cloud; persist(true); hideModal(); toTitle(); };
   renderCloud();
 }
@@ -335,9 +338,11 @@ async function startLevel(level, mode) { clearToasts(); /* B28: results toasts n
     buildMinimap(view);
     go('race'); layoutTouch();
     if (save.settings.music > 0) { audio.startRadio(); }
-    if (!save.seenIntro) { save.seenIntro = true; persist(); toast(input.isTouch || matchMedia('(pointer:coarse)').matches ? 'Hold ◀ ▶ to steer · 🔥 boost · ⬆ jump/thrust<br>In the air: gas/brake = flip, steer = spin' : 'WASD / arrows · Shift boost · Space jump/thrust · C camera · P pause<br>In the air: W/S flip, A/D spin', 5200); }
+    if (!save.settings.tutSeen && (!navigator.webdriver || /[?&]tut=1/.test(location.search))) showTut(); /* automation (QA scripts) skips it unless ?tut=1 */
   } catch (e) { console.error(e); toast('Failed to load level: ' + esc(e.message), 4000); toMap(); }
 }
+function showTut() { G.tut = true; $('#tut').classList.add('on'); input.releaseAll(); }
+$('#tut-ok').onclick = () => { click(); G.tut = false; $('#tut').classList.remove('on'); save.settings.tutSeen = true; persist(); last = performance.now(); input.releaseAll(); };
 function stopRace() {
   if (G.view) { G.view.dispose(); G.view = null; }
   if (G.sim) { G.sim.dispose(); G.sim = null; }
@@ -369,7 +374,7 @@ function honk() {
   if (near && s.state === 'race') { s.addScore(50, 'HONK!', 'trick'); }
 }
 $('#btn-horn').onclick = () => { honk(); };
-function cycleCam() { if (!G.view) return; const modes = ['chase', 'close', 'hood', 'drone']; const c = G.view.cam; c.mode = modes[(modes.indexOf(c.mode) + 1) % modes.length]; c.init = false; save.settings.camMode = c.mode; persist(); toast('Camera: ' + c.mode, 900); }
+function cycleCam() { if (!G.view) return; const modes = ['close', 'chase', 'hood']; const c = G.view.cam; c.mode = modes[(modes.indexOf(c.mode) + 1) % modes.length]; c.init = false; save.settings.camMode = c.mode; persist(); toast('Camera: ' + ({ close: 'Close chase', chase: 'Far chase', hood: 'Hood' })[c.mode], 900); }
 function manualRespawn() { const s = G.sim; if (!s) return; s.softReset('button'); }
 input.onKey = code => {
   if (code === 'KeyP' || code === 'Escape') { if (G.photo) photoMode(false); else if (G.screen === 'race') pause(true); else if (G.screen === 'pause') pause(false); else if ($('.modal.on')) hideModal(); }
@@ -435,13 +440,14 @@ function showResults(r) {
     <div><div class="kv"><span>Coins collected</span><b>🪙 ${earn.coins}</b></div><div class="kv"><span>Score payout</span><b>🪙 ${earn.score}</b></div><div class="kv"><span>Side quest</span><b>${r.quest.done ? '🪙 ' + earn.quest : '✗'}</b></div><div class="kv"><span>New stars</span><b>🪙 ${earn.stars}</b></div>${earn.daily ? `<div class="kv"><span>Daily challenges</span><b>🪙 ${earn.daily}</b></div>` : ''}<div class="kv big"><span>EARNED</span><b>🪙 ${nf(earn.total)}</b></div>
     <div class="mini">Flips ${r.stat.flips} · Loops ${r.stat.loops} · Car jumps ${r.stat.carJumps} · Perfect ${r.stat.perfect} · Max air ${r.stat.maxAir.toFixed(1)}s · Crashes ${r.stat.crashes}</div></div></div>`;
   $('#res-next').style.display = next && r.ok ? '' : 'none'; $('#res-next').onclick = () => { click(); startLevel(next, G.mode); };
-  $('#res-retry').onclick = () => { click(); startLevel(level, G.mode); };
+  $('#res-retry').onclick = () => { click(); clearToasts(); startLevel(level, G.mode); };
   $('#res-map').onclick = () => { click(); toMap(level.planet); };
   $('#res-garage').onclick = () => { click(); stopRace(); toGarage(); };
   $('#res-photo').onclick = () => { click(); photoMode(true, true); };
   go('results'); coinsBar();
-  unlocked.forEach((a, i) => setTimeout(() => achToast(a), 900 + i * 700));
-  earn.dailyDone.forEach((c, i) => setTimeout(() => toast(`📅 Daily done: ${esc(c.text)} +🪙 ${c.reward}`, 2800, 'ach'), 600 + i * 600));
+  { const gen = TOAST_GEN; /* results toasts scheduled for later are dropped once the player leaves (Retry etc.) */
+  unlocked.forEach((a, i) => setTimeout(() => gen === TOAST_GEN && achToast(a), 900 + i * 700));
+  earn.dailyDone.forEach((c, i) => setTimeout(() => gen === TOAST_GEN && toast(`📅 Daily done: ${esc(c.text)} +🪙 ${c.reward}`, 2800, 'ach'), 600 + i * 600)); }
   if (r.rocket) setTimeout(() => toast('🚀 You drove onto the rocket! Tap a planet on the map to launch.', 3500), 400);
   cloudSync();
 }
@@ -515,7 +521,7 @@ function drawMinimap() {
 $('#minimap').onclick = () => { G.mapBig = !G.mapBig; $('#minimap').classList.toggle('big', G.mapBig); };
 function updateHud() {
   const s = G.sim, st = s.stats;
-  $('#spd').textContent = Math.round(s.speed * 3.6);
+  $('#spd').textContent = Math.round(s.speed * 3.6); { const gr = s.reversing || s.forwardSpeed < -0.5 ? 'R' : s.speed < 0.5 ? 'N' : 'D'; const ge = $('#gear'); if (ge.textContent !== gr) { ge.textContent = gr; ge.className = 'gear ' + gr; } }
   updateHorizon(s);
   const bat = s.battery / st.tank; $('#bat-fill').style.width = (bat * 100).toFixed(1) + '%'; $('#bat-val').textContent = Math.ceil(s.battery) + 's'; $('#bat').classList.toggle('low', bat < 0.2);
   $('#boost-fill').style.width = (s.boost / st.boostCap * 100).toFixed(1) + '%'; $('#thr-fill').style.width = (s.veh.rcs ? s.gas / st.gasCap : s.thrust / st.thrustCap) * 100 + '%';
@@ -553,12 +559,13 @@ function frame(now) {
     if (s.overGap && !s.grounded && s.air > 0.35 && !G.gapSlow.has(s.overGap)) { G.gapSlow.add(s.overGap); slowmo(1.3); }
     v.slowmo = G.slowT > 0 && save.settings.bulletTime;
     const inp = input.state(!s.grounded, dt);
-    const running = G.screen === 'race' && !G.paused && !blocked;
+    const running = G.screen === 'race' && !G.paused && !blocked && !G.tut;
     const sdt = running ? dt * G.timeScale : 0;
     if (running) s.update(sdt, inp); else if (G.screen === 'results') s.update(dt * 0.5, { steer: 0, throttle: 0, brake: 1, boost: false, jump: false, pitch: 0 });
     const evs = s.events.splice(0); handleEvents(evs);
     if (G.photo) { v.update(0, s.alpha || 0, inp, []); v.photoCamera(G.photo); }
-    else v.update(running || G.screen === 'results' ? sdt || dt * 0.5 : 0, s.alpha || 0, inp, evs);
+    else if (!G.tut) v.update(running || G.screen === 'results' ? sdt || dt * 0.5 : 0, s.alpha || 0, inp, evs);
+    else if (!v.cam.init) v.update(1 / 60, s.alpha || 0, {}, []); /* frame the car behind the tutorial card */ /* a dt=0 view update during the tutorial produced a NaN camera */
     if (running) { audio.coldGas = !!s.veh.rcs; audio.engine(s.speed * (s.veh.rcs ? 0.8 : 1), inp.throttle, s.boosting, s.drifting ? 1 : 0, s.thrusting, true); if (s.veh.rcs) { const k = (s.rcs.lift ? 1 : 0) + (Math.abs(s.rcs.px) > 0.05 ? 0.6 : 0) + (Math.abs(s.rcs.py) > 0.05 ? 0.6 : 0); audio.rcs(Math.min(1, k)); if (k && !G.rcsWas) { audio.rcsPuff(); haptic(save.settings.haptics, 6); } G.rcsWas = k > 0; } if (now - G.lastHud > 33) { G.lastHud = now; updateHud(); drawMinimap(); } }
     gfx.render(v.scene, cam);
     if (G.photo && G.photo.capture) { G.photo.capture = false; capturePhoto(); }
@@ -589,7 +596,7 @@ window.__game = {
   levels: () => LEVELS.map(l => ({ id: l.id, planet: l.planet, name: l.name, diff: l.diff })),
   loadLevel: (id, mode = 'race') => { const l = levelById(id); if (!l) throw new Error('no level ' + id); return startLevel(l, mode); },
   save: () => { persist(true); return JSON.parse(JSON.stringify(save)); }, load: () => { save = P.loadLocal(); applySettings(); return save; },
-  get state() { return save; }, toast, input, show, view: () => G.view, sim: () => G.sim, gfx, goto: name => ({ title: toTitle, map: toMap, garage: toGarage, base: toBase })[name]?.(), cloudSync, pause, applySettings: () => { applySettings(); layoutTouch(); },
+  get state() { return save; }, toast, get tut() { return !!G.tut; }, cycleCam, get camMode() { return G.view?.cam.mode; }, input, show, view: () => G.view, sim: () => G.sim, gfx, goto: name => ({ title: toTitle, map: toMap, garage: toGarage, base: toBase })[name]?.(), cloudSync, pause, applySettings: () => { applySettings(); layoutTouch(); },
 };
 
 // ---------------- boot ----------------

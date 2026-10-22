@@ -380,6 +380,7 @@ export class LevelView {
         if (f < 1) { const k2 = Math.max(0.2, f - 0.6 / dl); const np = org.clone().addScaledVector(toCam, k2); c.pos.copy(np); } }
       if (keep < 1) c.pos.lerpVectors(cp, c.pos, keep);
       const gy = T.heightAt(c.pos.x, c.pos.z) + 0.8; if (c.pos.y < gy) c.pos.y = gy; }
+    if (!Number.isFinite(c.pos.x + c.pos.y + c.pos.z + c.fov)) { c.pos.copy(pos); c.fov = 62; c.init = false; } /* never let a NaN camera black out the view */
     if (!c.init) { c.look.copy(look); c.init = true; }
     c.look.lerp(look, 1 - Math.exp(-dt * 14));
     c.shake = Math.max(0, c.shake - dt * 2.2);

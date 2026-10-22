@@ -525,19 +525,26 @@
   }
  },
  {
-  "id": "B31 all 46 level/vehicle runs: finish at speed, smooth auto-stop on the run-off, never off the end or through the world",
+  "id": "B31 all 46 level/vehicle runs: finish at speed, gentle (<= ~1 g) auto-stop on the run-off, never off the end or through the world",
   "pass": true,
   "info": {
    "fails": [],
    "worst": {
-    "decel": 28,
-    "lvl": "r6",
+    "decel": 7,
+    "lvl": "r7",
     "veh": "roadster"
    }
   }
  },
  {
   "id": "B32 reverse + steer round the start back-stop stays on the ground (all levels)",
+  "pass": true,
+  "info": {
+   "fails": []
+  }
+ },
+ {
+  "id": "B32 ground beside the start (s 13.5, x ±9.5/±14) is solid on all levels",
   "pass": true,
   "info": {
    "fails": []

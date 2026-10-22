@@ -242,3 +242,34 @@ body.touch .hud-btns .btn { min-width: max(54px, 12.5vh); min-height: max(54px, 
 #horizon { left: calc(var(--sl, 0px) + 18px); top: auto; bottom: calc(var(--sb, 0px) + 45vh); width: 64px; height: 64px; margin: 0; border-width: 1.5px; }
 #horizon.on { opacity: 0.6; }
 #horizon .hz-dot { width: 8px; height: 8px; margin: -4px; }
+
+/* ---------- R28: classic mobile racing layout (default) ---------- */
+.tc-right .rev { width: 13vh; height: 13vh; min-width: 54px; min-height: 54px; right: 48vh; bottom: 17vh; font-size: 1.2rem; background: rgba(255, 160, 40, 0.28); }
+.tpad .split { display: none; }
+body.classic .tc-left { width: min(30vw, 300px); height: 30vh; min-height: 120px; bottom: calc(var(--sb) + 4vh); }
+body.classic .tpad { background: none; border: none; gap: 3vw; }
+body.classic .tpad .knob { display: none; }
+body.classic .tpad .tl, body.classic .tpad .tr { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; border-radius: 22px; border: 2px solid rgba(255, 255, 255, 0.3); background: rgba(10, 16, 28, 0.42); color: #fff; }
+body.classic .tpad.on .tl, body.classic .tpad.on .tr { background: rgba(10, 16, 28, 0.42); }
+body.classic .tpad.L .tl, body.classic .tpad.R .tr { background: rgba(0, 229, 255, 0.4); border-color: var(--c); }
+body.classic .tc-right { width: 58vh; height: 62vh; }
+#touch body.classic .tc-right .tbtn, body.classic #touch .tc-right .tbtn { border-radius: 18px; }
+body.classic .tc-right .gas { width: 17vh; height: 38vh; min-width: 72px; min-height: 150px; right: 0; bottom: 0; font-size: 1.1rem; background: rgba(57, 255, 106, 0.3); border-color: rgba(57, 255, 106, 0.7); }
+body.classic .tc-right .brake { width: 17vh; height: 26vh; min-width: 72px; min-height: 104px; right: 19vh; bottom: 0; font-size: 0.95rem; background: rgba(255, 60, 60, 0.3); border-color: rgba(255, 90, 90, 0.7); }
+body.classic .tc-right .rev { width: 17vh; height: 13vh; min-width: 72px; min-height: 54px; right: 19vh; bottom: 28vh; }
+body.classic #touch .tc-right .boost, body.classic #touch .tc-right .jump, body.classic #touch .tc-right .drift { width: 15vh; height: 15vh; min-width: 60px; min-height: 60px; border-radius: 50%; }
+body.classic .tc-right .boost { right: 38vh; bottom: 17vh; }
+body.classic .tc-right .drift { right: 38vh; bottom: 0; font-size: 0.7rem; }
+body.classic .tc-right .jump { right: 38vh; bottom: 34vh; }
+body.classic .hint-rev { display: block; }
+/* gear indicator */
+.spd-row { display: flex; align-items: baseline; justify-content: center; gap: 0.35em; }
+.gear { font-weight: 900; font-size: 1.3rem; min-width: 1.4em; text-align: center; border-radius: 6px; padding: 0 0.25em; border: 2px solid currentColor; color: #9aa4b5; line-height: 1.2; }
+.gear.D { color: #39ff6a; } .gear.R { color: #fff; background: #ff3b3b; border-color: #ff3b3b; }
+/* first-run controls tutorial */
+#tut { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(4, 8, 16, 0.72); }
+#tut.on { display: flex; }
+.tut-card { background: rgba(10, 16, 28, 0.96); border: 1px solid var(--line); border-radius: 18px; padding: 1.1em 1.4em; max-width: 86vw; text-align: center; display: flex; flex-direction: column; gap: 0.7em; align-items: center; }
+.tut-card h2 { margin: 0; }
+.tut-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35em 1.4em; text-align: left; font-size: 0.85rem; }
+.tut-grid b { display: inline-block; min-width: 3.2em; color: var(--c); } .tut-grid b.g { color: #39ff6a; } .tut-grid b.r { color: #ff5a5a; }

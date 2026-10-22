@@ -45,14 +45,14 @@
   "pass": true,
   "info": {
    "s1": 24,
-   "s2": 26.7
+   "s2": 25.9
   }
  },
  {
   "id": "RP multitouch gas + analog steer pad",
   "pass": true,
   "info": {
-   "steer": 0.780749138847414
+   "steer": 0.9776292281438345
   }
  },
  {
@@ -61,6 +61,7 @@
   "info": {
    "steer": 0,
    "throttle": 0,
+   "reverse": false,
    "brake": 0,
    "handbrake": false,
    "boost": false,
@@ -91,16 +92,16 @@
   "pass": true,
   "info": {
    "s": 21.8,
-   "t": 0.025
+   "t": 0.016666666666666666
   }
  },
  {
   "id": "RP10 frame-time ring buffer",
   "pass": true,
   "info": {
-   "n": 166,
-   "p50": 350.1,
-   "p95": 699.9
+   "n": 168,
+   "p50": 316.7,
+   "p95": 666.7
   }
  },
  {
@@ -131,6 +132,81 @@
   "info": {
    "screen": "pause",
    "vis": true
+  }
+ },
+ {
+  "id": "R28 first-run controls tutorial shows and holds the race",
+  "pass": true,
+  "info": {
+   "tut": true,
+   "s": 0
+  }
+ },
+ {
+  "id": "R28 tutorial dismisses and is remembered",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "R28 classic layout is default: arrows left, GAS/BRAKE pedals right, all visible",
+  "pass": true,
+  "info": {
+   "gas": {
+    "x": 838,
+    "y": 250,
+    "w": 72,
+    "h": 161,
+    "vis": true
+   },
+   "brake": {
+    "x": 758,
+    "y": 301,
+    "w": 72,
+    "h": 110,
+    "vis": true
+   }
+  }
+ },
+ {
+  "id": "R28 every control is thumb-sized (>= 9 mm on the phone)",
+  "pass": true,
+  "info": {
+   "gas": 12.2,
+   "brake": 12.2,
+   "rev": 9.3,
+   "boost": 10.8,
+   "drift": 10.8,
+   "jump": 10.8,
+   "left": 18.3,
+   "right": 18.3,
+   "cam": 9.1
+  }
+ },
+ {
+  "id": "R28 GAS drives in D, R pedal reverses with an R gear on the HUD",
+  "pass": true,
+  "info": {
+   "g1": {
+    "s": 22.11319923400879,
+    "gear": "D"
+   },
+   "g2": {
+    "s": 24.57172203063965,
+    "gear": "R",
+    "rev": true
+   }
+  }
+ },
+ {
+  "id": "R28 camera button cycles close / far / hood and the choice is saved",
+  "pass": true,
+  "info": {
+   "cams": [
+    "hood",
+    "close",
+    "chase"
+   ],
+   "kept": "chase"
   }
  },
  {

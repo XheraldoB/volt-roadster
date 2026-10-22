@@ -1,7 +1,7 @@
 {
   "name": "Volt Roadster",
   "short_name": "Volt Roadster",
-  "description": "3D electric hypercar stunt racer across Earth, the Moon and Mars.",
+  "description": "3D electric hypercar stunt racer across Earth, the Moon and Mars. Classic mobile racing controls: steer left, GAS/BRAKE/R pedals right, three cameras.",
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",

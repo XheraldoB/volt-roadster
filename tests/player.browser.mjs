@@ -55,6 +55,29 @@ ok('RP10 frame-time ring buffer', ft.length > 30, { n: ft.length, p50: srt[srt.l
     await p2.screenshot({ path: 'qa-shots/r5-pause-tap.png' }); await p2.evaluate(() => window.__game.pause(false)); await p2.waitForTimeout(300); }
   await c2.close(); }
 mkdirSync('qa-shots', { recursive: true });
+// R28: classic layout, R pedal + gear, cameras, tutorial (OnePlus 15, 924x424 DPR3, fresh save)
+{ const c3 = await browser.newContext({ viewport: { width: 924, height: 424 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }); const p3 = await c3.newPage(); const G3 = (f, a) => p3.evaluate(f, a);
+  await p3.goto(`${BASE}/?q=performance&tut=1`); await p3.waitForFunction(() => window.__game?.screen === 'title', null, { timeout: 60000 });
+  await G3(() => window.__game.loadLevel('e1')); await p3.waitForFunction(() => window.__game.screen === 'race', null, { timeout: 60000 }); await p3.waitForTimeout(800);
+  const t0 = await G3(() => ({ tut: window.__game.tut, s: window.__game.sim().time })); await p3.waitForTimeout(800); const t1 = await G3(() => window.__game.sim().time);
+  ok('R28 first-run controls tutorial shows and holds the race', t0.tut && t0.s === t1, t0); mkdirSync('qa-shots', { recursive: true }); await p3.screenshot({ path: 'qa-shots/r28-tutorial.png' });
+  await p3.tap('#tut-ok'); await p3.waitForTimeout(300); ok('R28 tutorial dismisses and is remembered', !(await G3(() => window.__game.tut)) && (await G3(() => window.__game.state.settings.tutSeen)), {});
+  const lay = await G3(() => { const r = s => { const b = document.querySelector(s).getBoundingClientRect(); return { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height), vis: b.width > 0 && getComputedStyle(document.querySelector(s)).display !== 'none' }; };
+    return { classic: document.body.classList.contains('classic'), gas: r('[data-ctl="gas"]'), brake: r('[data-ctl="brake"]'), rev: r('[data-ctl="rev"]'), boost: r('[data-ctl="boost"]'), drift: r('[data-ctl="drift"]'), jump: r('[data-ctl="jump"]'), left: r('.tpad .tl'), right: r('.tpad .tr'), cam: r('#btn-cam'), gear: document.querySelector('#gear').textContent }; });
+  const mm = v => +(v * 3 / 450 * 25.4).toFixed(1); const sizes = Object.fromEntries(['gas', 'brake', 'rev', 'boost', 'drift', 'jump', 'left', 'right', 'cam'].map(k => [k, mm(Math.min(lay[k].w, lay[k].h))]));
+  ok('R28 classic layout is default: arrows left, GAS/BRAKE pedals right, all visible', lay.classic && lay.left.vis && lay.gas.vis && lay.brake.vis && lay.rev.vis && lay.left.x < 300 && lay.gas.x > 700 && lay.gas.h > lay.gas.w, { gas: lay.gas, brake: lay.brake });
+  ok('R28 every control is thumb-sized (>= 9 mm on the phone)', Object.values(sizes).every(v => v >= 9), sizes);
+  const hz = async (sel, ms) => { const b = await (await p3.$(sel)).boundingBox(); const cdp = await c3.newCDPSession(p3); const x = b.x + b.width / 2, y = b.y + b.height / 2; await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 7 }] }); await p3.waitForTimeout(ms); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
+  await p3.waitForFunction(() => window.__game.car?.state === 'race', null, { timeout: 30000 });
+  await hz('[data-ctl="gas"]', 1500); const g1 = await G3(() => ({ s: window.__game.car.s, gear: document.querySelector('#gear').textContent })); await p3.screenshot({ path: 'qa-shots/r28-hud-classic.png' });
+  await hz('.tpad .tl', 600); await p3.waitForTimeout(100);
+  const cdp = await c3.newCDPSession(p3); const rb = await (await p3.$('[data-ctl="rev"]')).boundingBox(); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: rb.x + rb.width / 2, y: rb.y + rb.height / 2, id: 9 }] });
+  await p3.waitForTimeout(4500); const g2 = await G3(() => ({ s: window.__game.car.s, gear: document.querySelector('#gear').textContent, rev: window.__game.sim().reversing })); await p3.screenshot({ path: 'qa-shots/r28-hud-reverse.png' }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  ok('R28 GAS drives in D, R pedal reverses with an R gear on the HUD', g1.gear === 'D' && g2.rev && g2.gear === 'R', { g1, g2 });
+  const cams = []; for (let i = 0; i < 3; i++) { await p3.tap('#btn-cam'); await p3.waitForTimeout(900); const m = await G3(() => window.__game.camMode); cams.push(m); await p3.screenshot({ path: `qa-shots/r28-cam-${m}.png` }); }
+  const saved = await G3(() => window.__game.state.settings.camMode); await p3.reload(); await p3.waitForFunction(() => window.__game?.screen === 'title', null, { timeout: 60000 }); const kept = await G3(() => window.__game.state.settings.camMode);
+  ok('R28 camera button cycles close / far / hood and the choice is saved', new Set(cams).size === 3 && cams.every(c => ['close', 'chase', 'hood'].includes(c)) && kept === saved, { cams, kept });
+  await c3.close(); }
 { const q = await G(async () => { const box = document.querySelector('#toasts'); box.replaceChildren(); let seen = 0, maxOn = 0; const mo = new MutationObserver(() => { seen += 0; maxOn = Math.max(maxOn, box.children.length); }); mo.observe(box, { childList: true });
     const shown = new Set(); const mo2 = new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => shown.add(n.textContent)))); mo2.observe(box, { childList: true });
     for (let i = 0; i < 5; i++) window.__game.toast('Q' + i, 300); await new Promise(r => setTimeout(r, 4000)); mo.disconnect(); mo2.disconnect(); return { maxOn, shown: [...shown] }; });

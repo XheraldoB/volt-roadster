@@ -376,3 +376,43 @@ B32 | Minor | P2 | Reversing past the start back-stop around its end falls throu
 | Toast queue | FIXED | Toasts are queued: max 2 on screen, and an extra toast's timer starts only when it shows, so none are lost; cleared on race start. player.browser: 5 rapid toasts → max 2 visible, all 5 shown |
 
 Suites: drive 74/74, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 18/18.
+
+## Real-player checklist additions (owner feedback, Oct 22 2026, after playing)
+- RP12 Reverse discoverability: a new player finds and uses reverse within 5 s, without instructions (a dedicated, labelled reverse control, or BRAKE turning into REV in a way the HUD makes clear).
+- RP13 Classic control layout: standard mobile racing gamepad (steering on the left; gas, brake and reverse on the right; jump/boost/drift as clear buttons), labelled, at least 9 mm, no overlaps, comfortable for the thumbs at 2772x1272.
+- RP14 Camera views: 2-3 selectable views (for example close chase, far chase, hood/bumper), switched with an on-screen button during a race, choice saved across reloads, no clipping in any view, including loops, canyons and flips.
+- RP15 "Normal game" feel: menus, flow and controls feel like a standard, polished mobile racing game.
+
+## Final regression (RC 3b6c799)
+**Verdict: PASS for release, with 2 open Minor issues (B32 still open, new B33). No Blocker or Major open.**
+
+Build: 3b6c799 built in a fresh worktree (/workspace/volt-roadster-qa-3b6c799) to /workspace/vr-dist-3b6c799 and previewed on :4173 (the old preview was stopped). The live site serves identical assets (index-CeBXvjQ7.js, index-B8ksIhuO.css, three-zySor9gr.js, rapier-BYHDSJ8_.js). GitHub: `git ls-remote origin` shows refs/heads/master = 3b6c79938eaf… (= RC). **Zero live cloud writes.** drive.test 74/74. Scripts: qa/fallstress.mjs, qa/bw-trace.mjs, qa/hover5.mjs, qa/p9.mjs, qa/p9b.mjs, qa/p9-live.mjs; results in qa/fallstress-results.json and qa/p9*-results.json.
+
+| Item | Status | Evidence |
+|---|---|---|
+| B31 after-finish fall | FIXED | fallstress after-finish: **0/46 kill-plane hits**, 0 below terrain, max fall 0.1 s. Browser full-speed finish, roadster: e1 at 180 km/h stops in 65.7 m / 2.8 s (s 2579→2644, track end 2779). r6 at 172 km/h stops in 60.8 m / 2.7 s. Camera stays 10–16 m behind, car stays on the road (r9-finish-r6-a/b.png) |
+| Finish stop feel | **B33 (Minor)** | Deceleration jumps from 0 to **2.35 g within one 1/120 s step** at the line (peak 2.38 g e1, 2.26 g r6; GM's "2.9 g" not reproduced), then tapers 2.3→1.7 g. No ramp-in, so it reads as a wall-like slam, about 2× the car's own braking (≈1.2 g). Mostly hidden behind the results panel, which shows within about 0.3 s |
+| B32 start back-stop | **STILL OPEN** | Back-stop reverse-around: **8/46 still drop through the ground** (same as before). Trace e1: the car is at s≈13–14, x≈9–10, i.e. *in front of* the wall (s=2), and falls through terrain (heightAt +5.3 → −33 m), so the cause is a terrain/collider hole beside the road near the start, not the wall width. A crash + respawn catches it after about 1.6 s. Safe |
+| Toast queue | PASS (small residue) | Fresh save e1 finish: toasts seen = tutorial hint, First Finish, Superstar. None lost, max visible 1 (≤2), top-right, `pointer-events: none`, no button overlap. After a real-touch Retry, "Superstar" shows for about 0.4–0.8 s at race start, then clears |
+| Kill plane / NaN | PASS | 414 scenarios: 0 NaN, 1 kill-plane hit (flip at a gap edge, respawned), max fall 11 s (Moon edge hops above terrain) |
+| B6/B27 spot check | PASS | e1 PAD LANDING 3.7 m, r1 PERFECT, m1 PAD LANDING 3.9 m. Reserve descent −4.5 m/s on e1/r1 |
+| B7–B30 spot check | PASS | drive.test 74/74 (B7, B11, B12, B15, B16, B22, B23 and RP2–RP7 checks included). Live: B13 code with leading space restores (coins 4242). B14: 0 /api requests on boot/race/quit, restore = 1 GET only. B29/B30/B26/B25/B24 unchanged code paths, retested last round |
+| RP1–RP8 smoke | PASS | Touch: pad + jump + brake all at once, touchCancel clears everything. No page errors locally |
+| Live boot | PASS | 3.6 s boot, 0 console errors, 0 page errors, 0 HTTP errors, 0 writes |
+
+B33 | Minor | P2 | Finish auto-brake slams on instantly (~2.35 g in one physics step) | Roadster, finish e1 or r6 at full boost (`qa/p9.mjs`), record speed per fixed step | A short ramp-in (≈0.3–0.5 s) to a decel no harsher than the car's normal brakes | 0 → 2.35 g between consecutive 1/120 s steps, peak 2.38 g (e1) / 2.26 g (r6), tapering to 1.7 g. Stop 61–66 m / 2.7–2.8 s. Car and camera stay stable; the slam is partly hidden by the results panel | Open
+
+## Fix round 10 (Game Dev, 2026-10-22): R28 user playtest + B32/B33 + toast-after-Retry
+
+| Item | Status | Notes |
+|---|---|---|
+| R28.1 Reverse | DONE | Dedicated orange **R / REVERSE** pedal above BRAKE; BRAKE labelled "hold = R"; D/N/R gear badge next to the speed (red R). Browser: R pedal → `reversing`, gear R (qa-shots/r28-hud-reverse.png) |
+| R28.2 Classic layout | DONE (default) | ◀ ▶ arrow buttons left; tall GAS and BRAKE pedals right; R above BRAKE; boost / drift / jump column beside the pedals. Settings → Controls: Classic or Analog pad (then pad/halves/tilt). Old saves migrate to Classic with auto-gas off. Thumb sizes on OP15 (DPR3): GAS/BRAKE 12.2 mm, arrows 18.3, R 9.3, boost/drift/jump 10.8, camera 9.1 |
+| R28.3 Cameras | DONE | 🎥 cycles Close chase → Far chase → Hood, saved in settings (survives reload); Settings lists the same three (qa-shots/r28-cam-close/chase/hood.png) |
+| R28.4 Polish | DONE | First-run "How to drive" overlay holds the race until "Got it" (remembered; Settings → Help re-shows it; automation skips it unless `?tut=1`). Title menu PLAY / Garage / Base / Settings unchanged |
+| Finish stop | DONE | ≤ 1 g (cap 9.8 m/s²), ramped in over 0.5 s (B33), run-off 300 m; wheel brakes off until nearly stopped. 46/46 runs: worst 7 m/s², ≤ 4 m/s² in the first 0.1 s |
+| B32 hole | FIXED | Solid road-level ground slab (road ± 30 m, 50 m long) at both ends. New test drops the car at s 13.5, x ±9.5/±14 on all levels (fails at −30.9 m without the slab) |
+| Toast after Retry | FIXED | Results toasts scheduled for later are dropped when leaving (generation counter) and Retry clears instantly |
+| NaN camera | FIXED | Found while testing: a dt=0 view update during the tutorial made the camera NaN (black 3D view). View no longer updates while the tutorial is up, plus a NaN guard |
+
+Suites: drive 75/75, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 24/24 (7 new R28 checks).

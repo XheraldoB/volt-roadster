@@ -19,6 +19,7 @@ export const ESC = { yawGain: 1.15, yawSlack: 0.12, rate: 7, slide: 2.2 };
 export const AUTO_RIGHT_T = 0.9;
 export const LAND_CLEAN = 9, LAND_HARD = 14, LAND_CRASH = 23; // m/s along the surface normal, scaled by sqrt(toughness)
 export const WALL_LOSS = 13, WALL_PENALTY = 250;
+export const FINISH_MAX_DEC = 9.8;
 export const KILL_MARGIN = 60, MAX_LINVEL = 160, MAX_ANGVEL = 40; /* kill plane margin (m), runaway caps (m/s, rad/s) */
 export const HOVER_SINK = -1.2, HOVER_K = 2.6, HOVER_MAX = 2.6, HOVER_DRAG = 0.5, HOVER_FADE = 3.0, HOVER_RESERVE_SINK = -4.5, HOVER_RESERVE_MAX = 1.5; // B6: hover bleeds horizontal speed (1/s) and fades out over HOVER_FADE s when the gas runs dry
  // cold-gas hover: target sink m/s, gain 1/s, max lift in g
@@ -90,6 +91,8 @@ export class Sim {
     this.terrainHandle = this.terrainCollider.handle;
     /* back-stop: an invisible wall across the road at s=2 so reversing past the start line can't drive off the end of the track into the void */
     /* B31/B32: start and end back-stops span the full road plus wide shoulders, tall and thick enough that nothing can squeeze round or through */
+    /* B32: solid ground slabs at road level around both back-stops, so coarse-terrain holes beside the road there can't swallow the car */
+    for (const cs of [22, (this.tr.roadEnd ?? this.tr.length) - 25]) { const P = poseAt(this.tr, cs, 0, 0), rb = w.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(P.p.x, P.p.y, P.p.z).setRotation(P.q)); w.createCollider(R.ColliderDesc.cuboid(ROAD_W / 2 + 30, 0.5, 25).setTranslation(0, -0.52, 0).setFriction(0.9), rb); }
     for (const bs of [2, (this.tr.roadEnd ?? this.tr.length) - 3]) { const P = poseAt(this.tr, bs, 0, 0), rb = w.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(P.p.x, P.p.y, P.p.z).setRotation(P.q)); w.createCollider(R.ColliderDesc.cuboid(ROAD_W / 2 + 30, 12, 1.5).setTranslation(0, 6, 0), rb); }
     /* kill plane: anything below the lowest terrain/track point minus a margin, or far outside the world, is respawned */
     { let lo = Infinity; for (let i = 1; i < ta.pos.length; i += 3) lo = Math.min(lo, ta.pos[i]); for (const a of this.tr.samples) lo = Math.min(lo, a.p.y);
@@ -407,9 +410,10 @@ export class Sim {
     const thr = control ? (inp.throttle || 0) : (this.state === 'countdown' ? 0 : 0);
     /* B31: after the finish, inputs are locked and the car does a smooth cinematic stop before the end of the run-off */
     if (this.state === 'finished' && grounded) { const v = b.linvel(), hs = Math.hypot(v.x, v.z); if (hs > 0.05) {
-      const room = Math.max(8, (this.tr.roadEnd ?? this.tr.length) - 25 - this.prog.s), dec = Math.min(30, Math.max(4.5, hs * hs / (2 * room)) * (1 + 0.5 * Math.min(1, hs / 40)));
+      this.finT = (this.finT || 0) + h; /* B33: the finish brake ramps in over ~0.5 s */
+      const room = Math.max(8, (this.tr.roadEnd ?? this.tr.length) - 25 - this.prog.s), dec = Math.min(FINISH_MAX_DEC, Math.max(3, hs * hs / (2 * room))) * Math.min(1, this.finT / 0.5); /* R28: gentle, at most ~1 g */
       const k = Math.max(0, hs - dec * h) / hs; b.setLinvel({ x: v.x * k, y: v.y, z: v.z * k }, true); } }
-    const brk = control ? (inp.brake || 0) : (running ? 0.2 : 1);
+    const brk = control ? (inp.brake || 0) : this.state === 'finished' ? (this.speed < 0.6 ? 1 : 0) /* R28: the gentle finish stop does the slowing */ : (running ? 0.2 : 1);
     const boosting = control && inp.boost && (this.wasBoost ? this.boost > 0.01 : this.boost > 0.2);
     const vmax = st.vmax * (boosting ? 1.28 : 1);
     let drive = 0;
