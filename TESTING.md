@@ -350,3 +350,29 @@ Root cause (reproduced headless, scratch/rev.mjs): after the race ends on batter
 | Tests | drive.test +9: missed m1 canyon jump + battery-out over 120 s stays above the plane; respawn in countdown/race/finished/free roam; out-of-bounds respawn; velocity clamp; reverse-past-start (both vehicles) stays on the track |
 
 Suites: drive 72/72, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 17/17.
+
+## Regression rounds 7-8 (commit 0d16de3)
+Build: 0d16de3 built in a fresh worktree (/workspace/volt-roadster-qa-0d16de3) to /workspace/vr-dist-0d16de3 and previewed on :4173 (the old preview was stopped). The live site serves identical assets (index-BcHLsd_M.js, index-BTV1Z1xR.css, three-zySor9gr.js, rapier-BYHDSJ8_.js). **Zero live cloud writes.** drive.test 72/72. Scripts: qa/fallstress.mjs (414 sim scenarios), qa/bw-trace.mjs, qa/p8.mjs; results in qa/fallstress-results.json and qa/p8-results.json.
+
+| Item | Status | Evidence |
+|---|---|---|
+| B29 horizon ring | FIXED | DPR3, e1 jump: #horizon is 64x64 CSS at x=28, y=159, opacity 0.6. The car is at screen x≈403, so no overlap (r8-air-ring-dpr3.png) |
+| B30 landing popups | FIXED | Popups at y 114–184, centred on x≈433–491; car at (462, 245), so all popups sit above the car (r8-landing-pops-dpr3.png) |
+| Camera vs track pieces | PASS | Autopilot through loops on e1 (s 440), m2 (1909), r2 (2101). Camera never closer than 10.1 m, 0 frames inside the car, no clipping into the loop shell. The camera pops recorded were the teleport to the run-up plus catch-up, not loop-related. Inside-loop stills look clean (r8-inside-loop-e1/m2/r2.png) |
+| Kill plane / no infinite fall | PASS (safety net works) | 414 scenarios: 23 levels × 2 vehicles × {reverse into the back-stop, after-finish drive-off, 4 map edges with boost+jumps, 150 m/s slam down, 150 m/s sideways into terrain, flip at a gap edge}. **0 NaN, 0 infinite falls, 0 softlocks.** Every car ended back on or near the track. Longest continuous fall 11.9 s (Moon after finish). Pause mid-fall over the e1 canyon: y frozen exactly for 3 s, resume, then crash + respawn on the road |
+| Fall-through-world | **NOT fully fixed** | See B31 (after finish) and B32 (start area). The kill plane catches them, but the car still visibly drops through the ground |
+| RP1–RP8 smoke | PASS | drive.test 72/72. Touch: pad + jump + brake all at once, touchCancel clears everything. No page errors |
+| Free roam | N/A | The game has no free-roam mode (Sim modes are race/trial only). Map edges were tested in trial mode instead |
+
+B31 | Major | P2 | After finishing, the car rolls off the end of the track and falls through the world behind the results screen (every level) | Finish any level at speed (e1: `sim().respawnAt(end-80, 40)` with autoGas). Results screen shows and the game applies brake=1 at half speed | Car stops on the road past the finish (end back-stop like the start), or is frozen | e1 browser: car passes s≈2620 (track end), falls from −1.3 to −100 m while terrain is +9…12 m above, for about 10 s, then the kill plane respawns it to s 2328, where it creeps backwards. Sim: 45/46 level×vehicle runs hit the kill plane after finish, up to 292 m below terrain (e4) and 11.9 s of falling (Moon). The camera follows it down under the panel. qa/bw-trace.mjs `<lvl> fin`, qa/fallstress-results.json | Open
+B32 | Minor | P2 | Reversing past the start back-stop around its end falls through the terrain beside the road | `node qa/bw-trace.mjs e1 back` (reverse + steer from s=30) | Back-stop spans the drivable width, or terrain is solid beside the start | The car reverses to s≈13 at x≈9–12 (past the stop's 11 m half-width), drops through ground whose heightAt is +5.3 to −33 m, and the "fall" crash respawns it after about 1.6 s. Seen in 9/46 back-stop runs (up to 54 m below terrain). Safe but a visible fall-through | Open
+
+## Fix round 9 (Game Dev, 2026-10-22, against QA rounds 7–8)
+
+| ID | Status | Notes |
+|---|---|---|
+| B31 | FIXED | Every track gets a 160 m flat run-off past the old end (`tr.roadEnd`; `tr.length` keeps its old meaning so scoring/stars are unchanged; terrain bounds ignore the run-off so the seeded terrain is identical). On finish, inputs lock and the car does a smooth stop sized to the room left (≥4.5 m/s², capped 30). A wide end back-stop wall (road + 30 m shoulders each side, 24 m tall) sits at the run-off end. drive.test: all 46 level×vehicle runs cross the finish boosting and stop on the run-off, 0 kill-plane hits, worst peak decel 28 m/s² (r6 roadster) |
+| B32 | FIXED | Start back-stop widened to road + 30 m shoulders each side, 24 m tall, 3 m thick. drive.test: reverse + full steer either way from the start on all 23 levels stays on the ground (meteor hits excluded) |
+| Toast queue | FIXED | Toasts are queued: max 2 on screen, and an extra toast's timer starts only when it shows, so none are lost; cleared on race start. player.browser: 5 rapid toasts → max 2 visible, all 5 shown |
+
+Suites: drive 74/74, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 18/18.
