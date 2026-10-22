@@ -374,7 +374,7 @@ input.onKey = code => {
 audio.onTrack = info => { $('#radio').textContent = `📻 ${info.station} — ${info.name}`; $('#radio').classList.add('show'); clearTimeout(G.radioT); G.radioT = setTimeout(() => $('#radio').classList.remove('show'), 4000); };
 
 // popups
-function popup(text, pts, kind) { const el = document.createElement('div'); el.className = 'pop ' + (kind || ''); el.innerHTML = `${esc(text)}${pts ? `<small>+${nf(pts)}</small>` : ''}`; $('#pops').appendChild(el); setTimeout(() => el.remove(), 1500); while ($('#pops').children.length > 4) $('#pops').firstChild.remove(); }
+function popup(text, pts, kind) { const el = document.createElement('div'); el.className = 'pop ' + (kind || ''); el.innerHTML = `${esc(text)}${pts ? `<small>+${nf(pts)}</small>` : ''}`; $('#pops').appendChild(el); setTimeout(() => el.remove(), 900); while ($('#pops').children.length > 3) $('#pops').firstChild.remove(); }
 function bigText(t, ms = 900, cls = '') { const el = $('#big'); el.className = 'show ' + cls; el.textContent = t; clearTimeout(G.bigT); G.bigT = setTimeout(() => el.className = '', ms); }
 function slowmo(sec) { if (!save.settings.bulletTime || G.slowCd > 0) return; G.slowT = sec; G.slowCd = sec + 3.5; audio.setSlowmo(true); }
 
