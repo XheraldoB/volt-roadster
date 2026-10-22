@@ -136,6 +136,19 @@ for (const veh of ['roadster', 'hauler']) {
 for (const veh of ['hauler', 'roadster']) { const s = await mk('m1', veh); s.battery = 0.5; let minY = Infinity;
   for (let t = 0; t < 60; t += H) { s.fixed(H, I({ brake: 1 })); minY = Math.min(minY, s.body.translation().y); s.events.length = 0; }
   ok(`${veh} reversing past the start after the race ends stays on the track (back-stop)`, s.state === 'finished' && minY > -5 && !s.stat.killPlane, { minY: +minY.toFixed(1), killPlane: s.stat.killPlane }); }
+// B31: every level, both vehicles, crossing the finish at full speed (boosting): smooth stop on the run-off, never off the end
+{ const fails = []; let worst = { decel: 0 }, n = 0;
+  for (const L of LEVELS) for (const veh of ['roadster', 'hauler']) { const s = await mk(L.id, veh); s.respawnAt(s.tr.finishS - 120, 55); let maxS = 0, kp = 0, t = 0, prevV = null, maxDec = 0, fin = false;
+    for (; t < 40; t += H) { s.fixed(H, I({ throttle: 1, boost: true, steer: Math.max(-1, Math.min(1, -s.prog.x * 0.15)) })); if (s.state === 'finished') { if (!fin) fin = true; const v = s.speed; if (prevV != null && s.grounded) maxDec = Math.max(maxDec, (prevV - v) / H); prevV = v; }
+      maxS = Math.max(maxS, s.prog.s); kp += s.events.filter(e => e.type === 'killplane').length; s.events.length = 0; if (fin && s.speed < 0.3 && t > 3) break; }
+    n++; const r = { lvl: L.id, veh, fin, stopS: +(s.tr.roadEnd - maxS).toFixed(0), v: +s.speed.toFixed(2), kp, y: +s.prog.h.toFixed(1), dec: +maxDec.toFixed(0) }; if (maxDec > worst.decel) worst = { decel: +maxDec.toFixed(0), lvl: L.id, veh };
+    if (!fin || kp || s.speed > 0.5 || maxS > s.tr.roadEnd - 5 || Math.abs(s.prog.h) > 3) fails.push(r); }
+  ok(`B31 all ${n} level/vehicle runs: finish at speed, smooth auto-stop on the run-off, never off the end or through the world`, fails.length === 0, { fails: fails.slice(0, 6), worst }); }
+// B32: reversing and steering round the start back-stop never falls through the ground beside the road
+{ const fails = []; for (const L of LEVELS.slice(0, 23)) for (const st of [-1, 1]) { const s = await mk(L.id, 'roadster'); let minH = 0, kp = 0;
+    for (let t = 0; t < 12; t += H) { s.fixed(H, I({ brake: 1, steer: st })); minH = Math.min(minH, s.prog.h); kp += s.events.filter(e => e.type === 'killplane' || (e.type === 'crash' && e.reason !== 'meteor')).length; s.events.length = 0; }
+    if (minH < -3 || kp) fails.push({ lvl: L.id, st, minH: +minH.toFixed(1), kp }); }
+  ok('B32 reverse + steer round the start back-stop stays on the ground (all levels)', fails.length === 0, { fails: fails.slice(0, 6) }); }
 // B7 vehicle ownership (progress layer)
 { const P = await import('../src/progress.js'); const { VEHICLES } = await import('../src/vehicles.js'); const s = P.defaultSave();
   ok('B7 fresh save cannot select the pickup', !P.selectVehicle(s, 'hauler') && s.vehicle === 'roadster');

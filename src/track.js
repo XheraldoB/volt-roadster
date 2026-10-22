@@ -5,6 +5,7 @@ import { Vector3, Quaternion, Euler } from 'three';
 
 export const ROAD_W = 14;      // road width (m)
 export const WALL_H = 1.2;     // barrier height (m)
+export const RUNOFF = 160;      // B31: run-off road past the finish (m)
 const DS = 1;                  // sample spacing (m)
 
 const smooth = u => u * u * (3 - 2 * u);
@@ -121,6 +122,8 @@ export function buildTrack(def, gravity) {
   });
   // finish straight
   for (let k = 0; k < 60; k++) { step(); push(def.segments.length, { finishZone: true }); }
+  // B31: flat run-off past the old track end so a finished car always has room to brake to a stop
+  for (let k = 0; k < RUNOFF; k++) { step(); push(def.segments.length, { finishZone: true, runoff: true }); }
 
   // signed curvature toward the surface normal (for suspension load)
   for (let k = 0; k < samples.length; k++) {
@@ -128,7 +131,7 @@ export function buildTrack(def, gravity) {
     const ds2 = b.s - a.s || 1;
     samples[k].k = samples[k].gap ? 0 : b.T.clone().sub(a.T).dot(samples[k].U) / ds2;
   }
-  const length = s;
+  const roadEnd = s, length = s - RUNOFF; /* length keeps its old meaning (scoring, rocket); the road runs RUNOFF m further */
   const finishS = length - 40;
   // checkpoints every ~220 m on solid upright samples
   const checkpoints = [0];
@@ -140,7 +143,7 @@ export function buildTrack(def, gravity) {
       if (ok) checkpoints.push(sm.s);
     }
   }
-  const tr = { samples, length, finishS, checkpoints, features, def, gravity };
+  const tr = { samples, length, roadEnd, finishS, checkpoints, features, def, gravity };
   tr.grid = buildGrid(samples);
   return tr;
 }

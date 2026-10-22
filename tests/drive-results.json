@@ -409,7 +409,7 @@
   "id": "hauler r1 side -3 m: player steers onto the landing pad",
   "pass": true,
   "info": {
-   "noControl": "crash",
+   "noControl": "miss",
    "withControl": "PAD LANDING 5.4m"
   }
  },
@@ -522,6 +522,25 @@
   "info": {
    "minY": 6.7,
    "killPlane": 0
+  }
+ },
+ {
+  "id": "B31 all 46 level/vehicle runs: finish at speed, smooth auto-stop on the run-off, never off the end or through the world",
+  "pass": true,
+  "info": {
+   "fails": [],
+   "worst": {
+    "decel": 28,
+    "lvl": "r6",
+    "veh": "roadster"
+   }
+  }
+ },
+ {
+  "id": "B32 reverse + steer round the start back-stop stays on the ground (all levels)",
+  "pass": true,
+  "info": {
+   "fails": []
   }
  },
  {

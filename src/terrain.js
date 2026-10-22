@@ -6,7 +6,7 @@ export function makeTerrain(tr, level) {
   const planet = level.planet, env = level.env;
   const sm = tr.samples;
   let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9, ymin = 1e9;
-  for (const s of sm) { x0 = Math.min(x0, s.p.x); x1 = Math.max(x1, s.p.x); z0 = Math.min(z0, s.p.z); z1 = Math.max(z1, s.p.z); ymin = Math.min(ymin, s.p.y); }
+  for (const s of sm) { if (s.runoff) continue; /* bounds (and the seeded features built from them) ignore the B31 run-off */ x0 = Math.min(x0, s.p.x); x1 = Math.max(x1, s.p.x); z0 = Math.min(z0, s.p.z); z1 = Math.max(z1, s.p.z); ymin = Math.min(ymin, s.p.y); }
   const M = 700; const bounds = { x0: x0 - M, x1: x1 + M, z0: z0 - M, z1: z1 + M };
   const R = rng(level.id.charCodeAt(0) * 31 + level.id.charCodeAt(1) * 7);
   // subsampled sample index grid

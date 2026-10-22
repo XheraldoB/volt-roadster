@@ -89,7 +89,8 @@ export class Sim {
     this.terrainCollider = w.createCollider(R.ColliderDesc.trimesh(ta.pos, ta.idx).setFriction(0.9));
     this.terrainHandle = this.terrainCollider.handle;
     /* back-stop: an invisible wall across the road at s=2 so reversing past the start line can't drive off the end of the track into the void */
-    { const P = poseAt(this.tr, 2, 0, 0), rb = w.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(P.p.x, P.p.y, P.p.z).setRotation(P.q)); w.createCollider(R.ColliderDesc.cuboid(ROAD_W / 2 + 4, 4, 0.5).setTranslation(0, 3, 0), rb); }
+    /* B31/B32: start and end back-stops span the full road plus wide shoulders, tall and thick enough that nothing can squeeze round or through */
+    for (const bs of [2, (this.tr.roadEnd ?? this.tr.length) - 3]) { const P = poseAt(this.tr, bs, 0, 0), rb = w.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(P.p.x, P.p.y, P.p.z).setRotation(P.q)); w.createCollider(R.ColliderDesc.cuboid(ROAD_W / 2 + 30, 12, 1.5).setTranslation(0, 6, 0), rb); }
     /* kill plane: anything below the lowest terrain/track point minus a margin, or far outside the world, is respawned */
     { let lo = Infinity; for (let i = 1; i < ta.pos.length; i += 3) lo = Math.min(lo, ta.pos[i]); for (const a of this.tr.samples) lo = Math.min(lo, a.p.y);
       const B = this.terrain.bounds, M = 300; this.kill = { y: lo - KILL_MARGIN, x0: B.x0 - M, x1: B.x1 + M, z0: B.z0 - M, z1: B.z1 + M }; this.stat.killPlane = 0; }
@@ -404,6 +405,10 @@ export class Sim {
     }
     // ---- driving forces ----
     const thr = control ? (inp.throttle || 0) : (this.state === 'countdown' ? 0 : 0);
+    /* B31: after the finish, inputs are locked and the car does a smooth cinematic stop before the end of the run-off */
+    if (this.state === 'finished' && grounded) { const v = b.linvel(), hs = Math.hypot(v.x, v.z); if (hs > 0.05) {
+      const room = Math.max(8, (this.tr.roadEnd ?? this.tr.length) - 25 - this.prog.s), dec = Math.min(30, Math.max(4.5, hs * hs / (2 * room)) * (1 + 0.5 * Math.min(1, hs / 40)));
+      const k = Math.max(0, hs - dec * h) / hs; b.setLinvel({ x: v.x * k, y: v.y, z: v.z * k }, true); } }
     const brk = control ? (inp.brake || 0) : (running ? 0.2 : 1);
     const boosting = control && inp.boost && (this.wasBoost ? this.boost > 0.01 : this.boost > 0.2);
     const vmax = st.vmax * (boosting ? 1.28 : 1);
