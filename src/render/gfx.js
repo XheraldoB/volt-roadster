@@ -12,12 +12,13 @@ import { PRESETS as ART_POST } from '../../art/post/ultraPost.js';
 // Mobile-first presets (OnePlus 15 feedback). Ultra = native resolution (DPR up to 3) with a light post chain: no AO by default
 // (optional extra in Settings), no MSAA resolve, quarter-res emitter-only bloom, FXAA (invisible as blur at DPR >= 2).
 // Dynamic resolution holds the frame time; minScale bounds it so the image is never visibly upscaled.
+// B24: Ultra/High render at the device's native pixel ratio (OnePlus 15: 2772x1272); the DPR 2 cap applies to Performance/Medium/Low only.
 export const PRESETS = {
   performance: { target: 120, name: 'Performance', dpr: 1.5, shadows: 1024, bloom: false, ao: false, msaa: 0, particles: 0.45, terrainRes: 120, draw: 1300, decor: 0.45, vignette: false, minScale: 0.75 },
   low:    { target: 60, name: 'Low',    dpr: 1,   shadows: 0,    bloom: false, ao: false, msaa: 0, particles: 0.25, terrainRes: 96,  draw: 900,  decor: 0.3, vignette: false, minScale: 0.7 },
   medium: { target: 90, name: 'Medium', dpr: 1.75, shadows: 1024, bloom: false, ao: false, msaa: 0, particles: 0.5,  terrainRes: 140, draw: 1400, decor: 0.6, vignette: true, minScale: 0.75 },
-  high:   { target: 120, name: 'High',   dpr: 2,   shadows: 1024, bloom: true,  ao: false, msaa: 0, particles: 0.6, terrainRes: 180, draw: 2000, decor: 0.8, vignette: true, minScale: 0.85 },
-  ultra:  { target: 120, name: 'Ultra',  dpr: 2,   shadows: 2048, bloom: true,  ao: false, msaa: 0, particles: 0.7, terrainRes: 220, draw: 2600, decor: 1, vignette: true, minScale: 0.85 },
+  high:   { target: 120, name: 'High',   dpr: Infinity, native: true,   shadows: 1024, bloom: true,  ao: false, msaa: 0, particles: 0.6, terrainRes: 180, draw: 2000, decor: 0.8, vignette: true, minScale: 0.85 },
+  ultra:  { target: 120, name: 'Ultra',  dpr: Infinity, native: true,   shadows: 2048, bloom: true,  ao: false, msaa: 0, particles: 0.7, terrainRes: 220, draw: 2600, decor: 1, vignette: true, minScale: 0.85 },
 };
 
 export function detectTier(renderer) {
@@ -103,7 +104,8 @@ export class Gfx {
     const target = Math.min(this.q.target || 60, this.refreshHz * 0.97, this.fpsCap || 1e9);
     this.target = target;
     const prev = this.dynScale, floor = this.q.minScale || (this.q.dpr >= 2 ? 0.85 : 0.6); // art: keep Ultra/High crisp, never upscale blurrily
-    if (fps < target * 0.85) {
+    const drop = this.q.native ? 0.75 : 0.85; // native presets only lose resolution when frame time really suffers
+    if (fps < target * drop) {
       // shed effects before resolution: GTAO, then bloom, then small resolution steps down to the floor
       if (this.aoPass && this.aoPass.enabled) this.aoPass.enabled = false;
       else if (this.bloom && this.bloom.enabled) this.bloom.enabled = false;
@@ -120,6 +122,7 @@ export class Gfx {
     const hz = 1 / a[Math.floor(a.length * 0.2)]; const snap = [60, 90, 120, 144, 165, 240].reduce((b, v) => Math.abs(v - hz) < Math.abs(b - hz) ? v : b, 60); this.refreshHz = Math.max(this.refreshHz === 60 ? 0 : this.refreshHz, snap);
   }
   render(scene, camera) {
+    if (this.bloom) { const off = !!scene.userData.noBloom; if (off && this.bloom.enabled) { this.bloom.enabled = false; this._bloomParked = true; } else if (!off && this._bloomParked) { this.bloom.enabled = true; this._bloomParked = false; } } // title: no bloom on the low sunset sky (white haze)
     if (this.composer) { this.renderPass.scene = scene; this.renderPass.camera = camera; if (this.aoPass) { this.aoPass.scene = scene; this.aoPass.camera = camera; } this.composer.render(); }
     else this.renderer.render(scene, camera);
   }

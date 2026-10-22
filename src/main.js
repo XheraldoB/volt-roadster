@@ -482,7 +482,10 @@ function buildMinimap(view) {
   mm = { pts, minX, maxX, minZ, maxZ, ctx: $('#minimap').getContext('2d') };
 }
 function drawMinimap() {
-  const s = G.sim, c = mm.ctx, cv = c.canvas; const W = cv.width, H = cv.height; const p = s.pose.p;
+  const s = G.sim, c = mm.ctx, cv = c.canvas; const p = s.pose.p;
+  // native-sharp: back the canvas with device pixels and draw in a fixed 200-unit space
+  const px = Math.max(200, Math.min(2048, Math.round((cv.clientWidth || 200) * (window.devicePixelRatio || 1)))); if (cv.width !== px) { cv.width = cv.height = px; }
+  const k = cv.width / 200; c.setTransform(k, 0, 0, k, 0, 0); const W = 200, H = 200;
   c.clearRect(0, 0, W, H);
   const big = G.mapBig; const span = big ? Math.max(mm.maxX - mm.minX, mm.maxZ - mm.minZ) * 1.1 : 700; const sc = W / span;
   const cx = big ? (mm.minX + mm.maxX) / 2 : p.x, cz = big ? (mm.minZ + mm.maxZ) / 2 : p.z;
