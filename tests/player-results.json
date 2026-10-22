@@ -1,5 +1,15 @@
 [
  {
+  "id": "B14 fresh launch writes nothing to the cloud",
+  "pass": false,
+  "info": {
+   "apiReq": [
+    "GET /api/load",
+    "POST /api/save"
+   ]
+  }
+ },
+ {
   "id": "RP10 __game.pixelRatio / drawingBuffer exposed",
   "pass": true,
   "info": {
@@ -27,16 +37,16 @@
   "id": "RP touch GAS drives forward",
   "pass": true,
   "info": {
-   "ds": 1.3,
-   "kmh": 18
+   "ds": 2.2,
+   "kmh": 24
   }
  },
  {
   "id": "RP touch BRAKE stops then REVERSES",
   "pass": true,
   "info": {
-   "s1": 23.1,
-   "s2": 24.1
+   "s1": 24.1,
+   "s2": 26.2
   }
  },
  {
@@ -82,16 +92,16 @@
   "pass": true,
   "info": {
    "s": 21.8,
-   "t": 0.075
+   "t": 0.041666666666666664
   }
  },
  {
   "id": "RP10 frame-time ring buffer",
   "pass": true,
   "info": {
-   "n": 156,
-   "p50": 349.9,
-   "p95": 833.3
+   "n": 166,
+   "p50": 299.9,
+   "p95": 783.3
   }
  },
  {

@@ -184,8 +184,23 @@ B22 | Trivial | P1 | Moon free-fall acceleration measured 1.75 m/s² vs configur
 | B16 dust devil short hop | FIXED | drive.test dust devil |
 | B20 real fps | FIXED | rawDt fps; __game.frameTimes() |
 | B22 gravity | FIXED | drive.test exact free-fall |
-| B9, B13, B14, B17, B19, B21 | OPEN | not addressed in this round |
+| B9, B13, B14, B17, B19, B21 | FIXED in round 3 | see below |
 | RP3 reverse, RP4 brake, RP5 recovery/respawn, RP6 air control, RP7 pause/restart | PASS (automated) | drive.test 57/59, player.browser 12/12 |
 | RP9 sharpness | PASS (screenshot) | qa-shots/rp9-sharpness.png (DPR capped at 2, FXAA, quarter-res bloom) |
 | RP10 frame telemetry | PASS | __game.pixelRatio / drawingBuffer / frameTimes(n); 120 fps on device still needs a real-phone check |
-| Known fail | hauler r1 ±3 m pad-steer by the bot pilot (lands long/outside the pad); simtest finishes all 23 levels with both vehicles |
+| Pad steering | PASS | all 12 pad-steer cases incl. hauler r1 ±3 m (round 3) |
+
+## Fix round 3 (dev, 2026-10-22)
+| Item | Status | Evidence |
+|---|---|---|
+| B9 floating hero-car parts | FIXED | roof plate removed, flush black mirror pods, headlights/DRLs follow the nose slope (title/garage shots) |
+| B13 restore code with spaces | FIXED | input normalised (spaces, dashes, lower case, missing VOLT- prefix) before lookup; maxlength no longer truncates |
+| B14 cloud hygiene | FIXED | no identity or request on a fresh launch (player.browser B14 check: 0 /api calls); first write only after real progress; saves written as private blobs read server-side via get() (falls back to public only if the store is public-only); restoring deletes this device's previous record via POST /api/forget (id+secret required) |
+| B17 HUD legibility | FIXED | level title, km/h, BOOST/THRUST and quest line >= 11 CSS px, full white, bold, dark halo |
+| B19 toast over results title | FIXED | on the results screen toasts dock at the bottom |
+| B21 split base pad | FIXED | base ground uses radial rings so the 40 m centre is flat (the fan disc interpolated rim height through the pads) |
+| HUD horizon indicator | DONE | airborne-only attitude ball (roll + pitch) with landing verdict colour (green pad / red too hard) |
+| Quest types fragile / speedtrap / statGoal | DONE | 6 bonus side quests (e2, e4, e5, e6, m1, r4) unlock after a level's main quest; tests/quests.test.mjs 15/15; autopilot completes the e4/e5/e6/m1 bonuses |
+| InstancedMesh / batching pass | DONE | static props and vehicles merged per material, pickups instanced, per-frame allocations removed; e1 draw calls 799 -> 480 |
+| QA p4 RP8: tiny HUD icon buttons | FIXED | touch HUD buttons >= max(46 px, 10vh) |
+| Suites | PASS | drive 59/59, quests 15/15, simtest 23/23 roadster + 23/23 hauler, qa.mjs 31/31, player.browser 13/13 |

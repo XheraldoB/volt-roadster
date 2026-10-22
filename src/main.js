@@ -20,7 +20,7 @@ const fmtT = t => { if (!t && t !== 0) return '--'; const m = Math.floor(t / 60)
 const nf = n => Math.round(n).toLocaleString('en-US');
 
 // ---------------- state ----------------
-let save = P.loadLocal(); P.ensureCloudIdentity(save);
+let save = P.loadLocal(); /* B14: no cloud identity until there is progress to save */
 const canvas = $('#game');
 const gfx = new Gfx(canvas);
 const QS = new URLSearchParams(location.search);
@@ -223,7 +223,7 @@ function renderGarage() {
 async function buyGemPack(id) {
   if (!PAYMENTS.enabled) return toast('Gem packs are coming soon');
   try {
-    const r = await fetch(PAYMENTS.checkoutEndpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pack: id, playerId: save.cloud?.id }) });
+    const r = await fetch(PAYMENTS.checkoutEndpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pack: id, playerId: P.ensureCloudIdentity(save).id }) });
     const j = await r.json().catch(() => ({})); if (r.ok && j.url) location.href = j.url; else toast('Store unavailable: ' + esc(j.error || r.status));
   } catch (e) { toast('Store unavailable (offline)'); }
 }
