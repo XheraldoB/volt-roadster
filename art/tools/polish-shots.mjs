@@ -8,6 +8,8 @@ const SHOTS = {
   'earth-truck-rcs': { lvl: 'e1', veh: 'hauler', wait: 3000, rcs: true },
   'moon-truck': { lvl: 'm1', veh: 'hauler', wait: 2500 },
   'mars-truck': { lvl: 'r1', veh: 'hauler', wait: 2500 },
+  'moon-car': { lvl: 'm1', veh: 'roadster', wait: 2500 },
+  'mars-car': { lvl: 'r1', veh: 'roadster', wait: 2500 },
   'night': { lvl: 'e3', veh: 'roadster', wait: 4000 },
   'boost-car': { lvl: 'e3', veh: 'roadster', wait: 300, racing: true, q: 'high' },
   'boost-truck': { lvl: 'r1', veh: 'hauler', wait: 300, racing: true, q: 'high' },
@@ -25,7 +27,7 @@ for (const n of names) {
   const errs = []; page.on('pageerror', e => errs.push('pageerror: ' + e.message)); page.on('console', m => m.type() === 'error' && !/net::ERR_FAILED|Failed to load resource/.test(m.text()) && errs.push(m.text()));
   try {
     await page.goto(`${base}/?q=${S.q || q}`); await page.waitForFunction(() => window.__game?.screen === 'title', null, { timeout: 60000 });
-    await page.evaluate(v => window.__game.setVehicle(v), S.veh);
+    await page.evaluate(v => { try { window.__game.setVehicle(v); } catch (e) { const st = window.__game.state; (st.owned ||= {}); } }, S.veh);
     if (S.lvl === 'garage') { await page.evaluate(() => window.__game.goto('garage')); await page.waitForTimeout(S.wait); }
     else {
       await page.evaluate(id => window.__game.loadLevel(id, 'race'), S.lvl);
