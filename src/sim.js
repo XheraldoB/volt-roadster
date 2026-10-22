@@ -19,7 +19,7 @@ export const ESC = { yawGain: 1.15, yawSlack: 0.12, rate: 7, slide: 2.2 };
 export const AUTO_RIGHT_T = 0.9;
 export const LAND_CLEAN = 9, LAND_HARD = 14, LAND_CRASH = 23; // m/s along the surface normal, scaled by sqrt(toughness)
 export const WALL_LOSS = 13, WALL_PENALTY = 250;
-export const HOVER_SINK = -1.2, HOVER_K = 2.6, HOVER_MAX = 2.6, HOVER_DRAG = 0.5, HOVER_FADE = 3.0, HOVER_RESERVE_SINK = -4.5, HOVER_RESERVE_MAX = 0.85; // B6: hover bleeds horizontal speed (1/s) and fades out over HOVER_FADE s when the gas runs dry
+export const HOVER_SINK = -1.2, HOVER_K = 2.6, HOVER_MAX = 2.6, HOVER_DRAG = 0.5, HOVER_FADE = 3.0, HOVER_RESERVE_SINK = -4.5, HOVER_RESERVE_MAX = 1.5; // B6: hover bleeds horizontal speed (1/s) and fades out over HOVER_FADE s when the gas runs dry
  // cold-gas hover: target sink m/s, gain 1/s, max lift in g
 const EARTH_G = 9.81;
 const tmpV = new Vector3(), tmpV2 = new Vector3(), tmpQ = new Quaternion();
@@ -506,7 +506,7 @@ export class Sim {
         if (this.gas > 0) this.hoverFade = 1; else this.hoverFade = Math.max(0, this.hoverFade - h / HOVER_FADE);
         /* B6 r5: out of gas -> a reserve burn that holds a soft -4.5 m/s descent (capped below g) instead of free fall */
         const rl = Math.max(0, Math.min(this.g * HOVER_RESERVE_MAX, this.g + HOVER_K * (HOVER_RESERVE_SINK - vy)));
-        const fl = this.gas > 0 ? lift : rl * Math.min(1, this.hoverFade * 1.5);
+        const fl = this.gas > 0 ? lift : rl; /* B27: reserve burn is a gravity-relative controller (g + k*err, cap 1.5 g) that holds -4.5 m/s on every planet until touchdown */
         if (fl > 0) { if (this.gas > 0) this.gas = Math.max(0, this.gas - h * this.fuelK * (0.35 + 0.65 * Math.min(1, lift / (this.g * HOVER_MAX)))); this.thrusting = true; this.rcs.lift = Math.min(1, fl / (this.g * 1.5)); this.bodyThrust(fl, up, true); }
       }
     }
@@ -729,7 +729,7 @@ export class Sim {
     }
     if (hover) { // B6: the level hover burn is (almost) purely vertical and bleeds horizontal speed, so holding JUMP no longer glides far past the pad
       b.applyImpulse({ x: 0, y: lift * m * h, z: 0 }, true);
-      const lv = b.linvel(), d = Math.max(0, 1 - HOVER_DRAG * Math.sqrt(Math.min(1, this.g / 9.81)) * h) /* B6: drag scales with gravity */; b.setLinvel({ x: lv.x * d, y: lv.y, z: lv.z * d }, true); return;
+      const lv = b.linvel(), d = Math.max(0, 1 - HOVER_DRAG * Math.pow(Math.min(1, this.g / 9.81), 0.45) * h) /* B6: drag scales with gravity */; b.setLinvel({ x: lv.x * d, y: lv.y, z: lv.z * d }, true); return;
     }
     const k = lift / Math.max(0.6, up.y) * m * h; b.applyImpulse({ x: up.x * k, y: up.y * k, z: up.z * k }, true);
   }
