@@ -369,6 +369,11 @@ export class LevelView {
       if (!c.init) c.pos.copy(pos);
       c.pos.lerp(pos, 1 - Math.exp(-dt * (sim.grounded ? 9 : 5)));
     }
+    if (mode !== 'hood' && sim.terrain?.heightAt) { /* camera collision: pull in toward the car when terrain sits between them, and never sink below the ground */
+      const T = sim.terrain, cp = car.position, tmp = new THREE.Vector3(); let keep = 1;
+      for (let k = 3; k <= 10; k++) { const t = k / 10; tmp.lerpVectors(cp, c.pos, t); if (T.heightAt(tmp.x, tmp.z) > tmp.y + 0.2) { keep = Math.max(0.25, (k - 1) / 10); break; } }
+      if (keep < 1) c.pos.lerpVectors(cp, c.pos, keep);
+      const gy = T.heightAt(c.pos.x, c.pos.z) + 0.8; if (c.pos.y < gy) c.pos.y = gy; }
     if (!c.init) { c.look.copy(look); c.init = true; }
     c.look.lerp(look, 1 - Math.exp(-dt * 14));
     c.shake = Math.max(0, c.shake - dt * 2.2);
