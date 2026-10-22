@@ -1,0 +1,441 @@
+[
+ {
+  "id": "roadster reverse engages <1s and reaches >=15 km/h (capped)",
+  "pass": true,
+  "info": {
+   "tRev": "0.19",
+   "kmh": "30.2"
+  }
+ },
+ {
+  "id": "roadster steering works in reverse",
+  "pass": true,
+  "info": {
+   "dYawDeg": "51"
+  }
+ },
+ {
+  "id": "roadster gas after reverse drives forward",
+  "pass": true,
+  "info": {
+   "fspeed": "16.4"
+  }
+ },
+ {
+  "id": "roadster brake from 100 km/h stops <= 40 m and straight",
+  "pass": true,
+  "info": {
+   "dist": "32.9",
+   "lateral": "0.00"
+  }
+ },
+ {
+  "id": "roadster no creep when stopped (released)",
+  "pass": true,
+  "info": {
+   "moved": "0.51"
+  }
+ },
+ {
+  "id": "roadster low-speed (15 km/h) full lock: >= 40 deg in 1.2 s",
+  "pass": true,
+  "info": {
+   "dYawDeg": "41",
+   "kmh": "15"
+  }
+ },
+ {
+  "id": "roadster mid-speed steering not twitchy (80 km/h, 0.6 s)",
+  "pass": true,
+  "info": {
+   "fullDeg": "23.1",
+   "halfDeg": "8.5"
+  }
+ },
+ {
+  "id": "roadster handbrake rotates the car more (drift)",
+  "pass": true,
+  "info": {
+   "noHb": "15",
+   "hb": "57"
+  }
+ },
+ {
+  "id": "roadster upside-down car recovers by itself within 3 s",
+  "pass": true,
+  "info": {
+   "t": "1.27"
+  }
+ },
+ {
+  "id": "roadster reset button rights the car instantly",
+  "pass": true,
+  "info": {
+   "up": "1.00"
+  }
+ },
+ {
+  "id": "roadster wedged (no progress with throttle) auto-resets within 3 s",
+  "pass": true,
+  "info": {
+   "t": "2.73"
+  }
+ },
+ {
+  "id": "roadster falling into the canyon respawns facing forward within 3 s",
+  "pass": true,
+  "info": {
+   "fallAt": "4.4",
+   "respawnIn": "1.61",
+   "crashes": 1,
+   "facing": "0.95"
+  }
+ },
+ {
+  "id": "roadster 40 m drop is a hard landing / crash, never CLEAN",
+  "pass": true,
+  "info": "crash:landing"
+ },
+ {
+  "id": "roadster e1 free-fall = 9.81",
+  "pass": true,
+  "info": "9.810"
+ },
+ {
+  "id": "roadster m1 free-fall = 1.62",
+  "pass": true,
+  "info": "1.620"
+ },
+ {
+  "id": "roadster r1 free-fall = 3.71",
+  "pass": true,
+  "info": "3.710"
+ },
+ {
+  "id": "roadster e1 thrust/hover never worse than no input, no climb",
+  "pass": true,
+  "info": {
+   "noIn": "-19.6",
+   "hold": "-19.4",
+   "climb": "0.06"
+  }
+ },
+ {
+  "id": "roadster m1 thrust/hover never worse than no input, no climb",
+  "pass": true,
+  "info": {
+   "noIn": "-8.0",
+   "hold": "-1.7",
+   "climb": "0.02"
+  }
+ },
+ {
+  "id": "roadster r1 thrust/hover never worse than no input, no climb",
+  "pass": true,
+  "info": {
+   "noIn": "-12.1",
+   "hold": "-10.2",
+   "climb": "0.04"
+  }
+ },
+ {
+  "id": "roadster air input responds in 1 frame, spin capped",
+  "pass": true,
+  "info": {
+   "dw1frame": "0.314",
+   "maxW": "5.68"
+  }
+ },
+ {
+  "id": "roadster releases input -> auto-levels wheels-down within 2 s",
+  "pass": true,
+  "info": {
+   "upY": "1.000",
+   "w": "0.00"
+  }
+ },
+ {
+  "id": "roadster e1 side +3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "PAD LANDING 6.2m",
+   "withControl": "PAD LANDING 5.4m"
+  }
+ },
+ {
+  "id": "roadster e1 side -3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "crash",
+   "withControl": "PAD LANDING 4.1m"
+  }
+ },
+ {
+  "id": "roadster m1 side +3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "miss",
+   "withControl": "PAD LANDING 3.7m"
+  }
+ },
+ {
+  "id": "roadster m1 side -3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "crash",
+   "withControl": "PAD LANDING 3.7m"
+  }
+ },
+ {
+  "id": "roadster r1 side +3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "crash",
+   "withControl": "PAD LANDING 5.8m"
+  }
+ },
+ {
+  "id": "roadster r1 side -3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "crash",
+   "withControl": "PAD LANDING 5.9m"
+  }
+ },
+ {
+  "id": "roadster Mars dust devil gives a short hop (< 2 s air)",
+  "pass": true,
+  "info": {
+   "maxAir": "0.66",
+   "used": false
+  }
+ },
+ {
+  "id": "hauler reverse engages <1s and reaches >=15 km/h (capped)",
+  "pass": true,
+  "info": {
+   "tRev": "0.19",
+   "kmh": "26.7"
+  }
+ },
+ {
+  "id": "hauler steering works in reverse",
+  "pass": true,
+  "info": {
+   "dYawDeg": "35"
+  }
+ },
+ {
+  "id": "hauler gas after reverse drives forward",
+  "pass": true,
+  "info": {
+   "fspeed": "11.0"
+  }
+ },
+ {
+  "id": "hauler brake from 100 km/h stops <= 45 m and straight",
+  "pass": true,
+  "info": {
+   "dist": "40.8",
+   "lateral": "0.00"
+  }
+ },
+ {
+  "id": "hauler no creep when stopped (released)",
+  "pass": true,
+  "info": {
+   "moved": "0.49"
+  }
+ },
+ {
+  "id": "hauler low-speed (15 km/h) full lock: >= 27 deg in 1.2 s",
+  "pass": true,
+  "info": {
+   "dYawDeg": "29",
+   "kmh": "15"
+  }
+ },
+ {
+  "id": "hauler mid-speed steering not twitchy (80 km/h, 0.6 s)",
+  "pass": true,
+  "info": {
+   "fullDeg": "16.6",
+   "halfDeg": "6.1"
+  }
+ },
+ {
+  "id": "hauler handbrake rotates the car more (drift)",
+  "pass": true,
+  "info": {
+   "noHb": "11",
+   "hb": "14"
+  }
+ },
+ {
+  "id": "hauler upside-down car recovers by itself within 3 s",
+  "pass": true,
+  "info": {
+   "t": "1.27"
+  }
+ },
+ {
+  "id": "hauler reset button rights the car instantly",
+  "pass": true,
+  "info": {
+   "up": "1.00"
+  }
+ },
+ {
+  "id": "hauler wedged (no progress with throttle) auto-resets within 3 s",
+  "pass": true,
+  "info": {
+   "t": "2.73"
+  }
+ },
+ {
+  "id": "hauler falling into the canyon respawns facing forward within 3 s",
+  "pass": true,
+  "info": {
+   "fallAt": "4.3",
+   "respawnIn": "1.61",
+   "crashes": 1,
+   "facing": "0.95"
+  }
+ },
+ {
+  "id": "hauler 40 m drop is a hard landing / crash, never CLEAN",
+  "pass": true,
+  "info": "hardLanding: | HARD LANDING | AIR 4.1s"
+ },
+ {
+  "id": "hauler e1 free-fall = 9.81",
+  "pass": true,
+  "info": "9.810"
+ },
+ {
+  "id": "hauler m1 free-fall = 1.62",
+  "pass": true,
+  "info": "1.620"
+ },
+ {
+  "id": "hauler r1 free-fall = 3.71",
+  "pass": true,
+  "info": "3.710"
+ },
+ {
+  "id": "hauler e1 thrust/hover never worse than no input, no climb",
+  "pass": true,
+  "info": {
+   "noIn": "-19.6",
+   "hold": "-18.6",
+   "climb": "0.00"
+  }
+ },
+ {
+  "id": "hauler m1 thrust/hover never worse than no input, no climb",
+  "pass": true,
+  "info": {
+   "noIn": "-8.0",
+   "hold": "-1.2",
+   "climb": "-0.00"
+  }
+ },
+ {
+  "id": "hauler r1 thrust/hover never worse than no input, no climb",
+  "pass": true,
+  "info": {
+   "noIn": "-12.1",
+   "hold": "-1.2",
+   "climb": "-0.00"
+  }
+ },
+ {
+  "id": "hauler air input responds in 1 frame, spin capped",
+  "pass": true,
+  "info": {
+   "dw1frame": "0.314",
+   "maxW": "5.64"
+  }
+ },
+ {
+  "id": "hauler releases input -> auto-levels wheels-down within 2 s",
+  "pass": true,
+  "info": {
+   "upY": "1.000",
+   "w": "0.00"
+  }
+ },
+ {
+  "id": "hauler e1 side +3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "crash",
+   "withControl": "PAD LANDING 4.0m"
+  }
+ },
+ {
+  "id": "hauler e1 side -3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "crash",
+   "withControl": "PAD LANDING 3.8m"
+  }
+ },
+ {
+  "id": "hauler m1 side +3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "miss",
+   "withControl": "PERFECT LANDING!"
+  }
+ },
+ {
+  "id": "hauler m1 side -3 m: player steers onto the landing pad",
+  "pass": true,
+  "info": {
+   "noControl": "miss",
+   "withControl": "PERFECT LANDING!"
+  }
+ },
+ {
+  "id": "hauler r1 side +3 m: player steers onto the landing pad",
+  "pass": false,
+  "info": {
+   "noControl": "crash",
+   "withControl": "miss"
+  }
+ },
+ {
+  "id": "hauler r1 side -3 m: player steers onto the landing pad",
+  "pass": false,
+  "info": {
+   "noControl": "crash",
+   "withControl": "miss"
+  }
+ },
+ {
+  "id": "hauler Mars dust devil gives a short hop (< 2 s air)",
+  "pass": true,
+  "info": {
+   "maxAir": "0.31",
+   "used": true
+  }
+ },
+ {
+  "id": "B7 fresh save cannot select the pickup",
+  "pass": true
+ },
+ {
+  "id": "B7 cannot buy without 6000 coins",
+  "pass": true,
+  "info": {
+   "ok": false,
+   "why": "coins",
+   "need": 5700
+  }
+ },
+ {
+  "id": "B7 buying deducts 6000 and grants ownership",
+  "pass": true
+ }
+]
