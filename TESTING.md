@@ -244,3 +244,39 @@ B25 | Minor | P1 | Pause and top-right HUD buttons are too small to tap (about 4
 | RP9 haze | FIXED | Title: matte floor, lower mie scattering, no bloom on menu |
 
 Suites: drive 62/62, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 15/15.
+
+## Regression round 4 (commit f864d59)
+Build: f864d59 built in a fresh worktree (/workspace/volt-roadster-qa-f864d59) to /workspace/vr-dist-f864d59 and previewed on :4173 (the old preview was stopped). The live site serves identical assets (index-oEpgx4tC.js, index-wbqBF5qr.css, three-zySor9gr.js, rapier-BYHDSJ8_.js), so live = f864d59. **Zero live cloud writes this round** (/api/save and /api/forget were routed/blocked; neither was even requested). Scripts: qa/p5.mjs, qa/p5-live.mjs; results in qa/p5*-results.json. tests/drive.test.mjs: 62/62 on f864d59.
+
+| Bug | Status | Evidence |
+|---|---|---|
+| B24 native DPR | FIXED | 924x424 CSS at DPR 3: Ultra and High pixelRatio 3, drawing buffer 2772x1272 at race start and after 25 s (dynScale stays 1). The code floor is 0.85 (r5-race-dpr3.png) |
+| B6 hover glide | PARTIAL (much improved) | Ferrox holding JUMP across e1 (qa/hovergap.mjs MODE=hold): takeoff 135 km/h, hover drag slows it to about 50 km/h, fuel empties at about 4.25 s, lands s=1143. That is 27 m past the pad centre (pad r=9, so a miss but no longer +120 m). Touchdown −14.5 m/s (no input −17.4), scored "BABY CANYON CLEARED", 0 crashes. Fuel-out is still a hard drop |
+| B23 Mars pad | FIXED | drive.test hauler r1 ±3 m: PAD LANDING 7.7 m / 5.4 m |
+| B25 HUD buttons | FIXED | At DPR 3, horn/radio/cam/respawn/pause are 54x54 CSS = 9.1 mm; pad 28.7, brake 14.3, jump 13.6, boost 11.5, drift 9.3 mm |
+| Title haze | FIXED | r5-title-2772.png, r5-title-dpr3.png: no white haze, clean sunset gradient |
+| B9 car parts | FIXED | No roof plate or floating mirror/headlight parts (r5-title-2772.png, r5-garage-dpr3.png) |
+| B13 restore code | FIXED | Live: " VOLT-QPM5-VG64-XXS9" is kept in full, GET /api/load?code=VOLT-QPM5-VG64-XXS9 restores coins 4242 and gold paint |
+| B14 boot write | FIXED | Live fresh boot + 10 s race + quit: 0 /api requests and 0 beacons. Restore made only 1 GET (no save, no forget) |
+| B17 HUD labels | FIXED | Level name, km/h, BOOST/THRUST are larger and high-contrast (r5-race-dpr3.png) |
+| B21 hex pad | FIXED | r5-base-dpr3.png, all 6 pads whole |
+| B19 toast | FIXED for the headline / see B26 | Toasts stay clear of "FINISHED!" but now cover other results content |
+
+RP smoke (f864d59):
+- RP1: BRAKE/REV by touch reaches 29.7 km/h in reverse.
+- RP2–RP7: drive.test 62/62, including reverse, brake ≤40/45 m, flip 1.27 s, unstuck 2.73 s, respawn 1.61 s, low-speed and mid-speed steering, 1-frame air input, and pad steering on all worlds.
+- RP8: pad, jump and boost register together; all clear on release.
+- My pause-tap check was inconclusive: my detector read false, so it's a script artefact to recheck.
+- No page errors, console clean.
+
+B26 | Minor | P2 | Achievement toasts on the results screen cover the score and the Retry/📷 buttons | Finish e1 for the first time on a fresh save (DPR3 924x424; teleported near the finish with `sim().respawnAt(end-60)` and autoGas) | Toasts in a free area, never over buttons or numbers | "First Finish" covers the SCORE/EARNED row (score value) and part of Retry; "Superstar" covers the 📷 photo button (r5-results-dpr3.png). A tap on Retry/📷 may hit the toast | Open
+
+## Fix round 5 (Game Dev, 2026-10-22, against QA round 4 on f864d59)
+
+| ID | Status | Notes |
+|---|---|---|
+| B6 | FIXED | Hover drag 0.3→0.5 (scaled by √(g/9.81) for Moon/Mars). Out of gas → reserve burn holds a soft −4.5 m/s descent (fades over 3 s) instead of a drop. Full hold lands: e1 −4.1 m (on pad), m1 +12 m, r1 +3.7 m; max sink ≤ 8.7 m/s; qa/hovergap e1 lands s=1112 (pad 1116) at −4.3 m/s. drive.test now requires within 20 m and sink < 10 m/s |
+| B26 | FIXED | Results toasts: compact, top-right corner, max 2 visible, pointer-events:none. Browser test: 0 overlaps with score/buttons (qa-shots/r5-results-toasts.png) |
+| Pause tap | VERIFIED | Real CDP touch tap on #btn-pause at OP15 Ultra opens the pause menu (qa-shots/r5-pause-tap.png) |
+
+Suites: drive 62/62, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 17/17.
