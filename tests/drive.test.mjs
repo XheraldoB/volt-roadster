@@ -120,6 +120,22 @@ for (const veh of ['roadster', 'hauler']) {
 // camera collision against track pieces: a ray from above the road down through it is blocked, a ray in clear sky is not
 { const s = await mk('e1', 'roadster'); s.fixed(H, I({})); const P = s.tr.samples[60].p; const a = { x: P.x, y: P.y + 6, z: P.z }, b = { x: P.x, y: P.y - 6, z: P.z }, c = { x: P.x, y: P.y + 30, z: P.z };
   const f1 = s.camClear(a, b), f2 = s.camClear(a, c); ok('camera ray: road blocks, open sky clear', f1 < 0.7 && f2 === 1, { f1: +f1.toFixed(2), f2 }); }
+// kill plane: missed m1 canyon jump with the race ended on battery must never fall through the world, in every state
+{ const s = await mk('m1', 'hauler'); const g = s.tr.features.find(f => f.type === 'gap'); s.respawnAt(g.s0 - 60, 8);
+  let minY = Infinity, ended = false, kp = 0, bad = false;
+  for (let t = 0; t < 120; t += H) { if (t > 6 && !ended) { s.battery = 0; } s.fixed(H, I({ throttle: 0.4 })); if (s.state === 'finished') ended = true;
+    const p = s.body.translation(); minY = Math.min(minY, p.y); if (!Number.isFinite(p.y)) bad = true; kp += s.events.filter(e => e.type === 'killplane').length; s.events.length = 0; }
+  ok('kill plane: missed m1 jump + out of battery never falls through the world', ended && !bad && minY > s.kill.y - 5, { ended, state: s.state, minY: +minY.toFixed(1), killY: +s.kill.y.toFixed(1), killplane: kp });
+  for (const st of ['countdown', 'race', 'finished']) { s.state = st; s.body.setTranslation({ x: s.pose.p.x, y: s.kill.y - 50, z: s.pose.p.z }, true); s.body.setLinvel({ x: 0, y: -900, z: 0 }, true); s.fixed(H, I({})); s.events.length = 0;
+    const p = s.body.translation(); ok(`kill plane respawns in state ${st}`, p.y > s.kill.y + 20 && Math.hypot(...Object.values(s.body.linvel())) < 1, { y: +p.y.toFixed(1) }); }
+  { s.state = 'race'; s.body.setTranslation({ x: s.kill.x1 + 500, y: 50, z: 0 }, true); s.fixed(H, I({})); ok('kill plane respawns when out of bounds', s.body.translation().x < s.kill.x1, {}); }
+  { s.body.setLinvel({ x: 5000, y: 0, z: 0 }, true); s.body.setAngvel({ x: 0, y: 900, z: 0 }, true); s.fixed(H, I({})); const v = s.body.linvel(), w = s.body.angvel(); ok('runaway velocity clamped', Math.hypot(v.x, v.y, v.z) <= 161 && Math.hypot(w.x, w.y, w.z) <= 41, { v: +Math.hypot(v.x, v.y, v.z).toFixed(1) }); }
+  { const f = await mk('m1', 'roadster'); f.mode = 'free'; f.body.setTranslation({ x: f.pose.p.x, y: f.kill.y - 10, z: f.pose.p.z }, true); f.fixed(H, I({})); ok('kill plane respawns in free roam', f.body.translation().y > f.kill.y + 20, {}); }
+}
+// repro of the browser fall-through: battery ends the race, then the car rolls/reverses back past the start line
+for (const veh of ['hauler', 'roadster']) { const s = await mk('m1', veh); s.battery = 0.5; let minY = Infinity;
+  for (let t = 0; t < 60; t += H) { s.fixed(H, I({ brake: 1 })); minY = Math.min(minY, s.body.translation().y); s.events.length = 0; }
+  ok(`${veh} reversing past the start after the race ends stays on the track (back-stop)`, s.state === 'finished' && minY > -5 && !s.stat.killPlane, { minY: +minY.toFixed(1), killPlane: s.stat.killPlane }); }
 // B7 vehicle ownership (progress layer)
 { const P = await import('../src/progress.js'); const { VEHICLES } = await import('../src/vehicles.js'); const s = P.defaultSave();
   ok('B7 fresh save cannot select the pickup', !P.selectVehicle(s, 'hauler') && s.vehicle === 'roadster');

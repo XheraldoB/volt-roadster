@@ -19,6 +19,7 @@ export const ESC = { yawGain: 1.15, yawSlack: 0.12, rate: 7, slide: 2.2 };
 export const AUTO_RIGHT_T = 0.9;
 export const LAND_CLEAN = 9, LAND_HARD = 14, LAND_CRASH = 23; // m/s along the surface normal, scaled by sqrt(toughness)
 export const WALL_LOSS = 13, WALL_PENALTY = 250;
+export const KILL_MARGIN = 60, MAX_LINVEL = 160, MAX_ANGVEL = 40; /* kill plane margin (m), runaway caps (m/s, rad/s) */
 export const HOVER_SINK = -1.2, HOVER_K = 2.6, HOVER_MAX = 2.6, HOVER_DRAG = 0.5, HOVER_FADE = 3.0, HOVER_RESERVE_SINK = -4.5, HOVER_RESERVE_MAX = 1.5; // B6: hover bleeds horizontal speed (1/s) and fades out over HOVER_FADE s when the gas runs dry
  // cold-gas hover: target sink m/s, gain 1/s, max lift in g
 const EARTH_G = 9.81;
@@ -87,6 +88,11 @@ export class Sim {
     const ta = terrainArrays(this.terrain, 120);
     this.terrainCollider = w.createCollider(R.ColliderDesc.trimesh(ta.pos, ta.idx).setFriction(0.9));
     this.terrainHandle = this.terrainCollider.handle;
+    /* back-stop: an invisible wall across the road at s=2 so reversing past the start line can't drive off the end of the track into the void */
+    { const P = poseAt(this.tr, 2, 0, 0), rb = w.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(P.p.x, P.p.y, P.p.z).setRotation(P.q)); w.createCollider(R.ColliderDesc.cuboid(ROAD_W / 2 + 4, 4, 0.5).setTranslation(0, 3, 0), rb); }
+    /* kill plane: anything below the lowest terrain/track point minus a margin, or far outside the world, is respawned */
+    { let lo = Infinity; for (let i = 1; i < ta.pos.length; i += 3) lo = Math.min(lo, ta.pos[i]); for (const a of this.tr.samples) lo = Math.min(lo, a.p.y);
+      const B = this.terrain.bounds, M = 300; this.kill = { y: lo - KILL_MARGIN, x0: B.x0 - M, x1: B.x1 + M, z0: B.z0 - M, z1: B.z1 + M }; this.stat.killPlane = 0; }
     this.buildCar();
     this.buildEntities();
     this.respawnAt(this.startS = 22, 0);
@@ -301,6 +307,16 @@ export class Sim {
     const ray = new RAPIER.Ray({ x: a.x, y: a.y, z: a.z }, { x: dx / L, y: dy / L, z: dz / L });
     const hit = this.world.castRay(ray, L, true, RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_KINEMATIC);
     return hit ? hit.timeOfImpact / L : 1;
+  }
+  /* kill plane + runaway clamp. Runs in every state (countdown, race, ended, out of battery, free roam, results) */
+  guardWorld() {
+    const b = this.body, p = b.translation(), K = this.kill; if (!K) return;
+    const bad = !Number.isFinite(p.x + p.y + p.z) || p.y < K.y || p.x < K.x0 || p.x > K.x1 || p.z < K.z0 || p.z > K.z1;
+    if (bad) { this.stat.killPlane = (this.stat.killPlane || 0) + 1; const s = Math.max(this.startS ?? 0, this.lastCpS ?? 0);
+      this.emit('killplane', { p: { x: p.x, y: p.y, z: p.z }, s }); this.offT = 0; this.respawnAt(s, 0);
+      b.setLinvel({ x: 0, y: 0, z: 0 }, true); b.setAngvel({ x: 0, y: 0, z: 0 }, true); return; }
+    const v = b.linvel(), sp = Math.hypot(v.x, v.y, v.z); if (!(sp <= MAX_LINVEL)) { const k = Number.isFinite(sp) && sp > 0 ? MAX_LINVEL / sp : 0; b.setLinvel({ x: v.x * k, y: v.y * k, z: v.z * k }, true); }
+    const w = b.angvel(), ws = Math.hypot(w.x, w.y, w.z); if (!(ws <= MAX_ANGVEL)) { const k = Number.isFinite(ws) && ws > 0 ? MAX_ANGVEL / ws : 0; b.setAngvel({ x: w.x * k, y: w.y * k, z: w.z * k }, true); }
   }
   respawnAt(s, v = 22) {
     // never respawn inside (or on the lip of) a jump: go back to a proper run-up before it, so a respawn can't loop
@@ -534,6 +550,7 @@ export class Sim {
     // horizontal-only rolling/air drag (vertical damping would distort free-fall: gravity must be exactly the planet value)
     { const lv = b.linvel(), dk = 1 - 0.02 * h; b.setLinvel({ x: lv.x * dk, y: lv.y, z: lv.z * dk }, true); }
     this.world.step();
+    this.guardWorld();
 
     // ---- post step ----
     const np = v3(b.translation()), nrr = b.rotation();
