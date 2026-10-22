@@ -159,7 +159,7 @@
   "pass": true,
   "info": {
    "noControl": "PAD LANDING 6.2m",
-   "withControl": "PAD LANDING 5.4m"
+   "withControl": "PAD LANDING 5.9m"
   }
  },
  {
@@ -167,7 +167,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 4.1m"
+   "withControl": "PAD LANDING 5.3m"
   }
  },
  {
@@ -175,7 +175,7 @@
   "pass": true,
   "info": {
    "noControl": "miss",
-   "withControl": "PAD LANDING 3.7m"
+   "withControl": "PAD LANDING 3.3m"
   }
  },
  {
@@ -183,7 +183,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 3.7m"
+   "withControl": "PERFECT LANDING!"
   }
  },
  {
@@ -191,7 +191,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 5.8m"
+   "withControl": "PAD LANDING 6.1m"
   }
  },
  {
@@ -199,7 +199,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 5.9m"
+   "withControl": "PAD LANDING 5.2m"
   }
  },
  {
@@ -370,7 +370,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 4.0m"
+   "withControl": "PAD LANDING 6.1m"
   }
  },
  {
@@ -378,7 +378,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 3.8m"
+   "withControl": "PAD LANDING 5.9m"
   }
  },
  {
@@ -399,18 +399,18 @@
  },
  {
   "id": "hauler r1 side +3 m: player steers onto the landing pad",
-  "pass": false,
+  "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "miss"
+   "withControl": "PAD LANDING 8.1m"
   }
  },
  {
   "id": "hauler r1 side -3 m: player steers onto the landing pad",
-  "pass": false,
+  "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "miss"
+   "withControl": "PAD LANDING 6.9m"
   }
  },
  {
