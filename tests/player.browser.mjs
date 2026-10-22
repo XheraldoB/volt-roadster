@@ -46,8 +46,25 @@ ok('RP10 frame-time ring buffer', ft.length > 30, { n: ft.length, p50: srt[srt.l
   ok('B24 Ultra renders at native DPR (OnePlus 15: 2772x1272)', r.pr >= 3 * (r.db.dynScale || 1) - 0.01 && r.db.w >= 2772 * 0.85 - 1, { pr: r.pr, w: r.db.w, h: r.db.h, dynScale: r.db.dynScale, q: r.q });
   const bb = await p2.evaluate(() => { const b = document.querySelector('#btn-pause').getBoundingClientRect(); return { w: b.width, h: b.height }; });
   const mm = Math.min(bb.w, bb.h) * 3 / 450 * 25.4; ok('B25 pause button >= 9 mm on the phone', mm >= 9, { css: bb, mm: +mm.toFixed(1) });
-  await p2.screenshot({ path: 'qa-shots/b24-ultra-native.png' }); await c2.close(); }
-mkdirSync('qa-shots', { recursive: true }); await page.screenshot({ path: 'qa-shots/rp9-sharpness.png' });
+  await p2.screenshot({ path: 'qa-shots/b24-ultra-native.png' });
+  /* real touch tap on the pause button (CDP touch, like a finger) must open the pause menu */
+  { const pb = await p2.evaluate(() => { const b = document.querySelector('#btn-pause').getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; }); const cdp = await c2.newCDPSession(p2);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: pb.x, y: pb.y, id: 1 }] }); await p2.waitForTimeout(60); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p2.waitForTimeout(500);
+    const sc = await p2.evaluate(() => ({ screen: window.__game.screen, vis: getComputedStyle(document.querySelector('#scr-pause')).display !== 'none' }));
+    ok('RP tapping the pause button opens the pause menu', sc.screen === 'pause' && sc.vis, sc);
+    await p2.screenshot({ path: 'qa-shots/r5-pause-tap.png' }); await p2.evaluate(() => window.__game.pause(false)); await p2.waitForTimeout(300); }
+  await c2.close(); }
+mkdirSync('qa-shots', { recursive: true });
+  /* B26: first finish on a fresh save -> achievement toasts never overlap the results score/buttons */
+  { await page.evaluate(() => { const g = window.__game, s = g.sim(); s.respawnAt(s.tr.length - 60, 25); g.state.settings.autoGas = true; g.applySettings(); });
+    await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 60000 }); await page.waitForTimeout(1200);
+    const ov = await page.evaluate(() => { const ts = [...document.querySelectorAll('#toasts .toast')].filter(t => getComputedStyle(t).display !== 'none').map(t => t.getBoundingClientRect());
+      const tg = [...document.querySelectorAll('#scr-results .row-btns .btn, #res-body h1, #res-body .score, #res-body table, #res-body .stats, #res-body .row')].map(e => e.getBoundingClientRect());
+      const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      return { toasts: ts.length, overlaps: ts.reduce((n, a) => n + tg.filter(b => hit(a, b)).length, 0), pe: [...document.querySelectorAll('#toasts .toast')].map(t => getComputedStyle(t).pointerEvents) }; });
+    ok('B26 results toasts never cover score/buttons and ignore taps', ov.overlaps === 0 && ov.pe.every(p => p === 'none'), ov);
+    await page.screenshot({ path: 'qa-shots/r5-results-toasts.png' }); }
+await page.screenshot({ path: 'qa-shots/rp9-sharpness.png' });
 ok('RP9 sharpness screenshot saved (qa-shots/rp9-sharpness.png)', true, {});
 ok('no page errors', errs.length === 0, { errs });
 writeFileSync('tests/player-results.json', JSON.stringify(R, null, 1)); console.log(`${R.filter(r => r.pass).length}/${R.length} passed`);

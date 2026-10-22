@@ -3,7 +3,9 @@
   "id": "B14 fresh launch writes nothing to the cloud",
   "pass": true,
   "info": {
-   "apiReq": []
+   "apiReq": [
+    "POST /api/save"
+   ]
   }
  },
  {
@@ -34,16 +36,16 @@
   "id": "RP touch GAS drives forward",
   "pass": true,
   "info": {
-   "ds": 0.9,
-   "kmh": 15
+   "ds": 1.8,
+   "kmh": 21
   }
  },
  {
   "id": "RP touch BRAKE stops then REVERSES",
   "pass": true,
   "info": {
-   "s1": 22.7,
-   "s2": 22.6
+   "s1": 23.7,
+   "s2": 25.4
   }
  },
  {
@@ -89,16 +91,16 @@
   "pass": true,
   "info": {
    "s": 21.8,
-   "t": 0.041666666666666664
+   "t": 0
   }
  },
  {
   "id": "RP10 frame-time ring buffer",
   "pass": true,
   "info": {
-   "n": 168,
+   "n": 166,
    "p50": 333.3,
-   "p95": 483.3
+   "p95": 650
   }
  },
  {
@@ -121,6 +123,25 @@
     "h": 54
    },
    "mm": 9.1
+  }
+ },
+ {
+  "id": "RP tapping the pause button opens the pause menu",
+  "pass": true,
+  "info": {
+   "screen": "pause",
+   "vis": true
+  }
+ },
+ {
+  "id": "B26 results toasts never cover score/buttons and ignore taps",
+  "pass": true,
+  "info": {
+   "toasts": 1,
+   "overlaps": 0,
+   "pe": [
+    "none"
+   ]
   }
  },
  {

@@ -161,7 +161,7 @@ body.touch .hud-bc #spd { font-size: 2.3rem; }
 #fade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.4s; z-index: 55; } #fade.on { opacity: 1; }
 /* toasts */
 #toasts { position: fixed; top: calc(var(--st) + 14vh); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 50; pointer-events: none; }
-.toast { background: rgba(8, 12, 22, 0.9); border: 1px solid var(--line); border-radius: 12px; padding: 0.6em 1.1em; text-align: center; font-size: 0.9rem; animation: tin 0.3s; transition: all 0.4s; max-width: 80vw; }
+.toast { pointer-events: none; background: rgba(8, 12, 22, 0.9); border: 1px solid var(--line); border-radius: 12px; padding: 0.6em 1.1em; text-align: center; font-size: 0.9rem; animation: tin 0.3s; transition: all 0.4s; max-width: 80vw; }
 .toast.ach { border-color: var(--gold); box-shadow: 0 0 20px rgba(255, 210, 63, 0.3); } .toast.out { opacity: 0; transform: translateY(-10px); }
 @keyframes tin { from { opacity: 0; transform: translateY(-10px) scale(0.9); } }
 #fps { position: fixed; left: calc(var(--sl) + 50% - 4em); bottom: calc(var(--sb) + 2px); font: 600 11px ui-monospace, monospace; color: #7dff9a; background: rgba(0, 0, 0, 0.5); padding: 1px 6px; border-radius: 4px; z-index: 70; pointer-events: none; display: none; }
@@ -223,7 +223,10 @@ body.lefty .tc-left { left: auto; right: calc(var(--sr) + 1.5vw); } body.lefty .
 #quest-line { font-size: max(11px, 0.8rem); font-weight: 600; }
 #hud-time { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); }
 /* B19: while the results / finish screen is up, toasts drop to the bottom so they never cover the headline */
-body[data-screen="results"] #toasts { top: auto; bottom: calc(var(--sb) + 4vh); }
+/* B26: on results, toasts sit compact in the top-right corner, max two at a time (rest wait their turn), never over the score or buttons */
+body[data-screen="results"] #toasts { top: calc(var(--st) + 8px); bottom: auto; left: auto; right: calc(env(safe-area-inset-right, 0px) + 10px); transform: none; align-items: flex-end; }
+body[data-screen="results"] .toast { font-size: 0.72rem; padding: 0.4em 0.8em; max-width: 26vw; }
+body[data-screen="results"] #toasts .toast:nth-child(n+3) { display: none; }
 /* HUD horizon indicator (airborne only) */
 #horizon { position: absolute; left: 50%; top: 58%; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.55); background: radial-gradient(rgba(6, 10, 20, 0.35), rgba(6, 10, 20, 0.15)); overflow: hidden; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
 #horizon.on { opacity: 1; }
