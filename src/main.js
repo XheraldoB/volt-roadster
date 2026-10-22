@@ -313,7 +313,7 @@ $$('[data-go]').forEach(b => b.onclick = () => { click(); const g = b.dataset.go
 function toggleFS() { const d = document; if (!d.fullscreenElement) { (d.documentElement.requestFullscreen?.({ navigationUI: 'hide' }) || Promise.resolve()).then(() => window.screen.orientation?.lock?.('landscape').catch(() => {})).catch(() => {}); } else d.exitFullscreen?.(); }
 
 // ---------------- racing ----------------
-async function startLevel(level, mode) {
+async function startLevel(level, mode) { $('#toasts').replaceChildren(); /* B28: results toasts never follow into the next race */
   stopRace(); G.level = level; G.mode = mode;
   $('#loading-text').textContent = `Building ${level.name}…`; go('loading');
   await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
