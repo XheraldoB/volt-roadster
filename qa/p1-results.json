@@ -1,0 +1,321 @@
+{
+  "boot_ms": 2434,
+  "env": {
+    "gl2": true,
+    "gpu": {
+      "tier": "low",
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "cores": 8,
+      "mem": 16,
+      "mobile": true
+    },
+    "maxTex": 8192,
+    "scroll": [
+      924,
+      424,
+      924,
+      424
+    ],
+    "canvas": [
+      924,
+      424
+    ]
+  },
+  "nav_after_play": "map",
+  "levelcard_open": true,
+  "touch_layout": {
+    "bodyTouch": true,
+    "gasVisible": "none",
+    "autoGas": true,
+    "ctls": [
+      [
+        "left",
+        23,
+        322,
+        85,
+        85,
+        "block"
+      ],
+      [
+        "right",
+        128,
+        322,
+        85,
+        85,
+        "block"
+      ],
+      [
+        "brake",
+        706,
+        352,
+        51,
+        51,
+        "block"
+      ],
+      [
+        "gas",
+        0,
+        0,
+        0,
+        0,
+        "none"
+      ],
+      [
+        "boost",
+        829,
+        335,
+        72,
+        72,
+        "block"
+      ],
+      [
+        "jump",
+        761,
+        348,
+        59,
+        59,
+        "block"
+      ]
+    ]
+  },
+  "multitouch": {
+    "steerBoost": {
+      "t": {
+        "left": 0,
+        "right": 1,
+        "gas": 0,
+        "brake": 0,
+        "boost": 1,
+        "jump": 0
+      },
+      "steerCur": 0.3944349740240716,
+      "boosting": true,
+      "kmh": 17.299559971764577
+    },
+    "threeFingers": {
+      "left": 0,
+      "right": 1,
+      "gas": 0,
+      "brake": 0,
+      "boost": 1,
+      "jump": 1
+    },
+    "afterLiftBoost": {
+      "left": 0,
+      "right": 0,
+      "gas": 0,
+      "brake": 0,
+      "boost": 1,
+      "jump": 0
+    },
+    "slideToLeft": {
+      "left": 1,
+      "right": 0,
+      "gas": 0,
+      "brake": 0,
+      "boost": 1,
+      "jump": 1
+    },
+    "afterCancel": {
+      "left": 0,
+      "right": 0,
+      "gas": 0,
+      "brake": 0,
+      "boost": 0,
+      "jump": 0
+    }
+  },
+  "perf_low": {
+    "e1": {
+      "simMs": 1.26,
+      "renderSubmitMs": 4.95,
+      "avgFps": 10.3,
+      "minFps": 10,
+      "p50ms": 166.6,
+      "p99ms": 733.4,
+      "heapMB": [
+        25,
+        24
+      ],
+      "s": 698,
+      "crashes": 0,
+      "kmh": 114,
+      "state": "race",
+      "calls": 1,
+      "tris": 1,
+      "geo": 608,
+      "tex": 42
+    },
+    "m1": {
+      "simMs": 0.66,
+      "renderSubmitMs": 4.8,
+      "avgFps": 13.2,
+      "minFps": 10.6,
+      "p50ms": 100,
+      "p99ms": 666.6,
+      "heapMB": [
+        37,
+        41
+      ],
+      "s": 775,
+      "crashes": 1,
+      "kmh": 159,
+      "state": "race",
+      "calls": 1,
+      "tris": 1,
+      "geo": 568,
+      "tex": 56
+    },
+    "r1": {
+      "simMs": 0.77,
+      "renderSubmitMs": 6.51,
+      "avgFps": 11.4,
+      "minFps": 10,
+      "p50ms": 100.1,
+      "p99ms": 633.4,
+      "heapMB": [
+        30,
+        22
+      ],
+      "s": 758,
+      "crashes": 1,
+      "kmh": 159,
+      "state": "race",
+      "calls": 1,
+      "tris": 1,
+      "geo": 556,
+      "tex": 68
+    }
+  },
+  "leak_cycles": [
+    {
+      "heap": 39,
+      "geo": 672,
+      "tex": 86
+    },
+    {
+      "heap": 44,
+      "geo": 741,
+      "tex": 97
+    },
+    {
+      "heap": 25,
+      "geo": 702,
+      "tex": 112
+    },
+    {
+      "heap": 33,
+      "geo": 656,
+      "tex": 127
+    },
+    {
+      "heap": 50,
+      "geo": 736,
+      "tex": 142
+    },
+    {
+      "heap": 54,
+      "geo": 805,
+      "tex": 153
+    },
+    {
+      "heap": 27,
+      "geo": 766,
+      "tex": 168
+    },
+    {
+      "heap": 39,
+      "geo": 720,
+      "tex": 183
+    }
+  ],
+  "gravity": {
+    "e1": {
+      "planetG": 9.81,
+      "measured": 9.76
+    },
+    "m1": {
+      "planetG": 1.62,
+      "measured": 1.75
+    },
+    "r1": {
+      "planetG": 3.71,
+      "measured": 3.8
+    }
+  },
+  "visibility_pause": {
+    "screen": "pause",
+    "paused": true
+  },
+  "orientation": {
+    "before": {
+      "t": 1.9999999999999953,
+      "bat": 58.000000000000114
+    },
+    "portrait": {
+      "rotateShown": "flex",
+      "screen": "race",
+      "t": 3.874999999999989,
+      "bat": 56.12500000000022,
+      "canvas": [
+        233,
+        508
+      ]
+    },
+    "backToLandscape": {
+      "canvas": [
+        508,
+        233
+      ],
+      "screen": "race",
+      "cam": 2.1792452830188678
+    }
+  },
+  "context_loss": {
+    "lost": false,
+    "screen": "race",
+    "frameAdvance": -8917
+  },
+  "vibrate_calls": {
+    "n": 197,
+    "sample": [
+      8,
+      8,
+      8,
+      40,
+      25,
+      15,
+      40,
+      25
+    ]
+  },
+  "errors": {
+    "pageerrors": [],
+    "console": [
+      "warning: WebGL: INVALID_OPERATION: delete: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: delete: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: delete: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: delete: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: delete: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: delete: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: delete: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: delete: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: deleteVertexArray: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: deleteVertexArray: object does not belong to this context",
+      "warning: WebGL: INVALID_OPERATION: deleteVertexArray: object does not belong to this context"
+    ],
+    "bad": [],
+    "rejections": []
+  },
+  "dpr3": {
+    "canvas": [
+      924,
+      424
+    ],
+    "css": [
+      924,
+      424
+    ],
+    "hudOverlap": []
+  }
+}

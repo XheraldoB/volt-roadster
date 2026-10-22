@@ -1,0 +1,341 @@
+{
+  "fresh": {
+    "coins": 300,
+    "gems": 5,
+    "vehicle": "roadster",
+    "fpsCap": 0,
+    "quality": "auto",
+    "haptics": true
+  },
+  "planets_unlocked": {
+    "cut": {
+      "screen": "cut",
+      "title": "🌍 Earth  →  🌙 Moon"
+    },
+    "moon": {
+      "screen": "map",
+      "world": "moon",
+      "nodes": "OLLLLLL"
+    },
+    "mars": {
+      "world": "mars",
+      "nodes": "OLLLLLL"
+    },
+    "earth": {
+      "world": "earth",
+      "nodes": "OLLLLLLLL"
+    }
+  },
+  "hauler_price_check": {
+    "before": {
+      "coins": 300,
+      "veh": "roadster",
+      "haulerBtn": "SELECT"
+    },
+    "after": {
+      "coins": 300,
+      "veh": "hauler"
+    },
+    "vehiclePrice": 6000
+  },
+  "cant_afford": {
+    "ups": [
+      [
+        "tank",
+        true,
+        "🪙 180"
+      ],
+      [
+        "speed",
+        true,
+        "🪙 210"
+      ],
+      [
+        "accel",
+        true,
+        "🪙 180"
+      ],
+      [
+        "handling",
+        true,
+        "🪙 160"
+      ],
+      [
+        "boost",
+        true,
+        "🪙 160"
+      ],
+      [
+        "thruster",
+        true,
+        "🪙 240"
+      ],
+      [
+        "magnet",
+        true,
+        "🪙 130"
+      ]
+    ],
+    "afterTap": {
+      "coins": 0,
+      "up": {}
+    },
+    "paint": {
+      "owned": [],
+      "paint": "red",
+      "coins": 0,
+      "toast": [
+        "Need 🪙 250"
+      ]
+    },
+    "gem": {
+      "owned": [],
+      "gems": 0,
+      "toast": [
+        "Need 🪙 250",
+        "Need 💎 15 (you have 0)"
+      ]
+    }
+  },
+  "upgrades": {
+    "statsBefore": [
+      "Top speed187 km/h",
+      "Acceleration",
+      "Grip",
+      "Weight1650 kg",
+      "Toughnessfragile",
+      "Thruster1.0 s"
+    ],
+    "costs": {
+      "tank": "🪙 180",
+      "speed": "🪙 210",
+      "accel": "🪙 180",
+      "handling": "🪙 160",
+      "boost": "🪙 160",
+      "thruster": "🪙 240",
+      "magnet": "🪙 130"
+    },
+    "afterBuys": {
+      "coins": 18900,
+      "up": {
+        "speed": 2,
+        "tank": 1,
+        "handling": 1,
+        "accel": 1
+      }
+    },
+    "statsAfter": [
+      "Top speed230 km/h",
+      "Acceleration",
+      "Grip",
+      "Weight1650 kg",
+      "Toughnessfragile",
+      "Thruster1.0 s"
+    ],
+    "rapidTaps": {
+      "nextCost": 160,
+      "coins": 10,
+      "boost": 1
+    },
+    "persistedAfterReload": {
+      "coins": 10,
+      "up": {
+        "speed": 2,
+        "tank": 1,
+        "handling": 1,
+        "accel": 1,
+        "boost": 1
+      }
+    },
+    "simStats": {
+      "vmaxKmh": 230,
+      "tank": 72,
+      "grip": 3.45,
+      "accel": 11.5,
+      "battery": 72
+    }
+  },
+  "customizer": {
+    "st": {
+      "custom": {
+        "paint": "green",
+        "rims": "neon",
+        "spoiler": "wing"
+      },
+      "coins": 3880,
+      "owned": {
+        "p": [
+          "green"
+        ],
+        "r": [
+          "neon"
+        ],
+        "s": [
+          "wing"
+        ]
+      }
+    },
+    "afterReload": {
+      "paint": "green",
+      "rims": "neon",
+      "spoiler": "wing"
+    }
+  },
+  "pause_restart": {
+    "minimapBig": true,
+    "pre": {
+      "t": 1.9249999999999956,
+      "coins": 0,
+      "s": 21.79484748840332
+    },
+    "pausedScreen": {
+      "screen": "pause",
+      "t": 2.399999999999994
+    },
+    "timeFrozen": true,
+    "afterRestart": {
+      "state": "countdown",
+      "t": 0,
+      "coins": 0,
+      "s": 22
+    }
+  },
+  "pause_in_countdown": {
+    "screen": "pause",
+    "cd": 2.725000000000002
+  },
+  "flipped_recovery": {
+    "upsideDown": {
+      "events": [
+        "hit",
+        "crash:flip",
+        "respawn"
+      ],
+      "secs": 11.784
+    },
+    "onSide_autoGas": {
+      "events": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "land",
+        "land",
+        "crash:landing",
+        "crash:landing",
+        "respawn",
+        "respawn"
+      ],
+      "secs": 8.602
+    }
+  },
+  "onSide_noInput": {
+    "events": [
+      "hit",
+      "hit",
+      "hit",
+      "hit",
+      "hit",
+      "hit",
+      "land",
+      "land",
+      "land",
+      "crash:landing",
+      "crash:landing",
+      "crash:landing",
+      "respawn",
+      "respawn",
+      "respawn"
+    ],
+    "secs": 8.087
+  },
+  "out_of_bounds": {
+    "ev": [
+      "crash:off",
+      "crash:off",
+      "crash:off",
+      "respawn",
+      "respawn",
+      "respawn"
+    ],
+    "after": {
+      "x": 0,
+      "s": 24.746810913085938
+    }
+  },
+  "battery_zero_midair": {
+    "screen": "results",
+    "state": "finished",
+    "h": 0.7,
+    "grounded": true,
+    "title": "OUT OF BATTERY",
+    "secs": 15.505
+  },
+  "finish_results": {
+    "res": {
+      "title": "1ST PLACE!",
+      "body": "1ST PLACE! | Win + 12,975 pts for 3★ | ★★★ | Time | 0:02.52 | Tricks | 0 | Time bonus | 3,391 | Position bonus | 3,000 | SCORE | 6,431 | NEW BEST! | Coins collected | 🪙 4 | Score payout | 🪙 53 | Side quest | ✗ | New stars | 🪙 300 | EARNED | 🪙 357 | Flips 0 · Loops 0 · Car jumps 0 · Perfect 0 · Max air 0.2s · Crashes 0",
+      "coins": 4256,
+      "lv": {
+        "stars": 2,
+        "best": 6431,
+        "bestTime": 2.5249999999999937,
+        "bestTrial": 0,
+        "questDone": false,
+        "plays": 1
+      },
+      "nextVisible": "block"
+    },
+    "doubleTapRetry": {
+      "before": {
+        "geometries": 576,
+        "textures": 71
+      },
+      "after": {
+        "mem": {
+          "geometries": 643,
+          "textures": 86
+        },
+        "sceneChildren": 62
+      }
+    }
+  },
+  "progression": "O*OLLLLLLL",
+  "base_building": {
+    "padTap": {
+      "x": 462,
+      "y": 148.39999999999998
+    },
+    "built": {
+      "coins": 9500,
+      "plots": [
+        null,
+        null,
+        null,
+        {
+          "type": "robotbay",
+          "lvl": 1
+        },
+        null,
+        null
+      ],
+      "info": "🌍 Earth Base🤖 Volt-Bots: 1🏭 0/hTap a hex pad to build"
+    },
+    "trophy": {
+      "screen": "trophy",
+      "info": "Trophy Room · 1/26 trophies lit"
+    },
+    "simRobots": 1
+  },
+  "tier_spoof_adreno840": {
+    "tier": "ultra",
+    "quality": "ultra",
+    "fpsCap": 0
+  },
+  "errors": {
+    "pageerrors": [],
+    "console": [],
+    "bad": [],
+    "rejections": []
+  }
+}

@@ -1,0 +1,33 @@
+// Phase 3 cloud save + recovery-code restore on production. Exactly ONE /api/save write is allowed through.
+import { launch, newPage, bootToTitle, shot, G, tapSel, writeJSON, OP15 } from './lib.mjs';
+const BASE = 'https://volt-roadster.vercel.app';
+const VIEW = { ...OP15, viewport: { width: 924, height: 424 } };
+const R = {}; const rec = (k, v) => { R[k] = v; console.log(k, JSON.stringify(v)); writeJSON('p3-cloud-results.json', R); };
+const b = await launch();
+const A = await newPage(b, VIEW, { prodGuard: true }); const pa = A.page;
+const api = []; pa.on('response', async r => { if (r.url().includes('/api/save')) { let t = ''; try { t = await r.text(); } catch (e) {} api.push(`${r.status()} ${t.slice(0, 160)}`); } });
+await bootToTitle(pa, `${BASE}/`, 120000); await pa.waitForTimeout(2500);
+await G(pa, () => { const s = __game.state; s.coins = 4242; s.custom.paint = 'gold'; s.owned.paints = ['gold']; s.upgrades = { speed: 2, tank: 1 }; s.levels = { e1: { stars: 2, best: 6431, bestTime: 80.5, bestTrial: 0, questDone: true, plays: 3 } }; s.stats.loops = 7; __game.save(); });
+await tapSel(pa, A.cdp, '#scr-title [data-go="settings"]'); await pa.waitForTimeout(500);
+await pa.locator('#cl-sync').scrollIntoViewIfNeeded(); await pa.waitForTimeout(300);
+const vis = await G(pa, () => { const r = document.querySelector('#cl-sync').getBoundingClientRect(); return [r.top, r.bottom, innerHeight]; });
+const code = await G(pa, () => document.querySelector('#cloud-box .code').textContent);
+await shot(pa, 'p3-live-settings-cloud');
+A.allowSave();
+await tapSel(pa, A.cdp, '#cl-sync'); await pa.waitForTimeout(5000);
+const st = await G(pa, () => ({ status: __game.state.cloud.status, lastSync: !!__game.state.cloud.lastSync, toast: [...document.querySelectorAll('.toast')].map(t => t.textContent).slice(-2) }));
+rec('A_single_cloud_save', { syncBtnRect: vis, saves: A.log.saves, apiSave: api, status: st, code });
+await A.ctx.close(); // no further writes possible from A
+const B = await newPage(b, VIEW, { prodGuard: true }); const pb = B.page;
+await bootToTitle(pb, `${BASE}/`, 120000); await pb.waitForTimeout(2500);
+const fresh = await G(pb, () => ({ coins: __game.state.coins, paint: __game.state.custom.paint }));
+await tapSel(pb, B.cdp, '#scr-title [data-go="settings"]'); await pb.waitForTimeout(400);
+await pb.locator('#cl-restore').scrollIntoViewIfNeeded();
+await pb.fill('#cl-code', code.toLowerCase()); await tapSel(pb, B.cdp, '#cl-restore'); await pb.waitForTimeout(5000);
+const restored = await G(pb, () => ({ screen: __game.screen, coins: __game.state.coins, paint: __game.state.custom.paint, upgrades: __game.state.upgrades, e1: __game.state.levels.e1, loops: __game.state.stats.loops, code: __game.state.cloud.code, toast: [...document.querySelectorAll('.toast')].map(t => t.textContent).slice(-2) }));
+await pb.waitForTimeout(1000); await shot(pb, 'p3-live-restored-map');
+await G(pb, () => __game.goto('garage')); await pb.waitForTimeout(2500); await shot(pb, 'p3-live-restored-garage');
+await pb.reload(); await pb.waitForFunction(() => window.__game && __game.screen === 'title', null, { timeout: 120000 }); await pb.waitForTimeout(3000);
+const afterReload = await G(pb, () => ({ coins: __game.state.coins, paint: __game.state.custom.paint, code: __game.state.cloud.code }));
+rec('B_restore', { fresh, restored: { ...restored, codeMatches: restored.code === code }, afterReload: { ...afterReload, codeMatches: afterReload.code === code }, savesB: B.log.saves, errors: B.log.errors, bad: B.log.bad, rej: await G(pb, () => window.__qaRej || []) });
+await b.close();

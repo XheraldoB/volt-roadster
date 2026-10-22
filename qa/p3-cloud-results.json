@@ -1,0 +1,63 @@
+{
+  "A_single_cloud_save": {
+    "syncBtnRect": [
+      313,
+      340.65625,
+      424
+    ],
+    "saves": [
+      "BLOCKED POST",
+      "ALLOWED POST"
+    ],
+    "apiSave": [
+      "200 {\"ok\":false,\"error\":\"qa-blocked\"}",
+      "200 {\"ok\":true,\"backend\":\"blob\",\"savedAt\":1792345074285}"
+    ],
+    "status": {
+      "status": "synced",
+      "lastSync": true,
+      "toast": []
+    },
+    "code": "VOLT-QPM5-VG64-XXS9"
+  },
+  "B_restore": {
+    "fresh": {
+      "coins": 300,
+      "paint": "red"
+    },
+    "restored": {
+      "screen": "map",
+      "coins": 4242,
+      "paint": "gold",
+      "upgrades": {
+        "speed": 2,
+        "tank": 1
+      },
+      "e1": {
+        "stars": 2,
+        "best": 6431,
+        "bestTime": 80.5,
+        "bestTrial": 0,
+        "questDone": true,
+        "plays": 3
+      },
+      "loops": 7,
+      "code": "VOLT-QPM5-VG64-XXS9",
+      "toast": [],
+      "codeMatches": true
+    },
+    "afterReload": {
+      "coins": 4242,
+      "paint": "gold",
+      "code": "VOLT-QPM5-VG64-XXS9",
+      "codeMatches": true
+    },
+    "savesB": [
+      "BLOCKED POST",
+      "BLOCKED POST"
+    ],
+    "errors": [],
+    "bad": [],
+    "rej": []
+  }
+}

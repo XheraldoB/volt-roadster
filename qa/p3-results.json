@@ -1,0 +1,117 @@
+{
+  "A_boot_ms": 5053,
+  "A_env": {
+    "https": "https:",
+    "gl2": true,
+    "tier": "low",
+    "screen": "title",
+    "cloud": {
+      "status": "qa-blocked",
+      "code": "VOLT-8XYC-5LBZ-5UTB"
+    }
+  },
+  "A_smoke": {
+    "e1": {
+      "s": 111,
+      "kmh": 113,
+      "state": "race",
+      "coins": 0,
+      "fps": 11.250703168947998
+    },
+    "worlds": {
+      "m1": {
+        "s": 52,
+        "kmh": 84,
+        "veh": "hauler",
+        "g": 1.62
+      },
+      "r2": {
+        "s": 63,
+        "kmh": 85,
+        "veh": "roadster",
+        "g": 3.71
+      }
+    }
+  },
+  "A_single_cloud_save": {
+    "savesBefore": [
+      "BLOCKED POST"
+    ],
+    "savesAfter": [
+      "BLOCKED POST"
+    ],
+    "status": {
+      "status": "qa-blocked",
+      "lastSync": 0,
+      "toast": [],
+      "box": "Recovery code VOLT-… Copy\nStatus: qa-blocked. Saves to the cloud on launch, at checkpoints, after races and when you leave.\nSync now\nRestore"
+    },
+    "code": "VOLT-8XYC-5LBZ-5UTB"
+  },
+  "A_errors": {
+    "pageerrors": [],
+    "console": [
+      "warning: Service Worker registration blocked by Playwright"
+    ],
+    "bad": [],
+    "rejections": [],
+    "beacons": [
+      "/api/save"
+    ],
+    "saves": [
+      "BLOCKED POST"
+    ],
+    "api": [
+      "200 GET https://volt-roadster.vercel.app/api/load?id=131a913f-66d7-4cfe-b054-72f85b8ec8b0&secret=*** {\"ok\":true,\"found\":false,\"data\":null}",
+      "200 POST https://volt-roadster.vercel.app/api/save {\"ok\":false,\"error\":\"qa-blocked\"}"
+    ]
+  },
+  "B_restore": {
+    "fresh": {
+      "coins": 300,
+      "paint": "red",
+      "code": "VOLT-…(new identity)"
+    },
+    "wrongCodeToast": "Restore failed: Code not found",
+    "restored": {
+      "screen": "title",
+      "coins": 300,
+      "paint": "red",
+      "upgrades": {},
+      "loops": 0,
+      "code": "VOLT-PS99-XQHK-ANU4",
+      "toast": [],
+      "codeMatches": false
+    },
+    "afterReload": {
+      "coins": 300,
+      "paint": "red",
+      "code": "VOLT-PS99-XQHK-ANU4",
+      "codeMatches": false
+    },
+    "savesB": [
+      "BLOCKED POST",
+      "BLOCKED POST"
+    ],
+    "errors": [],
+    "bad": [
+      "404 https://volt-roadster.vercel.app/api/load?code=VOLT-ZZZZ-ZZZZ-ZZZZ",
+      "404 https://volt-roadster.vercel.app/api/load?code=VOLT-8XYC-5LBZ-5UT"
+    ]
+  },
+  "C_orientation_fullscreen": {
+    "portraitRotatePrompt": "flex",
+    "landscapePrompt": "none",
+    "fullscreenOn": {
+      "fs": true,
+      "orient": "landscape-primary"
+    },
+    "fullscreenOffAfterSecondTap": true,
+    "serviceWorker": "registered",
+    "fsButtonsOutsideTitle": 0,
+    "saves": [
+      "BLOCKED POST"
+    ],
+    "errors": []
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "modals": {
+    "daily": "🔥 Streak: 0 day(s) · rewards grow +25% per streak day | 🎯 | Finish any Moon level | Any level, any mode | 🪙 200 | 🎯 | Stick a PERFECT pad landing | Any level, any mode | 🪙 300 | 🎯 | Complete 6 loops in one run | Any level, any mode | 🪙 400 | New challenges every day at midnight.",
+    "achievements": 26,
+    "settings": {
+      "segs": [
+        "quality:Auto*/Low/Med/High/Ultra",
+        "fpsCap:60/120/Unlimited*",
+        "steer:Steer buttons*/Tilt phone",
+        "camMode:Chase*/Close/Hood/Drone"
+      ],
+      "maxlen": 19
+    },
+    "restoreInputWithLeadingSpace": " VOLT-ABCD-EFGH-JKL"
+  },
+  "race_extras": {
+    "camModes": [
+      "close",
+      "hood",
+      "drone",
+      "chase"
+    ],
+    "manualRespawnS": 25.478134155273438,
+    "photo": {
+      "screen": "photo",
+      "filters": 6,
+      "download": "volt-roadster-1792345211403.png",
+      "photos": 1,
+      "backTo": "pause"
+    }
+  },
+  "ghost": {
+    "hud": "👻 0:08.64",
+    "simGhost": true,
+    "frames": 79
+  },
+  "errors": {
+    "pageerrors": [],
+    "console": [],
+    "bad": []
+  }
+}
