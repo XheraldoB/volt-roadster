@@ -280,3 +280,34 @@ B26 | Minor | P2 | Achievement toasts on the results screen cover the score and 
 | Pause tap | VERIFIED | Real CDP touch tap on #btn-pause at OP15 Ultra opens the pause menu (qa-shots/r5-pause-tap.png) |
 
 Suites: drive 62/62, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 17/17.
+
+## Regression round 5 (commit f8e68d6)
+Build: f8e68d6 built in a fresh worktree (/workspace/volt-roadster-qa-f8e68d6) to /workspace/vr-dist-f8e68d6 and previewed on :4173 (the old preview was stopped). The live site serves identical assets (index-9Z2TgR6y.js, index-BaqPYPtX.css, three-zySor9gr.js, rapier-BYHDSJ8_.js). **Zero live cloud writes** (the live site was only compared by asset hashes). tests/drive.test.mjs: 62/62. Scripts: qa/hover5.mjs, qa/p6.mjs, qa/p6b.mjs, qa/p6c.mjs; results in qa/p6*-results.json.
+
+| Item | Status | Evidence |
+|---|---|---|
+| B6 e1 full JUMP hold | FIXED | Takeoff 134 km/h, lands s=1111.5 vs pad 1115.6: **−4.1 m**, "PAD LANDING 4.2m" + CLEAN. Touchdown −8.6 m/s |
+| B6 r1 | FIXED | Lands 649.5 vs pad 645.8: **+3.7 m**, "PAD LANDING 3.7m". Touchdown −5.9 m/s |
+| B6 m1 | OFF PAD | Lands 716.4 vs pad 704.8: **+11.6 m**, beyond padR 9 (2.6 m past the edge). Scored only "CRATER HOP CLEARED" + "CLEAN LANDING", no pad credit and no edge/partial credit. Touchdown −2.9 m/s. Air 14.5 s |
+| B6 fuel-out descent | PARTIAL | Descent starts soft but keeps accelerating instead of holding ~4.5 m/s. e1: fuel empties 9.7 m up, vy −1.5→−4.5 after about 1.2 s→−8.6 at touchdown. r1 (8.6 m up): −1.6→−4.6→−5.9. m1: −1.4→−2.9. Only Mars sits near 4.5; Earth doubles it (B27) |
+| B26 toasts | FIXED | Fresh-save finish: "First Finish" and "Superstar" stack top-right (x≈830–913, y 1–104 CSS), clear of the score row (y 267). `pointer-events: none` on both the toast and #toasts. Real CDP taps on 📸 (screen → photo) and Retry (screen → race, e2) both go through. elementFromPoint at the button centres = the button |
+| Pause tap | PASS | Real touch on #btn-pause: #scr-pause goes hidden → visible, raceTime frozen 0.758→0.758 over 2 s, Resume tap hides it and time runs again (r6-pause-tap.png) |
+| RP1–RP8 smoke | PASS | drive.test 62/62 (reverse, brakes, flip, unstuck, respawn, steering, air control, pad steering). Touch: pad + jump + boost + brake all at once (pad −1.0), touchCancel clears everything. No page errors |
+
+Notes:
+- The m1 still (r6-m1-pad-edge.png, pickup placed at s=716.4) has the chase camera blocked by a large dark terrain or ramp mass, and the pickup isn't visible. This is possibly an artefact of teleporting; recheck the camera after a real landing there.
+- Achievement toasts that fire on results carry over into the next race after Retry and show top-centre (x 413–512, y 59–128) for up to about 3 s, over the battery bar and quest line. Trivial.
+
+B27 | Minor | P2 | Pickup fuel-out descent keeps accelerating on Earth (touchdown −8.6 m/s instead of a soft ~4.5 m/s) | Ferrox, `node qa/hover5.mjs` (hold JUMP across the first gap of e1/r1/m1) | After the gas runs out, a capped soft descent of about 4.5 m/s until touchdown | e1: fuel empties 9.7 m up, then vy −1.5 → −4.5 (≈1.2 s) → −8.6 m/s at touchdown, and keeps growing. r1 −5.9, m1 −2.9 | Open
+B28 | Trivial | P2 | Results achievement toasts follow into the next race after Retry, top-centre over the battery bar | Fresh save, finish e1, tap Retry while "Superstar" is showing | Toasts cleared on leaving results, or kept top-right | Toast re-laid at top-centre (413,59 99x69 CSS at 924x424) during the countdown/race for its remaining ~3 s (qa/p6b-results.json) | Open
+
+## Fix round 6 (Game Dev, 2026-10-22, against QA round 5)
+
+| ID | Status | Notes |
+|---|---|---|
+| B6 m1 | FIXED | Hover drag gravity scale (g/9.81)^0.45. Full hold lands: e1 −3.6 m, m1 +3.3 m, r1 −0.3 m from pad centre (all inside r=9). drive.test now requires inside the pad radius and sink ≤ 5.2 m/s |
+| B27 | FIXED | Reserve burn is a gravity-relative controller (g + k·err, cap 1.5 g) with no fade; holds −4.5 m/s on every planet until touchdown (qa/hover5 e1/r1 vy settles at −4.5) |
+| B28 | FIXED | Toasts cleared on Retry / any race start |
+| m1 camera | VERIFIED + hardened | Real drive from the start line of m1 (no teleport) with a full hold: "PAD LANDING 5.9m", camera view clear before/after touchdown (qa-shots/r6-m1-real-landing.png, tools/m1cam.mjs). Added camera terrain collision anyway: pull in toward the car when terrain sits between them, and never below ground + 0.8 m |
+
+Suites: drive 62/62, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 17/17.
