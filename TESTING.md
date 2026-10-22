@@ -416,3 +416,37 @@ B33 | Minor | P2 | Finish auto-brake slams on instantly (~2.35 g in one physics 
 | NaN camera | FIXED | Found while testing: a dt=0 view update during the tutorial made the camera NaN (black 3D view). View no longer updates while the tutorial is up, plus a NaN guard |
 
 Suites: drive 75/75, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 24/24 (7 new R28 checks).
+
+## Regression (commit ab1aa7a, req 28)
+Build: fresh worktree /workspace/volt-roadster-qa-ab1aa7a -> /workspace/vr-dist-ab1aa7a (preview :4173). Live asset hashes identical; GitHub master = ab1aa7a; drive.test 75/75. Zero live cloud writes (restore GET with VOLT-QPM5-VG64-XXS9 only); no commits or source edits. Scripts: qa/p10*.mjs, qa/finish-trace.mjs, qa/fallstress.mjs.
+
+| Item | Result |
+|---|---|
+| Live boot | PASS: 4.5 s, 0 console errors, 0 API on boot/race/quit, restore GET ok (coins 4242) |
+| First-run tutorial (?tut=1) | PASS: shows, holds race clock, "Got it"/skip dismisses, no black screen after dismiss, Retry or level change; tutSeen saved |
+| RP12 reverse + D/N/R badge | PASS: R pedal labelled "R REVERSE", reverse in 0.15 s to 30 km/h, N/D/R switch cleanly, BRAKE hold also reverses, cancel clears; steering in reverse works (roadster -25 deg, hauler -18 deg over 1.2 s); both vehicles |
+| RP13 classic default | PASS: labelled, smallest 9.1 mm (cam/pause), pedals 9.3-12.2 mm, steer halves 21.5 mm, 0 overlaps at DPR3 and 2772; multi-touch + touchcancel clear |
+| RP13 Settings toggle | PASS (Classic -> Analog pad by tap, saved across reload). Switching back by mouse click didn't register in the harness (touch-first UI, not counted as a bug) |
+| RP14 cameras | PASS: btn-cam cycles chase -> hood -> close during a race, saved across reload, no NaN or under-ground in loops/flips; hood usable (FOV 68). Chase min distance 1.23 m during a flip (pull-in, no visible clipping in shot) |
+| Close vs far | far 7.8 m/2.5 m high vs close 5.5 m/1.7 m, same FOV 62: visibly different (car about 1.5x larger) but modest. Suggestion: far 10-11 m or +6 deg FOV |
+| B33 finish stop | PARTIAL: ramped (jerk about 14 g/s), but stock peaks 0.5-0.66 g (not ~1 g) and stops in 285-316 m (> 300 m target, < 340 m run-off). About 1.0-1.2 g only at upgraded speeds |
+| B32 | FIXED: backwall 0/46 drops |
+| Toast after Retry | FIXED: no toasts at 0.6 s or 3.6 s |
+| Smoke B6-B31, RP1-RP11, kill-plane (414 scenarios) | PASS: 0 NaN, 0 after-finish kills, 2 flipAtGapEdge respawns (expected), B6/B27 pad landings ok |
+
+New bugs:
+- **B34 (Major): post-finish auto-stop doesn't hold the lane, so the car hits the run-off side barrier.** Inputs lock after finish and the car drifts to x≈6 m. Node sim e1: stock hauler hits at 46 km/h (117 g one-step spike, 55 m before the end). Roadster with speed+boost Lv3 hits at 99 km/h (215 g). With Lv5 (finish 300-350 km/h) cars slam at 116-332 m (up to 650 g), and on m6 at 334 km/h it reaches the end wall. Fix: steer to the centreline during the auto-stop, and scale the decel to the finish speed so the stop fits inside 300 m.
+- **B35 (Minor): finish stop is softer than spec.** 0.5-0.66 g stock and 285-316 m, versus "about 1 g, within 300 m".
+- Suggestion (not a bug): increase the gap between close and far chase.
+
+Verdict: **CONDITIONAL PASS.** The new features (reverse, classic layout, cameras, tutorial) pass. B32 and the toast are fixed. B33 is only partly fixed and B34 is new (Major).
+
+## Fix round 11 (Game Dev, 2026-10-22, against QA on ab1aa7a)
+
+| ID | Status | Notes |
+|---|---|---|
+| B34 | FIXED | Finish auto-stop now steers to the run-off centreline (aim ~20 m + 0.3 s ahead) and straightens: yaw rate bled, velocity swung onto the heading. Braking is scaled to finish speed: target brake 8.6 m/s², up to 10.2 m/s² only if the remaining run-off needs it, ramped over 0.5 s; rolling + air drag add ~1–2 m/s². Run-off extended to 700 m (no run-off passes within 40 m of other track on any level). New drive test: maxed upgrades crossing the line at ≥350 km/h (boosting) with a weaving steering bot, plus stock, both vehicles, all 23 levels: centred (|x| ≤ 3 m), straight (heading·track ≥ 0.97), stopped inside the run-off, peak ≤ 10.7 m/s² (≤ 1.1 g), first 0.1 s of the ramp ≤ 7.4 m/s² (Moon landings 6.5–7.1 from tyre contact, elsewhere ≤ 4) |
+| B35 | FIXED | Stock cars now reach about 1 g: peak 9.6–10.8 m/s² across all levels |
+| Far chase | DONE | 10.5 m back (+1.2 m at speed), 3 m up, +6° FOV (qa-shots/r28-cam-chase.png) |
+
+Suites: drive 76/76, quests 15/15, simtest roadster 23/23, hauler 23/23, qa.mjs local 31/31, player.browser 24/24.

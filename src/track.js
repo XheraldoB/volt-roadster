@@ -5,7 +5,7 @@ import { Vector3, Quaternion, Euler } from 'three';
 
 export const ROAD_W = 14;      // road width (m)
 export const WALL_H = 1.2;     // barrier height (m)
-export const RUNOFF = 300;      // B31: run-off road past the finish (m)
+export const RUNOFF = 700;      // B31: run-off road past the finish (m)
 const DS = 1;                  // sample spacing (m)
 
 const smooth = u => u * u * (3 - 2 * u);

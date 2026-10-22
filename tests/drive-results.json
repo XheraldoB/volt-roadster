@@ -530,8 +530,8 @@
   "info": {
    "fails": [],
    "worst": {
-    "decel": 7,
-    "lvl": "r7",
+    "decel": 10,
+    "lvl": "e1",
     "veh": "roadster"
    }
   }
@@ -548,6 +548,20 @@
   "pass": true,
   "info": {
    "fails": []
+  }
+ },
+ {
+  "id": "B34/B35 finish auto-stop: 350 km/h maxed + stock, bot steering at the line, all levels: centred, straight, stopped in the run-off, <= 1.2 g ramped, stock ~1 g",
+  "pass": true,
+  "info": {
+   "fails": [],
+   "nFail": 0,
+   "worst": {
+    "dec": 10.7,
+    "lvl": "e1",
+    "veh": "roadster"
+   },
+   "stockPeakMin": 9.6
   }
  },
  {

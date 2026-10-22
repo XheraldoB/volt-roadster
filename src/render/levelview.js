@@ -364,7 +364,7 @@ export class LevelView {
       pos = car.position.clone().addScaledVector(side, 9).addScaledVector(hv, 4).add(new THREE.Vector3(0, 2.5, 0));
       look = car.position.clone(); c.pos.lerp(pos, 1 - Math.exp(-dt * 3)); fovT = 50;
     } else {
-      const big = sim.veh.rcs ? 1.3 : 1; const dist = (mode === 'close' ? 5.2 : 7.4 + speedK * 1.6) * big, hgt = (mode === 'close' ? 1.7 : 2.5) * big;
+      const big = sim.veh.rcs ? 1.3 : 1; const dist = (mode === 'close' ? 5.2 : 10.5 + speedK * 1.2) * big, hgt = (mode === 'close' ? 1.7 : 3.0) * big; if (mode === 'chase') fovT += 6; /* far chase: further back, higher, wider */
       pos = car.position.clone().addScaledVector(hv, -dist).addScaledVector(c.up, hgt);
       look = car.position.clone().addScaledVector(hv, 4).addScaledVector(c.up, 0.8);
       if (!c.init) c.pos.copy(pos);

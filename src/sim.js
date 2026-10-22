@@ -19,7 +19,7 @@ export const ESC = { yawGain: 1.15, yawSlack: 0.12, rate: 7, slide: 2.2 };
 export const AUTO_RIGHT_T = 0.9;
 export const LAND_CLEAN = 9, LAND_HARD = 14, LAND_CRASH = 23; // m/s along the surface normal, scaled by sqrt(toughness)
 export const WALL_LOSS = 13, WALL_PENALTY = 250;
-export const FINISH_MAX_DEC = 9.8;
+export const FINISH_DEC = 8.6, FINISH_MAX_DEC = 10.2; /* applied brake; rolling + air drag add ~1-2 m/s² on top */ /* finish auto-stop: target ~1 g, cap 1.2 g */
 export const KILL_MARGIN = 60, MAX_LINVEL = 160, MAX_ANGVEL = 40; /* kill plane margin (m), runaway caps (m/s, rad/s) */
 export const HOVER_SINK = -1.2, HOVER_K = 2.6, HOVER_MAX = 2.6, HOVER_DRAG = 0.5, HOVER_FADE = 3.0, HOVER_RESERVE_SINK = -4.5, HOVER_RESERVE_MAX = 1.5; // B6: hover bleeds horizontal speed (1/s) and fades out over HOVER_FADE s when the gas runs dry
  // cold-gas hover: target sink m/s, gain 1/s, max lift in g
@@ -322,6 +322,9 @@ export class Sim {
     const v = b.linvel(), sp = Math.hypot(v.x, v.y, v.z); if (!(sp <= MAX_LINVEL)) { const k = Number.isFinite(sp) && sp > 0 ? MAX_LINVEL / sp : 0; b.setLinvel({ x: v.x * k, y: v.y * k, z: v.z * k }, true); }
     const w = b.angvel(), ws = Math.hypot(w.x, w.y, w.z); if (!(ws <= MAX_ANGVEL)) { const k = Number.isFinite(ws) && ws > 0 ? MAX_ANGVEL / ws : 0; b.setAngvel({ x: w.x * k, y: w.y * k, z: w.z * k }, true); }
   }
+  /* B34: finish auto-stop steering: aim at the run-off centreline ~20 m ahead so the car straightens and centres while it brakes */
+  finishSteer(left) { const sm = this.tr.samples, i = Math.min(sm.length - 1, this.prog.i + 20 + Math.round(this.speed * 0.3)), d = sm[i].p.clone().sub(this.pose.p).dot(left);
+    return Math.max(-0.6, Math.min(0.6, -d * 0.12)); }
   respawnAt(s, v = 22) {
     // never respawn inside (or on the lip of) a jump: go back to a proper run-up before it, so a respawn can't loop
     const inGap = this.tr.features.find(f => f.type === 'gap' && s > f.s0 - 40 && s < f.s1 + 2);
@@ -411,8 +414,12 @@ export class Sim {
     /* B31: after the finish, inputs are locked and the car does a smooth cinematic stop before the end of the run-off */
     if (this.state === 'finished' && grounded) { const v = b.linvel(), hs = Math.hypot(v.x, v.z); if (hs > 0.05) {
       this.finT = (this.finT || 0) + h; /* B33: the finish brake ramps in over ~0.5 s */
-      const room = Math.max(8, (this.tr.roadEnd ?? this.tr.length) - 25 - this.prog.s), dec = Math.min(FINISH_MAX_DEC, Math.max(3, hs * hs / (2 * room))) * Math.min(1, this.finT / 0.5); /* R28: gentle, at most ~1 g */
-      const k = Math.max(0, hs - dec * h) / hs; b.setLinvel({ x: v.x * k, y: v.y, z: v.z * k }, true); } }
+      const room = Math.max(8, (this.tr.roadEnd ?? this.tr.length) - 30 - this.prog.s - hs * Math.max(0, 0.5 - this.finT) * 0.5), /* minus what the 0.5 s ramp still costs */ dec = Math.min(FINISH_MAX_DEC, Math.max(FINISH_DEC, hs * hs / (2 * room))) * Math.min(1, this.finT / 0.5); /* B34/B35: about 1 g, more (cap 1.2 g) only if the run-off needs it, ramped over 0.5 s */
+      /* B34: straighten: bleed yaw rate and swing the velocity onto the heading, so tyre scrub never adds a hard extra stop */
+      const fq = b.rotation(), fw = new Vector3(0, 0, 1).applyQuaternion(new Quaternion(fq.x, fq.y, fq.z, fq.w)); fw.y = 0; fw.normalize();
+      let vx = v.x / hs, vz = v.z / hs; const dot = vx * fw.x + vz * fw.z; if (dot > 0.5) { const a = Math.min(1, 6 * h); vx += (fw.x - vx) * a; vz += (fw.z - vz) * a; const n = Math.hypot(vx, vz) || 1; vx /= n; vz /= n; }
+      const w = b.angvel(); b.setAngvel({ x: w.x, y: w.y * Math.max(0, 1 - 4 * h), z: w.z }, true);
+      const ns = Math.max(0, hs - dec * h); b.setLinvel({ x: vx * ns, y: v.y, z: vz * ns }, true); } }
     const brk = control ? (inp.brake || 0) : this.state === 'finished' ? (this.speed < 0.6 ? 1 : 0) /* R28: the gentle finish stop does the slowing */ : (running ? 0.2 : 1);
     const boosting = control && inp.boost && (this.wasBoost ? this.boost > 0.01 : this.boost > 0.2);
     const vmax = st.vmax * (boosting ? 1.28 : 1);
@@ -456,7 +463,7 @@ export class Sim {
     for (let i = 0; i < 4; i++) { vc.setWheelEngineForce(i, drive * (i < 2 ? 0.42 : 0.58) / 2); vc.setWheelBrake(i, braking * (i < 2 ? 0.6 : 0.4) + (hb && i >= 2 ? 14 : 0)); }
     // steering (speed-sensitive, smoothed)
     // B12: progressive curve (small inputs are gentle), stronger speed sensitivity, slower wheel rate at speed, quick self-centring
-    const sIn = control ? (inp.steer || 0) * (inp.sens || 1) : 0, sC = Math.max(-1, Math.min(1, sIn));
+    const sIn = control ? (inp.steer || 0) * (inp.sens || 1) : this.state === 'finished' && grounded ? this.finishSteer(left) : 0, sC = Math.max(-1, Math.min(1, sIn));
     const curve = sC * (STEER_LIN + (1 - STEER_LIN) * Math.abs(sC));
     const spd = Math.max(0, speed), sens = st.steer / (1 + Math.pow(spd / STEER_V0, STEER_EXP));
     const target = curve * (sens + 0.012);

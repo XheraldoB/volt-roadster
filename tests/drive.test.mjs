@@ -156,6 +156,21 @@ for (const veh of ['hauler', 'roadster']) { const s = await mk('m1', veh); s.bat
     for (let t = 0; t < 2.5; t += H) { s.fixed(H, I({})); minH = Math.min(minH, s.body.translation().y - P.p.y); s.events.length = 0; }
     if (minH < -2.5) fails.push({ lvl: L.id, x, minH: +minH.toFixed(1) }); }
   ok('B32 ground beside the start (s 13.5, x ±9.5/±14) is solid on all levels', fails.length === 0, { fails: fails.slice(0, 6) }); }
+// B34/B35: maxed car crossing the finish at 350 km/h while the bot is still steering hard: centred, straight, stopped inside the run-off, <= ~1.2 g; stock cars reach ~1 g
+{ const PR = await import('../src/progress.js'); const maxUp = Object.fromEntries(PR.UPGRADES.map(u => [u.id, PR.maxTier(u.id)])); const fails = []; let worst = { dec: 0 }, stockPeak = 99;
+  for (const L of LEVELS) for (const veh of ['roadster', 'hauler']) for (const cfg of [{ up: maxUp, v: 97.2, tag: 'max350' }, { up: {}, v: 0, tag: 'stock' }]) {
+    const s = new Sim(L, { mode: 'race', vehicle: veh, upgrades: cfg.up }); await s.init(); s.state = 'race'; s.battery = 999;
+    s.respawnAt(s.tr.finishS - (cfg.v ? 40 : 160), cfg.v || 50); if (cfg.v) { const rq = s.body.rotation(), T = new Vector3(0, 0, 1).applyQuaternion(new (await import('three')).Quaternion(rq.x, rq.y, rq.z, rq.w)); s.body.setLinvel({ x: T.x * cfg.v, y: T.y * cfg.v, z: T.z * cfg.v }, true); }
+    let fin = false, tf = 0, prevV = null, maxDec = 0, early = 0, maxS = 0, kp = 0, t = 0, wasG = false;
+    for (; t < 60; t += H) { const lf = new Vector3(1, 0, 0).applyQuaternion(s.pose.q), tg = s.tr.samples[Math.min(s.tr.samples.length - 1, s.prog.i + 30)].p; /* steering bot: tracks the line with a weave, so it is mid-steer at the line */
+      const steer = Math.max(-1, Math.min(1, -tg.clone().sub(s.pose.p).dot(lf) * 0.15 + 0.35 * Math.sin(t * 4)));
+      s.fixed(H, I({ throttle: 1, boost: true, steer })); if (s.state === 'finished') { if (!fin) { fin = true; tf = t; } const lv = s.body.linvel(), hv = Math.hypot(lv.x, lv.z); if (prevV != null && s.grounded && wasG && hv > 1.5) { const d = (prevV - hv) / H; maxDec = Math.max(maxDec, d); if ((s.finT || 0) < 0.1) early = Math.max(early, d); } prevV = hv; wasG = s.grounded; }
+      maxS = Math.max(maxS, s.prog.s); kp += s.events.filter(e => e.type === 'killplane' || e.type === 'crash').length; s.events.length = 0; if (fin && s.speed < 0.3 && t - tf > 2) break; }
+    const T = s.tr.samples[s.prog.i].T, f = new Vector3(0, 0, 1).applyQuaternion(s.pose.q), align = Math.abs(f.dot(T));
+    const r = { lvl: L.id, veh, cfg: cfg.tag, left: +(s.tr.roadEnd - maxS).toFixed(0), x: +s.prog.x.toFixed(1), align: +align.toFixed(3), v: +s.speed.toFixed(1), dec: +maxDec.toFixed(1), early: +early.toFixed(1), kp };
+    if (cfg.tag === 'max350') { if (maxDec > worst.dec) worst = { dec: r.dec, lvl: L.id, veh }; } else stockPeak = Math.min(stockPeak, maxDec);
+    if (!fin || kp || s.speed > 0.5 || maxS > s.tr.roadEnd - 5 || Math.abs(s.prog.x) > 3 || align < 0.97 || maxDec > 12.0 || early > 7.4 || (cfg.tag === 'stock' && maxDec < 8.3)) fails.push(r); }
+  ok('B34/B35 finish auto-stop: 350 km/h maxed + stock, bot steering at the line, all levels: centred, straight, stopped in the run-off, <= 1.2 g ramped, stock ~1 g', fails.length === 0, { fails: fails.slice(0, 20), nFail: fails.length, worst, stockPeakMin: +stockPeak.toFixed(1) }); }
 // B7 vehicle ownership (progress layer)
 { const P = await import('../src/progress.js'); const { VEHICLES } = await import('../src/vehicles.js'); const s = P.defaultSave();
   ok('B7 fresh save cannot select the pickup', !P.selectVehicle(s, 'hauler') && s.vehicle === 'roadster');
