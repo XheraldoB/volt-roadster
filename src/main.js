@@ -64,7 +64,12 @@ function go(name) {
   $$('.scr').forEach(e => e.classList.toggle('on', e.id === 'scr-' + name));
   document.body.dataset.screen = name;
 }
-function toast(html, ms = 2200, cls = '') { const t = document.createElement('div'); t.className = 'toast ' + cls; t.innerHTML = html; $('#toasts').appendChild(t); setTimeout(() => t.classList.add('out'), ms); setTimeout(() => t.remove(), ms + 500); }
+/* toast queue: at most TOAST_MAX on screen; extras wait their turn (their timer starts only when shown), so none are lost */
+const TOAST_Q = [], TOAST_MAX = 2;
+function toastPump() { const box = $('#toasts'); while (TOAST_Q.length && box.children.length < TOAST_MAX) { const { html, ms, cls } = TOAST_Q.shift(); const t = document.createElement('div'); t.className = 'toast ' + cls; t.innerHTML = html; box.appendChild(t);
+  setTimeout(() => t.classList.add('out'), ms); setTimeout(() => { t.remove(); toastPump(); }, ms + 500); } }
+function toast(html, ms = 2200, cls = '') { TOAST_Q.push({ html, ms, cls }); toastPump(); }
+function clearToasts() { TOAST_Q.length = 0; $('#toasts').replaceChildren(); }
 function coinsBar() { $$('.coinval').forEach(e => e.textContent = nf(save.coins)); $$('.gemval').forEach(e => e.textContent = nf(save.gems || 0)); }
 const curCustom = () => save.vehicle === 'hauler' ? save.truckCustom : save.custom;
 
@@ -313,7 +318,7 @@ $$('[data-go]').forEach(b => b.onclick = () => { click(); const g = b.dataset.go
 function toggleFS() { const d = document; if (!d.fullscreenElement) { (d.documentElement.requestFullscreen?.({ navigationUI: 'hide' }) || Promise.resolve()).then(() => window.screen.orientation?.lock?.('landscape').catch(() => {})).catch(() => {}); } else d.exitFullscreen?.(); }
 
 // ---------------- racing ----------------
-async function startLevel(level, mode) { $('#toasts').replaceChildren(); /* B28: results toasts never follow into the next race */
+async function startLevel(level, mode) { clearToasts(); /* B28: results toasts never follow into the next race */
   stopRace(); G.level = level; G.mode = mode;
   $('#loading-text').textContent = `Building ${level.name}…`; go('loading');
   await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
@@ -584,7 +589,7 @@ window.__game = {
   levels: () => LEVELS.map(l => ({ id: l.id, planet: l.planet, name: l.name, diff: l.diff })),
   loadLevel: (id, mode = 'race') => { const l = levelById(id); if (!l) throw new Error('no level ' + id); return startLevel(l, mode); },
   save: () => { persist(true); return JSON.parse(JSON.stringify(save)); }, load: () => { save = P.loadLocal(); applySettings(); return save; },
-  get state() { return save; }, input, show, view: () => G.view, sim: () => G.sim, gfx, goto: name => ({ title: toTitle, map: toMap, garage: toGarage, base: toBase })[name]?.(), cloudSync, pause, applySettings: () => { applySettings(); layoutTouch(); },
+  get state() { return save; }, toast, input, show, view: () => G.view, sim: () => G.sim, gfx, goto: name => ({ title: toTitle, map: toMap, garage: toGarage, base: toBase })[name]?.(), cloudSync, pause, applySettings: () => { applySettings(); layoutTouch(); },
 };
 
 // ---------------- boot ----------------

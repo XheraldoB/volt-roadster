@@ -226,7 +226,6 @@ body.lefty .tc-left { left: auto; right: calc(var(--sr) + 1.5vw); } body.lefty .
 /* B26: on results, toasts sit compact in the top-right corner, max two at a time (rest wait their turn), never over the score or buttons */
 body[data-screen="results"] #toasts { top: calc(var(--st) + 8px); bottom: auto; left: auto; right: calc(env(safe-area-inset-right, 0px) + 10px); transform: none; align-items: flex-end; }
 body[data-screen="results"] .toast { font-size: 0.72rem; padding: 0.4em 0.8em; max-width: 26vw; }
-body[data-screen="results"] #toasts .toast:nth-child(n+3) { display: none; }
 /* HUD horizon indicator (airborne only) */
 #horizon { position: absolute; left: 50%; top: 58%; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.55); background: radial-gradient(rgba(6, 10, 20, 0.35), rgba(6, 10, 20, 0.15)); overflow: hidden; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
 #horizon.on { opacity: 1; }

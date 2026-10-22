@@ -55,6 +55,10 @@ ok('RP10 frame-time ring buffer', ft.length > 30, { n: ft.length, p50: srt[srt.l
     await p2.screenshot({ path: 'qa-shots/r5-pause-tap.png' }); await p2.evaluate(() => window.__game.pause(false)); await p2.waitForTimeout(300); }
   await c2.close(); }
 mkdirSync('qa-shots', { recursive: true });
+{ const q = await G(async () => { const box = document.querySelector('#toasts'); box.replaceChildren(); let seen = 0, maxOn = 0; const mo = new MutationObserver(() => { seen += 0; maxOn = Math.max(maxOn, box.children.length); }); mo.observe(box, { childList: true });
+    const shown = new Set(); const mo2 = new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => shown.add(n.textContent)))); mo2.observe(box, { childList: true });
+    for (let i = 0; i < 5; i++) window.__game.toast('Q' + i, 300); await new Promise(r => setTimeout(r, 4000)); mo.disconnect(); mo2.disconnect(); return { maxOn, shown: [...shown] }; });
+  ok('toast queue: max 2 on screen, all 5 shown in turn', q.maxOn <= 2 && q.shown.length === 5, q); }
   /* B26: first finish on a fresh save -> achievement toasts never overlap the results score/buttons */
   { await page.evaluate(() => { const g = window.__game, s = g.sim(); s.respawnAt(s.tr.length - 60, 25); g.state.settings.autoGas = true; g.applySettings(); });
     await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 60000 }); await page.waitForTimeout(1200);
