@@ -22,15 +22,17 @@ export class Showroom {
   clear() { if (this.scene) { this.car?.userData.dispose?.(); disposeScene(this.scene, [this._trophyRT]); this._trophyRT = null; this.env?.envRT?.dispose?.(); if (this.env) this.env.envRT = null; } this.scene = null; this.car = null; this.robots = []; this.picks = []; }
 
   menu(custom, planet = 'earth', vehicle = 'roadster') { // title backdrop: car on a hill at sunset-ish
-    this.garage(custom, planet, true, vehicle); this.kind = 'menu';
+    this.garage(custom, planet, true, vehicle); this.kind = 'menu'; this.scene.userData.noBloom = true;
+    const u = this.env && this.env.sky && this.env.sky.material && this.env.sky.material.uniforms; // title: kill the milky mie halo of the low sun (white haze on the left)
+    if (u && u.turbidity) { u.turbidity.value = 2.5; u.mieCoefficient.value = 0.0008; u.mieDirectionalG.value = 0.6; u.rayleigh.value = Math.min(u.rayleigh.value, 2); }
   }
   garage(custom, planet = 'earth', menu = false, vehicle = 'roadster') {
     this.clear(); this.kind = 'garage'; const s = this.scene = new THREE.Scene();
     this.env = buildEnvironment(s, this.gfx.renderer, menu ? (planet === 'earth' ? 'sunset' : PLANET_ENV[planet]) : 'night', this.gfx.q, new THREE.Vector3());
     if (this.env.water) this.env.water.position.y = -30;
-    s.fog.density = 0.004;
+    s.fog.density = menu ? 0.0012 : 0.004; // title: thin fog so the low sunset sun does not wash a white haze across the left of the screen
     if (!menu) this.studioEnv(s); // art: neutral softbox reflections (the night-city env painted cars/steel pink and smeared colour bars across the floor)
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(60, 64).rotateX(-Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: 0x0c0d12, roughness: 0.25, metalness: 0.6, clearcoat: 1 })); floor.receiveShadow = true; s.add(floor);
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(60, 64).rotateX(-Math.PI / 2), new THREE.MeshPhysicalMaterial(menu ? { color: 0x0c0d12, roughness: 0.7, metalness: 0.2, clearcoat: 0.25, clearcoatRoughness: 0.5 } : { color: 0x0c0d12, roughness: 0.25, metalness: 0.6, clearcoat: 1 })); // title: matte floor so the low sun does not smear a white sheen across the left floor.receiveShadow = true; s.add(floor);
     const plate = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.4, 0.18, 64), new THREE.MeshPhysicalMaterial({ color: 0x23252d, metalness: 0.9, roughness: 0.25 })); plate.position.y = 0.09; plate.receiveShadow = true; s.add(plate); this.plate = plate;
     const ring = new THREE.Mesh(new THREE.TorusGeometry(4.3, 0.04, 8, 96), new THREE.MeshBasicMaterial({ color: 0x00e5ff, toneMapped: false })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.19; s.add(ring);
     for (const [x, z, c] of [[6, 4, 0xffffff], [-6, 3, 0xbfe0ff], [0, -7, 0xffd2e8]]) { const L = new THREE.SpotLight(c, 260, 40, 0.5, 0.6, 1.5); L.position.set(x, 9, z); L.castShadow = this.gfx.q.shadows > 0; s.add(L); }
