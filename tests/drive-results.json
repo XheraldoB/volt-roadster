@@ -327,7 +327,7 @@
   "pass": true,
   "info": {
    "noIn": "-19.6",
-   "hold": "-13.6",
+   "hold": "-6.8",
    "climb": "0.00"
   }
  },
@@ -370,7 +370,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 5.7m"
+   "withControl": "PAD LANDING 5.1m"
   }
  },
  {
@@ -378,7 +378,7 @@
   "pass": true,
   "info": {
    "noControl": "crash",
-   "withControl": "PAD LANDING 5.5m"
+   "withControl": "PAD LANDING 4.9m"
   }
  },
  {
@@ -394,7 +394,7 @@
   "pass": true,
   "info": {
    "noControl": "miss",
-   "withControl": "PAD LANDING 5.6m"
+   "withControl": "PERFECT LANDING!"
   }
  },
  {
@@ -414,33 +414,33 @@
   }
  },
  {
-  "id": "hauler e1 full JUMP hold: lands within 60 m past the pad, no hard drop",
+  "id": "hauler e1 full JUMP hold: lands on/near the pad (within 20 m), soft descent",
   "pass": true,
   "info": {
-   "pastPad": 27.5,
+   "pastPad": -4.1,
    "hard": false,
    "crashed": false,
-   "maxSinkMs": 14.9
+   "maxSinkMs": 8.7
   }
  },
  {
-  "id": "hauler m1 full JUMP hold: lands within 60 m past the pad, no hard drop",
+  "id": "hauler m1 full JUMP hold: lands on/near the pad (within 20 m), soft descent",
   "pass": true,
   "info": {
-   "pastPad": -26.6,
+   "pastPad": 12,
    "hard": false,
    "crashed": false,
-   "maxSinkMs": 1.2
+   "maxSinkMs": 2.9
   }
  },
  {
-  "id": "hauler r1 full JUMP hold: lands within 60 m past the pad, no hard drop",
+  "id": "hauler r1 full JUMP hold: lands on/near the pad (within 20 m), soft descent",
   "pass": true,
   "info": {
-   "pastPad": 5.9,
+   "pastPad": 3.7,
    "hard": false,
    "crashed": false,
-   "maxSinkMs": 7.8
+   "maxSinkMs": 5.9
   }
  },
  {

@@ -111,7 +111,7 @@ for (const veh of ['roadster', 'hauler']) {
       s.fixed(H, inp); for (const ev of s.events) { if (ev.type === 'hardLanding') hard = true; if (ev.type === 'crash') crashed = true; if (ev.type === 'land' && s.prog.s > g.s0 && landS == null) landS = s.prog.s; } s.events.length = 0;
       if (landS != null || crashed) break; }
     const past = landS != null ? landS - g.padS : null;
-    ok(`${veh} ${lvl} full JUMP hold: lands within 60 m past the pad, no hard drop`, past != null && past < 60 && !hard && !crashed, { pastPad: past == null ? null : +past.toFixed(1), hard, crashed, maxSinkMs: +maxDrop.toFixed(1) });
+    ok(`${veh} ${lvl} full JUMP hold: lands on/near the pad (within 20 m), soft descent`, past != null && Math.abs(past) < 20 && maxDrop < 10 && !hard && !crashed, { pastPad: past == null ? null : +past.toFixed(1), hard, crashed, maxSinkMs: +maxDrop.toFixed(1) });
   }
   // B16 dust devil on Mars: short hop
   { const s = await mk('r1', veh); const d = s.devils[0]; if (d) { s.respawnAt(d.s - 60, 20); let airT = 0, maxAir = 0; run(s, (s) => { const left = new Vector3(1, 0, 0).applyQuaternion(s.pose.q); return I({ throttle: 0.6, steer: Math.max(-1, Math.min(1, (s.prog.x - d.x) * 0.1)) }); }, 6, s => { maxAir = Math.max(maxAir, s.air); });
