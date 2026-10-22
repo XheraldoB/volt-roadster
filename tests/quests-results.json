@@ -1,0 +1,88 @@
+[
+ {
+  "id": "bonus quests attached to 6 levels",
+  "pass": true,
+  "info": {
+   "ids": [
+    "e2:fragile",
+    "e5:statGoal",
+    "e4:statGoal",
+    "e6:speedtrap",
+    "m1:statGoal",
+    "r4:statGoal"
+   ]
+  }
+ },
+ {
+  "id": "main quest first",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "bonus quest once main quest done",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "back to main quest after bonus cleared",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "fragile: active from start",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "fragile: a hard landing fails it",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "fragile: intact at the finish completes",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "speedtrap: camera placed",
+  "pass": true,
+  "info": {
+   "s": 1417
+  }
+ },
+ {
+  "id": "speedtrap: slow pass fails",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "speedtrap: fast pass completes",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "statGoal: progress counts",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "statGoal: completes at value",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "statGoal window: tricks 49 s apart do not count together",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "statGoal window: 2 within 40 s completes",
+  "pass": true,
+  "info": {}
+ },
+ {
+  "id": "statGoal maxAir completes",
+  "pass": true,
+  "info": {}
+ }
+]

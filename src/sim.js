@@ -54,7 +54,7 @@ export class Sim {
     level = typeof structuredClone === 'function' ? structuredClone(level) : JSON.parse(JSON.stringify(level)); // buildTrack mutates segment defs
     this.level = level; this.planet = PLANETS[level.planet];
     this.fuelK = Math.sqrt(PLANETS[level.planet].gravity / EARTH_G); // thrust needed scales with gravity, so does fuel use
-    this.mode = opts.mode || 'race'; // 'race' | 'trial'
+    this.questOverride = opts.quest || null; this.mode = opts.mode || 'race'; // 'race' | 'trial'
     this.g = this.planet.gravity;
     this.veh = vehicleOf(opts.vehicle);
     this.stats = carStats(opts.upgrades, opts.bonus, this.veh);
@@ -185,10 +185,13 @@ export class Sim {
       }
     }
     // quest entities
-    this.quest = { ...this.level.quest, done: false, failed: false, progress: 0, active: false, timer: 0 };
+    this.quest = { ...(this.questOverride || this.level.quest), done: false, failed: false, progress: 0, active: false, timer: 0 };
     this.questItems = [];
     const q = this.quest, L = tr.finishS;
     const place = (s, x, h, kind, extra = {}) => { const P = poseAt(tr, s, x, h); const o = { s, x, h, kind, p: P.p.clone(), q: P.q.clone(), taken: false, ...extra }; this.questItems.push(o); return o; };
+    if (q.type === 'fragile') { q.active = true; q.gapsAtStart = 0; }
+    else if (q.type === 'speedtrap') { const jump = tr.features.find(f => f.type === 'gap' && f.s0 > L * 0.3) || tr.features.find(f => f.type === 'gap'); const sc = this.safeS(jump ? jump.s0 - 60 : L * 0.55); /* the run-up to a jump is where players are flat out */ place(sc, hw + 1.5, 0, 'camera', { role: 'camera' }); }
+    else if (q.type === 'statGoal') { q.active = true; q.count = q.value; q.keys = String(q.stat).split('+'); q.base = 0; q.hits = []; q.last = 0; }
     if (q.type === 'mailbox') {
       for (let k = 0; k < 12; k++) {
         let s = 120 + k * (L - 300) / 12; let sm = sampleAt(tr, s); let g = 0; while ((!sm.solid || sm.magnet || sm.ramp || sm.land) && g < 100) { s += 4; sm = sampleAt(tr, s); g++; }
@@ -837,6 +840,23 @@ export class Sim {
   questRules(h, c) {
     const q = this.quest; if (q.done || q.failed) return;
     const p = this.pose.p;
+    if (q.type === 'fragile') { // the cargo survives only soft landings and no crashes; delivered at the finish
+      if ((this.stat.hardLandings || 0) > 0 || this.stat.crashes > 0) { q.active = false; q.failed = true; this.emit('questFail', { text: q.failText || 'Cracked! The cargo did not survive that landing.' }); return; }
+      q.progress = this.stat.gaps; if (this.prog.s > this.tr.finishS - 25) { q.active = false; this.completeQuest(); } return;
+    }
+    if (q.type === 'speedtrap') { // one camera: pass it at or above the target speed
+      const cam = this.questItems[0]; if (!cam || cam.taken) return; q.best = Math.max(q.best || 0, this.speed);
+      if (this.prog.s > cam.s) { cam.taken = true; const kmh = Math.round(this.speed * 3.6); this.emit('popup', { text: `📸 ${kmh} km/h`, kind: this.speed >= q.speed ? 'good' : 'bad' });
+        if (this.speed >= q.speed) this.completeQuest(); else { q.failed = true; this.emit('questFail', { text: `Too slow for the camera: ${kmh} of ${Math.round(q.speed * 3.6)} km/h` }); } }
+      return;
+    }
+    if (q.type === 'statGoal') { // sum of sim.stat keys (maxAir is a peak value, everything else counts events), optionally within a sliding window
+      let v = 0; for (const k of q.keys) v += this.stat[k] || 0;
+      if (q.keys[0] === 'maxAir') { q.progress = Math.min(q.value, Math.floor(Math.max(v, this.air) * 10) / 10); if (v >= q.value) this.completeQuest(); return; }
+      if (q.withinSeconds) { for (let n = q.last; n < v; n++) q.hits.push(this.raceTime); q.last = v; while (q.hits.length && this.raceTime - q.hits[0] > q.withinSeconds) q.hits.shift(); q.progress = q.hits.length; }
+      else q.progress = v;
+      if (q.progress >= q.value) this.completeQuest(); return;
+    }
     if (q.type === 'mailbox') {
       for (const o of this.questItems) if (!o.smashed && o.p.distanceToSquared(p) < 3.2 * 3.2) {
         o.smashed = true; q.progress++; this.stat.mailboxes++;
@@ -893,7 +913,7 @@ export class Sim {
       else { stars = this.raceTime <= gold ? 3 : this.raceTime <= silver ? 2 : 1; objText = 'Beat the gold time for 3★'; }
     }
     this.result = { ok, reason, position, time: this.raceTime, score: total, trickScore: this.score - coinBonus, timeBonus, posBonus, coins: this.coins, stars, goal,
-      quest: { name: this.quest.name, done: this.quest.done, reward: this.quest.done ? this.quest.reward : 0 }, stat: { ...this.stat }, ghost: ok ? { time: this.raceTime, frames: this.ghostRec } : null,
+      quest: { name: this.quest.name, bonus: !!this.quest.bonus, done: this.quest.done, reward: this.quest.done ? this.quest.reward : 0 }, stat: { ...this.stat }, ghost: ok ? { time: this.raceTime, frames: this.ghostRec } : null,
       gold, silver, objective: obj, objText, pads: this.stat.pads };
     this.emit('finish', this.result);
   }

@@ -109,7 +109,8 @@ export function applyResult(s, level, r) {
     if (r.mode === 'race' && (!lv.bestTime || r.time < lv.bestTime)) lv.bestTime = r.time;
     if (r.mode === 'trial' && (!lv.bestTrial || r.time < lv.bestTrial)) { lv.bestTrial = r.time; r.newRecord = true; }
   }
-  if (r.quest.done && !lv.questDone) { lv.questDone = true; earn.quest = r.quest.reward; earn.gems += 2; s.stats.quests++; } else if (r.quest.done) earn.quest = Math.round(r.quest.reward * 0.25);
+  if (r.quest.bonus) { if (r.quest.done && !lv.bonusDone) { lv.bonusDone = true; earn.quest = r.quest.reward; earn.gems += 2; s.stats.quests++; } else if (r.quest.done) earn.quest = Math.round(r.quest.reward * 0.25); }
+  else if (r.quest.done && !lv.questDone) { lv.questDone = true; earn.quest = r.quest.reward; earn.gems += 2; s.stats.quests++; } else if (r.quest.done) earn.quest = Math.round(r.quest.reward * 0.25);
   // stats
   const st = r.stat; s.stats.loops += st.loops; s.stats.flips += st.flips; s.stats.carJumps += st.carJumps; s.stats.perfect += st.perfect; s.stats.dodges += st.dodges || 0; s.stats.nearMiss += st.nearMiss; s.stats.races++;
   s.stats.devils = (s.stats.devils || 0) + (st.devils || 0); s.stats.maxAir = Math.max(s.stats.maxAir || 0, st.maxAir); s.stats.maxSpeed = Math.max(s.stats.maxSpeed || 0, st.maxSpeed);
@@ -182,6 +183,9 @@ export async function cloudRestore(code) {
 }
 // B14: after restoring onto this device, delete the record this device had created under its old identity
 export async function cloudForget(old) { if (!old || !old.id || !old.secret) return; try { await fetch('/api/forget', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: old.id, secret: old.secret, code: old.code }) }); } catch (e) {} }
+// which side quest a run uses: the bonus quest once the main quest is done and the bonus trigger is met (until it is cleared)
+export function bonusUnlocked(s, level) { const lv = s.levels[level.id] || {}; const b = level.bonus; return !!(b && lv.questDone && (lv.stars || 0) >= ((b.after && b.after.stars) || 0)); }
+export function activeQuest(s, level) { const lv = s.levels[level.id] || {}; return bonusUnlocked(s, level) && !lv.bonusDone ? { ...level.bonus, bonus: true } : level.quest; }
 export function mergeCloud(local, remote) { // newest wins
   if (!remote || !remote.updatedAt) return local; if (remote.updatedAt > local.updatedAt) { const m = migrate(remote); m.cloud = local.cloud; return m; } return local;
 }

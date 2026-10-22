@@ -108,7 +108,7 @@ $$('#planets button').forEach(b => b.onclick = () => {
 function levelCard(l) {
   const rec = save.levels[l.id] || {}; const q = l.quest;
   $('#lc-body').innerHTML = `<h2>${esc(l.name)}</h2><div class="diff">${'●'.repeat(l.diff)}${'○'.repeat(Math.max(0, 5 - l.diff))} · ${PLANETS[l.planet].name}</div>
-    <p>${esc(l.blurb)}</p><div class="objline">${objLabel(l)}</div><div class="quest">🎯 <b>${esc(q.name)}</b>: ${esc(q.text)} <span class="rw">+${q.reward}</span>${rec.questDone ? ' ✓' : ''}</div>
+    <p>${esc(l.blurb)}</p><div class="objline">${objLabel(l)}</div><div class="quest">🎯 <b>${esc(q.name)}</b>: ${esc(q.text)} <span class="rw">+${q.reward}</span>${rec.questDone ? ' ✓' : ''}</div>${l.bonus ? `<div class="quest bonus">⭐ <b>${esc(l.bonus.name)}</b>${l.bonus.giver ? ` <small>(${esc(l.bonus.giver)})</small>` : ''}: ${P.bonusUnlocked(save, l) ? esc(l.bonus.text) + ` <span class="rw">+${l.bonus.reward}</span>${rec.bonusDone ? ' ✓' : ' <small>(active this run)</small>'}` : '<i>Unlocks after you clear the side quest above</i>'}</div>` : ''}
     <div class="recs"><span>Best score <b>${nf(rec.best || 0)}</b></span><span>Best race <b>${fmtT(rec.bestTime)}</b></span><span>Best trial <b>${fmtT(rec.bestTrial)}</b></span><span>${'★'.repeat(rec.stars || 0)}${'☆'.repeat(3 - (rec.stars || 0))}</span></div>`;
   $('#lc-race').onclick = () => { click(); hideModal(); startLevel(l, 'race'); };
   $('#lc-trial').onclick = () => { click(); hideModal(); startLevel(l, 'trial'); };
@@ -318,7 +318,7 @@ async function startLevel(level, mode) {
   $('#loading-text').textContent = `Building ${level.name}…`; go('loading');
   await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
   try {
-    const sim = new Sim(level, { mode, vehicle: P.ownsVehicle(save, save.vehicle) ? save.vehicle : 'roadster', upgrades: save.upgrades, bonus: P.runBonus(save, level.planet), robots: P.robotCount(save) });
+    const sim = new Sim(level, { quest: P.activeQuest(save, level), mode, vehicle: P.ownsVehicle(save, save.vehicle) ? save.vehicle : 'roadster', upgrades: save.upgrades, bonus: P.runBonus(save, level.planet), robots: P.robotCount(save) });
     await sim.init();
     G.ghostPrev = save.settings.ghosts ? P.loadGhost(level.id, mode) : null; if (G.ghostPrev) sim.setGhost(G.ghostPrev);
     const view = new LevelView(gfx, sim, { custom: curCustom(), camMode: save.settings.camMode, shake: save.settings.shake });
@@ -326,7 +326,7 @@ async function startLevel(level, mode) {
     gfx.setScene(view.scene);
     $('#hud-level').textContent = `${level.name} · ${mode === 'race' ? 'Race' : 'Time Trial'}`; $('#thr-lbl').textContent = sim.veh.rcs ? 'GAS' : 'THRUST'; $('#hud').classList.toggle('rcs', !!sim.veh.rcs);
     $('#hud-pos').style.display = mode === 'race' ? '' : 'none';
-    $('#quest-line').innerHTML = `🎯 ${esc(level.quest.name)}: ${esc(level.quest.text)}`;
+    { const aq = P.activeQuest(save, level); $('#quest-line').innerHTML = `${aq.bonus ? '⭐' : '🎯'} ${esc(aq.name)}: ${esc(aq.text)}`; }
     buildMinimap(view);
     go('race'); layoutTouch();
     if (save.settings.music > 0) { audio.startRadio(); }
@@ -516,7 +516,7 @@ function updateHud() {
   $('#hud-time').textContent = fmtT(s.raceTime);
   if (G.mode === 'race') $('#hud-pos').innerHTML = `<b>${s.position()}</b>/4`;
   $('#prog-fill').style.width = Math.min(100, s.prog.s / s.tr.finishS * 100) + '%';
-  const q = s.quest; let ql = `🎯 ${q.name}`; if (q.done) ql += ' ✓'; else if (q.failed) ql += ' ✗'; else if (q.count) ql += ` ${q.progress}/${q.count}`; else if (q.active) ql += ` ⏱ ${Math.max(0, q.timer).toFixed(0)}s`;
+  const q = s.quest; let ql = `${q.bonus ? '⭐' : '🎯'} ${q.name}`; if (q.done) ql += ' ✓'; else if (q.failed) ql += ' ✗'; else if (q.type === 'fragile') ql += ' · cargo intact'; else if (q.type === 'speedtrap') ql += ` · ${Math.round(q.speed * 3.6)} km/h at the camera`; else if (q.type === 'statGoal' && q.stat === 'maxAir') ql += ` ${q.progress.toFixed(1)}/${q.value}s`; else if (q.count) ql += ` ${q.progress}/${q.count}`; else if (q.active) ql += ` ⏱ ${Math.max(0, q.timer).toFixed(0)}s`;
   $('#quest-line').textContent = ql;
   if (G.ghostPrev) $('#hud-ghost').textContent = `👻 ${fmtT(G.ghostPrev.time)}`; else $('#hud-ghost').textContent = '';
 }
