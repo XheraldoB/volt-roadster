@@ -568,7 +568,7 @@ window.__game = {
   levels: () => LEVELS.map(l => ({ id: l.id, planet: l.planet, name: l.name, diff: l.diff })),
   loadLevel: (id, mode = 'race') => { const l = levelById(id); if (!l) throw new Error('no level ' + id); return startLevel(l, mode); },
   save: () => { persist(true); return JSON.parse(JSON.stringify(save)); }, load: () => { save = P.loadLocal(); applySettings(); return save; },
-  get state() { return save; }, input, sim: () => G.sim, gfx, goto: name => ({ title: toTitle, map: toMap, garage: toGarage, base: toBase })[name]?.(), cloudSync, pause,
+  get state() { return save; }, input, sim: () => G.sim, gfx, goto: name => ({ title: toTitle, map: toMap, garage: toGarage, base: toBase })[name]?.(), cloudSync, pause, applySettings: () => { applySettings(); layoutTouch(); },
 };
 
 // ---------------- boot ----------------

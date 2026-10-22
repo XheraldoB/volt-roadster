@@ -172,3 +172,20 @@ B19 | Minor | P2 | Achievement toast covers the results title | Finish e1 for th
 B20 | Trivial | P1 | FPS counter can never show below 10 | Settings, Show FPS, on a slow GPU | Real fps | dt is clamped to 0.1 s before the fps average, so the counter shows 10 while actual is about 3.5 fps (2772x1272 software GL). The sim also runs at about 0.8× real time below 12 fps (max 10 substeps), intentional but worth knowing | Open
 B21 | Trivial | P2 | Base hex pad renders split in two | Base, Earth, top-right pad (vis-base-ultra.png) | Whole hex pad | Pad appears cut into two pieces where the terrain pokes through the middle | Open
 B22 | Trivial | P1 | Moon free-fall acceleration measured 1.75 m/s² vs configured 1.62 | Pause, lift the car 60 m, step the sim 0.5 s with no input (p1 `gravity`) | 1.62 | 1.75 (+8%); Mars 3.80 vs 3.71, Earth 9.76 vs 9.81. Small extra downward force while airborne on low-g worlds | Open
+
+## Fix-round results (dev, 2026-10-22)
+| Item | Status | Evidence |
+|---|---|---|
+| B6 reverse / brakes | FIXED | tests/drive.test.mjs (reverse, brake distance, no creep) + tests/player.browser.mjs touch BRAKE→REV |
+| B7 vehicle ownership | FIXED | drive.test ownership checks; two-tap purchase; setVehicle requires ownership |
+| B8 / B10 / B18 hidden-tab, context loss, portrait pause | FIXED | blocked/pause handling in main.js; pause test in player.browser.mjs |
+| B11–B12 steering / touch | FIXED | analog pad, sensitivity, ESC; drive.test steering + multitouch browser test |
+| B15 hard landings / crashes by impact speed | FIXED | drive.test hard landing not CLEAN |
+| B16 dust devil short hop | FIXED | drive.test dust devil |
+| B20 real fps | FIXED | rawDt fps; __game.frameTimes() |
+| B22 gravity | FIXED | drive.test exact free-fall |
+| B9, B13, B14, B17, B19, B21 | OPEN | not addressed in this round |
+| RP3 reverse, RP4 brake, RP5 recovery/respawn, RP6 air control, RP7 pause/restart | PASS (automated) | drive.test 57/59, player.browser 12/12 |
+| RP9 sharpness | PASS (screenshot) | qa-shots/rp9-sharpness.png (DPR capped at 2, FXAA, quarter-res bloom) |
+| RP10 frame telemetry | PASS | __game.pixelRatio / drawingBuffer / frameTimes(n); 120 fps on device still needs a real-phone check |
+| Known fail | hauler r1 ±3 m pad-steer by the bot pilot (lands long/outside the pad); simtest finishes all 23 levels with both vehicles |

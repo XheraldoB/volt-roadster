@@ -44,7 +44,7 @@ G_EXPECT.flag = true; const checkout = await G(async () => (await fetch('/api/cr
 const saved = await G(() => { window.__game.state.coins += 1; const s = window.__game.save(); return s.coins; }); const loaded = await G(() => window.__game.load().coins); ok('T7 local save round trip', saved === loaded, `${saved}=${loaded}`);
 // races with both vehicles
 for (const veh of ['roadster', 'hauler']) {
-  await G(v => window.__game.setVehicle(v), veh);
+  await G(v => (window.__game.grantVehicle(v), window.__game.setVehicle(v)), veh);
   await G(() => window.__game.loadLevel('e1', 'race'));
   await page.waitForFunction(() => window.__game.screen === 'race' && window.__game.car?.state === 'race', null, { timeout: 120000 });
   // touch controls: real pointer taps on GAS/boost
