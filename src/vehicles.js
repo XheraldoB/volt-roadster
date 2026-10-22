@@ -10,7 +10,7 @@ export const VEHICLES = {
     id: 'hauler', name: 'Volt Ferrox', icon: '🛻', blurb: 'Angular stainless-steel electric pickup. Heavy, tough and grippy, with cold-gas RCS jets for air control, hover hops and soft landings.',
     mass: 2900, half: [1.0, 0.4, 2.6], com: [0, -0.22, 0], inertia: [7800, 8600, 2300], roof: { half: [0.92, 0.3, 1.15], at: [0, 0.68, 0.05] },
     wheelPos: [[0.9, -0.02, 1.75], [-0.9, -0.02, 1.75], [0.9, -0.02, -1.75], [-0.9, -0.02, -1.75]], rest: 0.40, radius: 0.44, travel: 0.4,
-    mul: { accel: 0.74, vmax: 0.9, grip: 1.28, steer: 0.88 }, tough: 1.8, rcs: true, groundY: -0.86, price: { coins: 6000 },
+    mul: { accel: 0.74, vmax: 0.9, grip: 1.28, steer: 0.88 }, tough: 1.8, brakeDecel: 8.6, reverseVmax: 7.5, rcs: true, groundY: -0.86, price: { coins: 6000 },
   },
 };
 export const vehicleOf = id => VEHICLES[id] || VEHICLES.roadster;

@@ -12,9 +12,22 @@ let rapierReady = null;
 export const initPhysics = () => (rapierReady ??= RAPIER.init({}).catch(() => RAPIER.init()));
 
 export const STEP = 1 / 120;
+export const DEVIL_AIRTIME = 0.9, DEVIL_MAX_DV = 4.5;
+export const BRAKE_DECEL = 11.5, REVERSE_VMAX = 8.5, REVERSE_ACCEL = 6.5;
+export const STEER_LIN = 0.45, STEER_V0 = 7, STEER_EXP = 1.6, STEER_RATE = 6, STEER_RETURN = 9;
+export const ESC = { yawGain: 1.15, yawSlack: 0.12, rate: 7, slide: 2.2 };
+export const AUTO_RIGHT_T = 0.9;
+export const LAND_CLEAN = 9, LAND_HARD = 14, LAND_CRASH = 23; // m/s along the surface normal, scaled by sqrt(toughness)
+export const WALL_LOSS = 13, WALL_PENALTY = 250;
+export const HOVER_SINK = -1.2, HOVER_K = 2.6, HOVER_MAX = 2.6; // cold-gas hover: target sink m/s, gain 1/s, max lift in g
 const EARTH_G = 9.81;
 const tmpV = new Vector3(), tmpV2 = new Vector3(), tmpQ = new Quaternion();
 const v3 = (o) => new Vector3(o.x, o.y, o.z);
+const WORLD_UP = new Vector3(0, 1, 0), _t1 = new Vector3(), _t2 = new Vector3(), _t3 = new Vector3(), NO_INPUT = { steer: 0, throttle: 0, brake: 0, pitch: 0, boost: false, jump: false };
+let _ray = null;
+const STATIC_ONLY = col => { const p = col.parent(); return !p || p.isFixed(); }; // road, terrain, pads: never traffic or meteors
+// air-control tuning (rad/s, 1/s). maxRate keeps the car from spinning wildly; response is how fast it follows input.
+export const AIR = { pitchRate: 4.2, yawRate: 2.6, rollRate: 4.5, response: 9, maxRate: 6.5, levelKp: 3.2, levelKpNear: 6, levelMax: 3.2, noGasAuth: 0.3, gasPerRate: 0.45, steerThrust: 0.9, steerGlide: 0.3 };
 const AI_NAMES = ['Nova', 'Sparky', 'Ion Ivy', 'Turbo Tess', 'Ampere', 'Watt Rodriguez', 'Coil', 'Dyna'];
 
 export function carStats(up = {}, bonus = {}, veh = VEHICLES.roadster) {
@@ -24,7 +37,7 @@ export function carStats(up = {}, bonus = {}, veh = VEHICLES.roadster) {
     vmax: 52 + 6 * l('speed'),
     accel: 10 + 1.5 * l('accel'),
     grip: 3.1 + 0.35 * l('handling'),
-    steer: 0.42 + 0.03 * l('handling'),
+    steer: 0.55 + 0.03 * l('handling'),
     boostMul: 1.5 + 0.1 * l('boost'),
     boostCap: (2.6 + 0.6 * l('boost')) * (1 + (bonus.nitroCap || 0)),
     jumpV: 5.5 + 0.8 * l('thruster'),
@@ -40,6 +53,7 @@ export class Sim {
   constructor(level, opts = {}) {
     level = typeof structuredClone === 'function' ? structuredClone(level) : JSON.parse(JSON.stringify(level)); // buildTrack mutates segment defs
     this.level = level; this.planet = PLANETS[level.planet];
+    this.fuelK = Math.sqrt(PLANETS[level.planet].gravity / EARTH_G); // thrust needed scales with gravity, so does fuel use
     this.mode = opts.mode || 'race'; // 'race' | 'trial'
     this.g = this.planet.gravity;
     this.veh = vehicleOf(opts.vehicle);
@@ -62,7 +76,7 @@ export class Sim {
     await initPhysics();
     const R = RAPIER;
     const w = this.world = new R.World({ x: 0, y: -this.g, z: 0 });
-    w.timestep = STEP;
+    w.timestep = STEP; if (!_ray) _ray = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: -1, z: 0 });
     // road collider
     this.road = buildRoadArrays(this.tr);
     const c = this.road.col;
@@ -82,7 +96,7 @@ export class Sim {
 
   buildCar() {
     const R = RAPIER, w = this.world;
-    const body = this.body = w.createRigidBody(R.RigidBodyDesc.dynamic().setCcdEnabled(true).setLinearDamping(0.02).setAngularDamping(0.4).setCanSleep(false));
+    const body = this.body = w.createRigidBody(R.RigidBodyDesc.dynamic().setCcdEnabled(true).setLinearDamping(0).setAngularDamping(0.4).setCanSleep(false));
     const V = this.veh; this.mass = V.mass;
     const col = R.ColliderDesc.cuboid(...V.half).setTranslation(0, 0.05, 0)
       .setMassProperties(this.mass, { x: V.com[0], y: V.com[1], z: V.com[2] }, { x: V.inertia[0], y: V.inertia[1], z: V.inertia[2] }, { x: 0, y: 0, z: 0, w: 1 })
@@ -98,7 +112,7 @@ export class Sim {
       vc.setWheelMaxSuspensionTravel(i, V.travel); vc.setWheelMaxSuspensionForce(i, 1e6);
       vc.setWheelFrictionSlip(i, this.stats.grip * (i < 2 ? 1.05 : 0.95)); vc.setWheelSideFrictionStiffness(i, 1.0);
     }
-    this.steerCur = 0; this.prevVel = new Vector3(); this.contacts = 4; this.air = 0; this.airRot = new Vector3();
+    this.steerCur = 0; this.prevVel = new Vector3(); this.preVel = new Vector3(); this.contacts = 4; this.air = 0; this.airRot = new Vector3();
     this.pose = { p: new Vector3(), q: new Quaternion(), pp: new Vector3(), pq: new Quaternion() };
     this.hint = 0; this.prog = { s: 0, x: 0, h: 0, i: 0 }; this.maxS = 0; this.cpIndex = 0;
     this.jumpCd = 0; this.crashT = 0; this.upsideT = 0; this.stuckT = 0; this.offT = 0;
@@ -252,7 +266,7 @@ export class Sim {
       const P = poseAt(this.tr, d.s, d.x, 0); d.p.copy(P.p);
       if (!d.used && d.p.distanceTo(p) < 7) {
         d.used = true; this.boost = this.stats.boostCap;
-        const b = this.body; b.applyImpulse({ x: 0, y: this.mass * 11, z: 0 }, true);
+        const b = this.body, lv = b.linvel(); const dv = Math.min(DEVIL_MAX_DV, DEVIL_AIRTIME * this.g * 0.5) - Math.max(0, lv.y); if (dv > 0) b.applyImpulse({ x: 0, y: this.mass * dv, z: 0 }, true); // B16: fixed short hop (~0.9 s airtime, planet-scaled), no extra lateral force
         this.stat.devils = (this.stat.devils || 0) + 1; this.addScore(900, 'DUST DEVIL RIDE!', 'air'); this.emit('devil');
       }
     }
@@ -263,7 +277,24 @@ export class Sim {
 
   emit(type, data = {}) { this.events.push({ type, ...data }); }
 
+  // put the car back on the road near where it is (not at the last checkpoint): used by auto-right, stuck and the reset button
+  softReset(reason = 'reset') {
+    if (this.state !== 'race' || this.crashT > 0) return false;
+    const sm = this.tr.samples[this.prog.i];
+    if (reason === 'flip' && !sm.gap && Math.abs(this.prog.x) < ROAD_W * 0.9) { // right it in place, same heading along the track
+      const P = poseAt(this.tr, this.prog.s, Math.max(-ROAD_W * 0.7, Math.min(ROAD_W * 0.7, this.prog.x)), -this.veh.groundY + 0.6), b = this.body;
+      b.setTranslation({ x: P.p.x, y: P.p.y, z: P.p.z }, true); b.setRotation({ x: P.q.x, y: P.q.y, z: P.q.z, w: P.q.w }, true);
+      b.setLinvel({ x: 0, y: 0, z: 0 }, true); b.setAngvel({ x: 0, y: 0, z: 0 }, true);
+      this.pose.p.copy(P.p); this.pose.q.copy(P.q); this.pose.pp.copy(P.p); this.pose.pq.copy(P.q); this.prevVel.set(0, 0, 0);
+      this.upsideT = 0; this.stuckT = 0; this.air = 0; this.airRot.set(0, 0, 0);
+    } else this.respawnAt(Math.max(this.lastCpS ?? 0, Math.min(this.maxS, this.prog.s) - 25), 10);
+    this.combo.chain = 0; this.combo.mult = 1; this.combo.pts = 0; this.reversing = false;
+    this.stat.resets = (this.stat.resets || 0) + 1; this.emit('respawn', { reason }); return true;
+  }
   respawnAt(s, v = 22) {
+    // never respawn inside (or on the lip of) a jump: go back to a proper run-up before it, so a respawn can't loop
+    const inGap = this.tr.features.find(f => f.type === 'gap' && s > f.s0 - 40 && s < f.s1 + 2);
+    if (inGap) s = Math.max(0, inGap.s0 - 220);
     s = this.safeS(Math.max(0, s));
     if (v > 0) { // give enough run-up speed for an upcoming jump
       const g = this.tr.features.find(f => f.type === 'gap' && f.s0 > s && f.s0 - s < 420);
@@ -359,14 +390,42 @@ export class Sim {
       const f = this.tr.features.find(f => f.type === 'gap' && this.prog.s > f.s0 - 60 && this.prog.s < f.s0 + 2);
       const req = f ? (this.tr.def.segments.find(sg => sg.t === 'gap' && sg.name === f.name)?.speed ?? 40) * 1.04 : 0;
       if (req && fspeed < req) drive = Math.max(drive, this.mass * Math.min(14, (req - fspeed) * 2.2));
+      // speed governor on take-off (unless boosting): arrive at the design speed so the landing pad is reachable with air control
+      else if (req && !boosting && fspeed > req * 1.06) { const lv = b.linvel(), k = Math.max(0.9, 1 - (fspeed - req * 1.05) / Math.max(1, fspeed) * Math.min(1, 6 * h)); b.setLinvel({ x: lv.x * k, y: lv.y * k, z: lv.z * k }, true); }
     }
     let braking = 0;
-    if (brk > 0) { if (fspeed > 1.5) braking = 38 * brk * this.mass / 1650; else drive = -this.mass * 5 * brk * (fspeed > -14 ? 1 : 0); }
+    // brake / reverse: BRAKE slows the car; once (nearly) stopped, keeping BRAKE held engages reverse (capped speed).
+    const V = this.veh, revCap = V.reverseVmax ?? REVERSE_VMAX;
+    if (brk > 0 && thr < 0.5) {
+      if (fspeed > 1.2 && !this.reversing) {
+        braking = 6 * brk; this.revHold = 0;
+        if (grounded) { // ABS-style deceleration (B11): per-vehicle, applied along the velocity, grip-limited by the tyres
+          const dec = Math.min(V.brakeDecel ?? BRAKE_DECEL, this.stats.grip * 3.4) * brk; const lv = b.linvel();
+          const vx = lv.x, vy = lv.y, vz = lv.z, sp = Math.hypot(vx, vy, vz) || 1, dv = Math.min(sp, dec * h);
+          b.applyImpulse({ x: -vx / sp * dv * this.mass, y: -vy / sp * dv * this.mass, z: -vz / sp * dv * this.mass }, true);
+        }
+      } else {
+        this.revHold = (this.revHold || 0) + h;
+        if (this.revHold > 0.12 || this.reversing) { this.reversing = true; drive = fspeed > -revCap ? -this.mass * REVERSE_ACCEL * brk * Math.min(1, (revCap + fspeed) / 3) : 0; }
+        else braking = 8;
+      }
+    } else { this.revHold = 0; if (this.reversing && (thr > 0.5 || fspeed > 0.5)) this.reversing = false; if (this.reversing && brk === 0 && thr === 0) { braking = 2; if (Math.abs(fspeed) < 0.5) this.reversing = false; } }
+    if (thr > 0.5 && fspeed < -1.2) braking = Math.max(braking, 10); // gas while rolling backwards brakes first
     if (!control && running) braking = Math.max(braking, 6);
-    for (let i = 0; i < 4; i++) { vc.setWheelEngineForce(i, drive * (i < 2 ? 0.42 : 0.58) / 2); vc.setWheelBrake(i, braking * (i < 2 ? 0.6 : 0.4)); }
+    // handbrake: locks the rear wheels and drops rear grip for drifts
+    const hb = control && inp.handbrake && grounded;
+    const rearSlip = this.stats.grip * 0.95 * (hb ? 0.3 : 1);
+    if (rearSlip !== this.rearSlip) { const sf = hb ? 0.35 : 1; for (const i of [2, 3]) { vc.setWheelFrictionSlip(i, rearSlip); vc.setWheelSideFrictionStiffness(i, sf); } this.rearSlip = rearSlip; }
+    this.handbrake = !!hb;
+    for (let i = 0; i < 4; i++) { vc.setWheelEngineForce(i, drive * (i < 2 ? 0.42 : 0.58) / 2); vc.setWheelBrake(i, braking * (i < 2 ? 0.6 : 0.4) + (hb && i >= 2 ? 14 : 0)); }
     // steering (speed-sensitive, smoothed)
-    const target = (control ? (inp.steer || 0) : 0) * (st.steer / (1 + Math.max(0, speed) / 28) + 0.035);
-    const rate = 6 * h; this.steerCur += Math.max(-rate, Math.min(rate, target - this.steerCur));
+    // B12: progressive curve (small inputs are gentle), stronger speed sensitivity, slower wheel rate at speed, quick self-centring
+    const sIn = control ? (inp.steer || 0) * (inp.sens || 1) : 0, sC = Math.max(-1, Math.min(1, sIn));
+    const curve = sC * (STEER_LIN + (1 - STEER_LIN) * Math.abs(sC));
+    const spd = Math.max(0, speed), sens = st.steer / (1 + Math.pow(spd / STEER_V0, STEER_EXP));
+    const target = curve * (sens + 0.012);
+    const centring = Math.abs(target) < Math.abs(this.steerCur) - 1e-3 || Math.sign(target) !== Math.sign(this.steerCur);
+    const rate = (centring ? STEER_RETURN : STEER_RATE / (1 + spd / 35)) * h; this.steerCur += Math.max(-rate, Math.min(rate, target - this.steerCur));
     vc.setWheelSteering(0, -this.steerCur); vc.setWheelSteering(1, -this.steerCur);
 
     // stiffer springs under high g (loops / walls), like a real coaster-tuned setup
@@ -404,6 +463,19 @@ export class Sim {
       const df = Math.min(1.2 * EARTH_G, 0.0035 * speed * speed) + assist;
       b.applyImpulse({ x: -up.x * df * m * h, y: -up.y * df * m * h, z: -up.z * df * m * h }, true);
     }
+    // ---- stability control / traction assist (on by default, toggle in settings) ----
+    if (grounded && control && inp.esc !== false && !hb && !this.rail && !sm.magnet && speed > 4) {
+      const avE = b.angvel(); const wu = avE.x * up.x + avE.y * up.y + avE.z * up.z;
+      const wb = Math.abs(V.wheelPos[0][2] - V.wheelPos[2][2]) || 2.7;
+      const want = fspeed * Math.tan(this.steerCur) / wb * -1; // bicycle-model yaw rate for the current steering angle
+      const lim = Math.abs(want) * ESC.yawGain + ESC.yawSlack;
+      if (Math.abs(wu) > lim) { const tgt = Math.sign(wu) * lim, k = Math.min(1, ESC.rate * h) * (tgt - wu); b.setAngvel({ x: avE.x + up.x * k, y: avE.y + up.y * k, z: avE.z + up.z * k }, true); }
+      const lv = b.linvel(), side = lv.x * left.x + lv.y * left.y + lv.z * left.z, k2 = Math.min(1, ESC.slide * h) * side; // bleed sideways slide
+      b.setLinvel({ x: lv.x - left.x * k2, y: lv.y - left.y * k2, z: lv.z - left.z * k2 }, true);
+    }
+    // handbrake drift: arcade yaw kick in the steering direction while the rear is loose
+    if (hb && speed > 7) { const avH = b.angvel(), wu = avH.x * up.x + avH.y * up.y + avH.z * up.z, want = -(inp.steer || 0) * 1.8, k = Math.max(-1, Math.min(1, (want - wu))) * 3.5 * h;
+      if (Math.abs(inp.steer || 0) > 0.1) b.setAngvel({ x: avH.x + up.x * k, y: avH.y + up.y * k, z: avH.z + up.z * k }, true); }
     // ---- boost ----
     if (boosting) { this.boost = Math.max(0, this.boost - h); if (!this.wasBoost) this.emit('boost'); }
     else this.boost = Math.min(st.boostCap, this.boost + h * 0.06);
@@ -416,44 +488,35 @@ export class Sim {
         const j = st.jumpV * m; b.applyImpulse({ x: up.x * j, y: up.y * j, z: up.z * j }, true);
         this.jumpCd = 0.6; this.emit('jump');
       } else if (!grounded && !this.veh.rcs && this.thrust > 0 && this.air > 0.25) {
-        this.thrust = Math.max(0, this.thrust - h); this.thrusting = true;
-        b.applyImpulse({ x: 0, y: m * (this.g * 1.25 + 2) * h, z: 0 }, true);
-        b.applyImpulse({ x: fwd.x * m * 3 * h, y: 0, z: fwd.z * m * 3 * h }, true);
+        // battery thruster: same vertical-speed controller as the pickup's hover (target: hold altitude), never pushes down
+        this.thrust = Math.max(0, this.thrust - h * 0.5 * this.fuelK); this.thrusting = true;
+        const vy = b.linvel().y, lift = Math.max(0, Math.min(this.g * HOVER_MAX, this.g + HOVER_K * (0 - vy)));
+        this.bodyThrust(lift, up);
       } else if (!grounded && this.veh.rcs && this.gas > 0 && this.air > 0.12) {
-        // cold-gas hover / soft-landing burn: holds altitude and bleeds off sink rate
-        const vy = b.linvel().y; this.gas = Math.max(0, this.gas - h); this.thrusting = true; this.rcs.lift = 1;
-        const up2 = this.g * 1.12 + Math.max(0, -vy) * 2.2;
-        b.applyImpulse({ x: 0, y: m * up2 * h, z: 0 }, true);
+        // cold-gas hover / soft-landing burn: a vertical-speed controller that tracks a gentle descent (HOVER_SINK).
+        // Lift = g + k*(target - vy), clamped to [0, HOVER_MAX*g]: it never adds climb beyond the target and never pushes down,
+        // so holding JUMP can only ever fall slower than not holding it. Scales with planet gravity.
+        const vy = b.linvel().y;
+        const lift = Math.max(0, Math.min(this.g * HOVER_MAX, this.g + HOVER_K * (HOVER_SINK - vy)));
+        if (lift > 0) { this.gas = Math.max(0, this.gas - h * this.fuelK * (0.35 + 0.65 * Math.min(1, lift / (this.g * HOVER_MAX)))); this.thrusting = true; this.rcs.lift = Math.min(1, lift / (this.g * 1.5)); this.bodyThrust(lift, up); }
       }
     }
     this.jumpHeld = !!inp.jump;
     if (grounded) { this.thrust = Math.min(st.thrustCap, this.thrust + h * 0.5); this.gas = Math.min(st.gasCap, this.gas + h * 0.22); }
-    // ---- air control ----
+    // ---- air control (rate controller, not raw torque impulses) ----
+    // steer = yaw (or roll with the air-roll setting), gas/brake = nose down/up. With no input the car levels itself
+    // toward the surface it will land on. Angular velocity is driven toward a target with a fixed response, clamped and damped,
+    // so the same input always gives the same rotation speed and it can never spin out of control.
     const av = v3(b.angvel());
-    if (!grounded) {
-      const pitchIn = control ? (inp.pitch || 0) : 0; // + = nose up (backflip)
-      const rollIn = control ? (inp.steer || 0) : 0;
-      const I = 2600 * (this.veh.inertia[0] / 3000), useRcs = this.veh.rcs && this.gas > 0;
-      const k = 5.5 * h * I * (useRcs ? 1.35 : this.veh.rcs ? 0.25 : 1);
-      if (this.veh.rcs) { const act = (Math.abs(pitchIn) > 0.05 ? 1 : 0) + (Math.abs(rollIn) > 0.05 ? 1 : 0); this.rcs.px = useRcs ? pitchIn : 0; this.rcs.py = useRcs ? rollIn : 0; if (useRcs && act && this.air > 0.2) this.gas = Math.max(0, this.gas - h * 0.35 * act); }
-      if (Math.abs(pitchIn) > 0.05 && this.air > 0.2) b.applyTorqueImpulse({ x: left.x * pitchIn * k, y: left.y * pitchIn * k, z: left.z * pitchIn * k }, true);
-      if (Math.abs(rollIn) > 0.05 && this.air > 0.2) {
-        const ax = inp.airRoll ? fwd : up; const sgn = inp.airRoll ? 1 : -1;
-        b.applyTorqueImpulse({ x: ax.x * rollIn * k * sgn, y: ax.y * rollIn * k * sgn, z: ax.z * rollIn * k * sgn }, true);
-      }
-      // landing assist: level towards the track up when no input
-      if (inp.assist !== false && Math.abs(pitchIn) < 0.05 && Math.abs(rollIn) < 0.05 && this.air > 0.15) {
-        const tgt = sm.gap ? new Vector3(0, 1, 0) : sm.U;
-        const ax = new Vector3().crossVectors(up, tgt);
-        const kk = 1800 * h;
-        b.applyTorqueImpulse({ x: (ax.x * 4 - av.x * 0.9) * kk, y: (ax.y * 4 - av.y * 0.6) * kk, z: (ax.z * 4 - av.z * 0.9) * kk }, true);
-      }
-    }
+    if (!grounded && this.air > 0.1 && !this.rail) this.airControl(h, control ? inp : NO_INPUT, sm, up, fwd, left);
+    if (!grounded) { this.predT = (this.predT || 0) - h; if (this.predT <= 0) { this.predT = 0.05; this.predictLanding(); } } else this.landing = null;
     // ---- kinematic actors ----
     this.updateTraffic(h); this.updateAI(h, running); this.updateCow(h, running);
 
     // ---- physics step ----
     vc.updateVehicle(h);
+    // horizontal-only rolling/air drag (vertical damping would distort free-fall: gravity must be exactly the planet value)
+    { const lv = b.linvel(), dk = 1 - 0.02 * h; b.setLinvel({ x: lv.x * dk, y: lv.y, z: lv.z * dk }, true); }
     this.world.step();
 
     // ---- post step ----
@@ -467,7 +530,7 @@ export class Sim {
     this.stat.maxSpeed = Math.max(this.stat.maxSpeed, this.speed);
     // impact detection
     const imp = Math.max(0, (this.prevVel.length() - nv.length()) / h); // sudden speed loss = impact
-    this.prevVel.copy(nv);
+    this.preVel.copy(this.prevVel); this.prevVel.copy(nv);
     // scraping walls / bottoming out (for sparks)
     let scrape = false; this.world.contactPair(this.chassisCol, this.roadCollider, m => { if (m.numContacts() > 0) scrape = true; });
     if (!scrape) this.world.contactPair(this.roofCol, this.roadCollider, m => { if (m.numContacts() > 0) scrape = true; });
@@ -581,6 +644,12 @@ export class Sim {
     }
     this.stat.maxAir = Math.max(this.stat.maxAir, this.air);
     // hits (walls, traffic)
+    // B12: wall scrape / head-on hit penalty: a big speed loss within ~0.25 s while on the ground and not landing
+    { const loss = Math.max(0, this.preVel.length() - this.speed); this.lossWin = (this.lossWin || 0) * Math.exp(-h / 0.25) + (c.grounded && !this.justLanded && this.air === 0 ? loss : 0);
+      this.wallCd = Math.max(0, (this.wallCd || 0) - h);
+      if (this.lossWin > WALL_LOSS && this.wallCd <= 0 && !sm.gap) { this.wallCd = 1.5; this.lossWin = 0; this.stat.wallHits = (this.stat.wallHits || 0) + 1;
+        this.score = Math.max(0, this.score - WALL_PENALTY); this.combo.chain = 0; this.combo.mult = 1; this.combo.pts = 0; this.battery = Math.max(0, this.battery - 1);
+        this.emit('wallHit', { penalty: WALL_PENALTY }); this.emit('popup', { text: `WALL HIT −${WALL_PENALTY}`, kind: 'bad' }); } }
     if (c.imp > 90 && !this.justLanded) { this.emit('hit', { strength: Math.min(1, c.imp / 300) }); if (this.combo.chain && c.imp > 150) { this.combo.timer = Math.min(this.combo.timer, 0.5); } }
     this.justLanded = false;
     // traffic: near miss / crash
@@ -606,11 +675,12 @@ export class Sim {
     }
     // crash conditions
     const upDot = c.up.dot(sm.gap ? new Vector3(0, 1, 0) : sm.U);
-    if (upDot < -0.1 && this.contacts === 0 && this.speed < 18) { this.upsideT += h; if (this.upsideT > 1.1) return this.crash('flip'); } else this.upsideT = Math.max(0, this.upsideT - h);
+    // RP3: on the roof or side and (nearly) stopped -> right the car in place after a short beat (no crash, run continues)
+    if (upDot < 0.35 && this.contacts < 3 && this.speed < 6 && !sm.magnet && !this.rail) { this.upsideT += h; if (this.upsideT > AUTO_RIGHT_T) { this.softReset('flip'); return; } } else this.upsideT = Math.max(0, this.upsideT - h * 2);
     const below = sm.gap ? this.prog.h < -14 : this.prog.h < -9;
     if (below || Math.abs(this.prog.x) > 90 || this.pose.p.y < -400) { this.offT += h; if (this.offT > (below ? 0.4 : 1.2)) return this.crash(below ? 'fall' : 'off'); } else this.offT = 0;
     if (Math.abs(this.prog.x) > ROAD_W * 0.65 && c.grounded && !sm.gap) { this.stuckT += h; if (this.stuckT > 2.5) return this.crash('off'); }
-    else if (this.speed < 1 && c.inp.throttle > 0.5) { this.stuckT += h; if (this.stuckT > 3) return this.crash('stuck'); }
+    else if (this.speed < 1 && (c.inp.throttle > 0.5 || c.inp.brake > 0.5)) { this.stuckT += h; if (this.stuckT > 2.5) { this.softReset('stuck'); return; } }
     else this.stuckT = 0;
     // checkpoints
     const cps = tr.checkpoints;
@@ -638,13 +708,102 @@ export class Sim {
     if (this.prog.s >= tr.finishS && Math.abs(this.prog.x) < ROAD_W) this.finish(true);
   }
 
+  // thrust acts along the car's own up axis: its vertical part matches the requested lift, so tilting the nose
+  // forward/back (GAS/BRAKE while thrusting) pushes the car forward/back - that is how you stretch or shorten a jump.
+  bodyThrust(lift, up) {
+    const b = this.body, m = this.mass, h = this.h || STEP;
+    if (up.y < 0.35) { b.applyImpulse({ x: 0, y: m * lift * h, z: 0 }, true); return; }
+    // tilted on purpose (GAS/BRAKE held): constant thrust of 1 g along the body, so the tilt trades lift for push and
+    // braking/stretching changes the range instead of just hovering longer. Level: vertical controller (hover).
+    if (this.airTiltIn) { // vectored: the tilt mostly pushes (up to ~0.9 g at full tilt), with light lift so braking really shortens the jump
+      const gh = Math.max(this.g * 1.6, 6) * m * h, gv = this.g * 0.35 * m * h; /* push has a floor so tilting still works in Moon gravity */ b.applyImpulse({ x: up.x * gh, y: gv, z: up.z * gh }, true); return;
+    }
+    const k = lift / Math.max(0.6, up.y) * m * h; b.applyImpulse({ x: up.x * k, y: up.y * k, z: up.z * k }, true);
+  }
+  airControl(h, inp, sm, up, fwd, left) {
+    const b = this.body, V = this.veh, a = AIR;
+    const pitchIn = inp.pitch || 0, steerIn = inp.steer || 0, roll = !!inp.airRoll, assist = inp.assist !== false;
+    const touchdown = this.landing && this.landing.t < 0.35 && inp.assist !== false; // last moments: landing assist wins, wheels down
+    this.airTiltIn = Math.abs(pitchIn) > 0.05 && !touchdown;
+    const hasGas = !V.rcs || this.gas > 0; // the pickup's attitude jets need gas; the roadster has reaction wheels
+    const auth = hasGas ? 1 : a.noGasAuth;
+    const av = b.angvel(); const avx = av.x, avy = av.y, avz = av.z;
+    const wl = avx * left.x + avy * left.y + avz * left.z, wu = avx * up.x + avy * up.y + avz * up.z, wf = avx * fwd.x + avy * fwd.y + avz * fwd.z;
+    // attitude error toward the landing surface normal (world up over gaps)
+    let T = this.landing && this.landing.n && this.landing.t < 1.2 && this.landing.n.y > 0.75 ? this.landing.n : (sm.gap || Math.abs(this.prog.h) > 3 || sm.U.y < 0.5 ? WORLD_UP : sm.U); // far from the road (or above a loop): level to the horizon
+    const tilt = this.thrusting && Math.abs(pitchIn) > 0.05 && !touchdown; // thrust + GAS/BRAKE = hold a tilt (max 32 deg), not a flip
+    if (tilt) { const fh = _t2.set(fwd.x, 0, fwd.z); if (fh.lengthSq() > 1e-4) { fh.normalize(); const a2 = pitchIn * 0.75; T = _t3.copy(WORLD_UP).multiplyScalar(Math.cos(a2)).addScaledVector(fh, -Math.sin(a2)); } }
+    const c = _t1.crossVectors(up, T); const sn = c.length(), cs = up.dot(T);
+    let el = 0, ef = 0;
+    if (sn > 1e-4 || cs < 0) { const ang = Math.atan2(sn, cs); if (sn > 1e-4) c.multiplyScalar(ang / sn); else c.copy(left).multiplyScalar(Math.PI); el = c.dot(left); ef = c.dot(fwd); }
+    const near = this.landing && this.landing.t < 0.6; // generous landing assist in the last moments
+    const kp = near ? a.levelKpNear : a.levelKp, lim = a.levelMax;
+    const cl = x => Math.max(-lim, Math.min(lim, x));
+    const sens = this.sens || 1;
+    let tl, tu, tf;
+    if (Math.abs(pitchIn) > 0.05 && !tilt && !touchdown) tl = -pitchIn * a.pitchRate * sens; /* BRAKE = nose up, GAS = nose down (same as the thrust tilt) */ else tl = (assist || tilt) ? cl(el * (tilt ? 5 : kp)) : wl;
+    if (!roll && Math.abs(steerIn) > 0.05) tu = -steerIn * a.yawRate * sens; else tu = assist ? 0 : wu;
+    if (roll && Math.abs(steerIn) > 0.05) tf = steerIn * a.rollRate * sens; else tf = assist ? cl(ef * kp) : wf;
+    // landing assist also corrects roll while the player pitches, and pitch while only yawing
+    const resp = Math.min(1, a.response * auth * h);
+    const dl = (tl - wl) * resp, du = (tu - wu) * resp, df = (tf - wf) * resp;
+    let nx = avx + left.x * dl + up.x * du + fwd.x * df, ny = avy + left.y * dl + up.y * du + fwd.y * df, nz = avz + left.z * dl + up.z * du + fwd.z * df;
+    const mag = Math.hypot(nx, ny, nz); if (mag > a.maxRate) { const k = a.maxRate / mag; nx *= k; ny *= k; nz *= k; }
+    b.setAngvel({ x: nx, y: ny, z: nz }, true);
+    if (V.rcs) {
+      const act = Math.min(2, Math.abs(dl) + Math.abs(du) + Math.abs(df)) / (resp || 1) / 4;
+      this.rcs.px = hasGas ? (Math.abs(pitchIn) > 0.05 ? pitchIn : Math.max(-1, Math.min(1, dl / (resp || 1) / 3))) : 0;
+      this.rcs.py = hasGas ? (Math.abs(steerIn) > 0.05 ? steerIn : Math.max(-1, Math.min(1, -du / (resp || 1) / 3))) : 0;
+      if (hasGas) this.gas = Math.max(0, this.gas - h * a.gasPerRate * Math.min(1, act));
+    }
+    // trajectory steering: the velocity vector is gently pulled toward the car's heading (strong while thrusting),
+    // so yaw + thrust lets the player line up a landing pad. Speed is preserved; it only redirects.
+    const lv = b.linvel(); const hs = Math.hypot(lv.x, lv.z); const hx = fwd.x, hz = fwd.z, hl = Math.hypot(hx, hz);
+    if (hs > 2 && hl > 0.3 && (this.thrusting || Math.abs(steerIn) > 0.05)) { // only when the player asks for it (steer or thrust): no drift on hands-off jumps
+      const cur = Math.atan2(lv.x, lv.z), want = Math.atan2(hx, hz); let d = want - cur; d = Math.atan2(Math.sin(d), Math.cos(d));
+      const maxTurn = (this.thrusting ? a.steerThrust : a.steerGlide) * h; const turn = Math.max(-maxTurn, Math.min(maxTurn, d * 3 * h));
+      if (Math.abs(d) < 1.6) { const na = cur + turn; b.setLinvel({ x: Math.sin(na) * hs, y: lv.y, z: Math.cos(na) * hs }, true); }
+    }
+  }
+  // ballistic landing prediction (raycast along the arc) for the HUD target ring, horizon and landing assist
+  predictLanding() {
+    const b = this.body, R = RAPIER; const p = b.translation(), v = b.linvel(); const dt = 0.07, g = this.g;
+    let x = p.x, y = p.y, z = p.z, vx = v.x, vy = v.y, vz = v.z, t = 0;
+    for (let i = 0; i < 70; i++) {
+      const nx = x + vx * dt, ny = y + vy * dt - 0.5 * g * dt * dt, nz = z + vz * dt; vy -= g * dt;
+      const dx = nx - x, dy = ny - y, dz = nz - z, len = Math.hypot(dx, dy, dz) || 1e-6;
+      _ray.origin.x = x; _ray.origin.y = y; _ray.origin.z = z; _ray.dir.x = dx / len; _ray.dir.y = dy / len; _ray.dir.z = dz / len;
+      const hit = this.world.castRayAndGetNormal(_ray, len + 0.9, true, undefined, undefined, undefined, b, STATIC_ONLY); // static world only: traffic, meteors and props never confuse the landing marker
+      if (hit) {
+        const toi = hit.timeOfImpact ?? hit.toi; const hp = new Vector3(x + _ray.dir.x * toi, y + _ray.dir.y * toi, z + _ray.dir.z * toi);
+        const n = new Vector3(hit.normal.x, hit.normal.y, hit.normal.z); if (n.y < 0) n.negate();
+        const tt = t + dt * Math.min(1, toi / len); let padD = null;
+        const g2 = this.overGap; if (g2) { const nr = nearest(this.tr, hp, this.hint, 200); const sm = this.tr.samples[nr.i]; const rel = hp.clone().sub(sm.p); padD = Math.hypot(sm.s + rel.dot(sm.T) - g2.padS, rel.dot(sm.X)); }
+        const vImp = Math.abs(vx * n.x + vy * n.y + vz * n.z);
+        this.landing = { p: hp, n, t: tt, padD, padR: g2 ? g2.padR : 0, vImp, onPad: padD != null && padD < (g2.padR || 9) };
+        return;
+      }
+      x = nx; y = ny; z = nz; t += dt;
+    }
+    this.landing = null;
+  }
+
   landed(c) {
     const t = this.air, rot = this.airRot;
     const upDot = c.up.dot(c.sm.U);
     this.justLanded = true;
-    const vy = Math.abs(this.prevVel.dot(c.sm.U));
-    this.emit('land', { strength: Math.min(1, (vy + t * 2) / 25), air: t });
+    const vy = Math.abs(Math.min(0, this.preVel.dot(c.sm.U))); // B15: impact speed along the surface normal BEFORE the contact step
+    this.emit('land', { strength: Math.min(1, (vy + t * 2) / 25), air: t, vy });
     if (upDot < 0.45 / this.veh.tough) { this.crash('landing'); return; }
+    const rt = Math.sqrt(this.veh.tough);
+    if (vy > LAND_CRASH * rt) { this.crash('landing'); return; }
+    let hard = false;
+    if (vy > LAND_HARD * rt) { // hard landing: damage, speed loss, combo broken, never CLEAN
+      hard = true; this.stat.hardLandings = (this.stat.hardLandings || 0) + 1;
+      const lv = this.body.linvel(); this.body.setLinvel({ x: lv.x * 0.65, y: lv.y, z: lv.z * 0.65 }, true);
+      this.battery = Math.max(0, this.battery - 2); this.combo.chain = 0; this.combo.mult = 1; this.combo.pts = 0;
+      this.emit('hardLanding', { vy }); this.emit('popup', { text: 'HARD LANDING', kind: 'bad' });
+    }
     const flips = Math.floor((Math.abs(rot.x) + 0.6) / (Math.PI * 2));
     const rolls = Math.floor((Math.abs(rot.z) + 0.6) / (Math.PI * 2));
     const spins = Math.floor((Math.abs(rot.y) + 0.5) / (Math.PI * 2));
@@ -661,7 +820,7 @@ export class Sim {
       if (d < g.padR) this.stat.pads++;
       if (d < 2.5) { this.stat.perfect++; this.addScore(2500, 'PERFECT LANDING!', 'pad'); this.emit('perfect'); }
       else if (d < g.padR) { this.addScore(Math.round(1500 * (1 - d / g.padR)) + 300, `PAD LANDING ${d.toFixed(1)}m`, 'pad'); this.emit('pad'); }
-      if (upDot > 0.97 && t > 1) this.addScore(250, 'CLEAN LANDING', 'clean');
+      if (!hard && upDot > 0.97 && t > 1 && vy < LAND_CLEAN * rt) this.addScore(250, 'CLEAN LANDING', 'clean');
     }
     this.overGap = null;
   }
