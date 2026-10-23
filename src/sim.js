@@ -19,7 +19,7 @@ export const ESC = { yawGain: 1.15, yawSlack: 0.12, rate: 7, slide: 2.2 };
 export const AUTO_RIGHT_T = 0.9;
 export const LAND_CLEAN = 9, LAND_HARD = 14, LAND_CRASH = 23; // m/s along the surface normal, scaled by sqrt(toughness)
 export const WALL_LOSS = 13, WALL_PENALTY = 250;
-export const FINAL_RAMP_ZONE = 2000, FINAL_RAMP_DEC = 9.81, FINAL_RAMP_LOCK = 450, FINAL_RAMP_K = +(globalThis.process?.env?.FRK || 1.1), FINAL_AIR_LAT = 4, FINAL_SOFT_DEC = 30, FINAL_TOPUP_LEN = 120, FINAL_TOPUP_ACC = 7, FINAL_FAST_V = +(globalThis.process?.env?.FFV || 100), FINAL_REACH_MARGIN = +(globalThis.process?.env?.FRM || 300); /* fast flight = ~360 km/h lip speed */ /* B41-B43: final-jump approach governor (m before finish, m/s², boost-lock distance before take-off) */
+export const FINAL_RAMP_ZONE = 2000, FINAL_RAMP_DEC = 9.81, FINAL_RAMP_BUDGET = 9.5, FINAL_RAMP_LOCK = 250, FINAL_GOV_LEN = 450, FINAL_RAMP_K = +(globalThis.process?.env?.FRK || 1.1), FINAL_AIR_LAT = 4, FINAL_SOFT_DEC = 30, FINAL_TOPUP_LEN = 120, FINAL_TOPUP_ACC = 7, FINAL_FAST_V = +(globalThis.process?.env?.FFV || 100), FINAL_REACH_MARGIN = +(globalThis.process?.env?.FRM || 300); /* fast flight = ~360 km/h lip speed */ /* B41-B43: final-jump approach governor (m before finish, m/s², boost-lock distance before take-off) */
 export const FINISH_AIR_SAFE = 30, FINISH_AIR_DEC = 14, FINISH_AIR_SINK = -7; /* B36: post-finish airborne assist (m/s, m/s², m/s) */
 export const FINISH_DEC = 8.6, FINISH_MAX_DEC = 10.2; /* applied brake; rolling + air drag add ~1-2 m/s² on top */ /* finish auto-stop: target ~1 g, cap 1.2 g */
 export const KILL_MARGIN = 60, MAX_LINVEL = 160, MAX_ANGVEL = 40; /* kill plane margin (m), runaway caps (m/s, rad/s) */
@@ -334,16 +334,17 @@ export class Sim {
     return 1e9;
   }
   finalRampAt(sv) {
-    const tr = this.tr; if (!this._fr) { this._fr = tr.features.filter(f => f.type === 'gap' && f.s0 < tr.finishS && f.s0 > tr.finishS - FINAL_RAMP_ZONE && this.reachS(f, Math.min(FINAL_FAST_V, (this.stats?.vmax || FINAL_FAST_V) * 1.2)) > tr.finishS - FINAL_REACH_MARGIN) /* this car's fast (boosted) speed */
+    const tr = this.tr; if (!this._fr) { this._fr = tr.features.filter(f => f.type === 'gap' && f.s0 < tr.finishS && f.s0 > tr.finishS - FINAL_RAMP_ZONE && !tr.features.some(g => g.type === 'loop' && g.s0 > f.land1 && g.s0 < tr.finishS) /* B45: a loop after the landing needs the speed, and a flight can't skip it */ && this.reachS(f, Math.min(FINAL_FAST_V, (this.stats?.vmax || FINAL_FAST_V) * 1.2)) > tr.finishS - FINAL_REACH_MARGIN) /* this car's fast (boosted) speed */
       .map(f => ({ f, design: (tr.def.segments.find(sg => sg.t === 'gap' && sg.name === f.name)?.speed ?? 40), v: (tr.def.segments.find(sg => sg.t === 'gap' && sg.name === f.name)?.speed ?? 40) * FINAL_RAMP_K,
         /* the lock/governor zone never reaches back into a previous feature (a loop needs its full speed) */
-        from: Math.max(f.s0 - FINAL_RAMP_LOCK, ...tr.features.filter(g => g !== f && g.s0 < f.s0 && g.type !== 'loop').map(g => (g.land1 ?? g.s1 ?? g.s0) + 15)),
+        from: Math.max(f.s0 - FINAL_GOV_LEN, ...tr.features.filter(g => g !== f && g.s0 < f.s0 && g.type !== 'loop').map(g => (g.land1 ?? g.s1 ?? g.s0) + 15)),
         /* a loop inside the zone keeps a generous minimum speed (1.6x the loop-the-loop minimum, >= 30 m/s) from 60 m before it to its exit */
-        loops: tr.features.filter(g => g.type === 'loop' && g.s0 < f.s0 && g.s1 > f.s0 - FINAL_RAMP_LOCK).map(g => ({ a: g.s0 - 60, b: g.s1 + 5, v: Math.max(30, 1.6 * Math.sqrt(5 * this.g * (g.r || 24))) })) })); }
-    return this._fr.find(r => sv > r.from && sv < r.f.land1);
+        loops: tr.features.filter(g => g.type === 'loop' && g.s0 < f.s0 && g.s1 > f.s0 - FINAL_GOV_LEN).map(g => ({ a: g.s0 - 60, b: g.s1 + 5, v: Math.max(30, 1.6 * Math.sqrt(5 * this.g * (g.r || 24))) })) })); }
+    return this._fr.find(r => sv > r.from && (sv <= r.f.s0 + 2 || (sv < r.f.land1 && !this.grounded))); /* B48: ~250 m before the lip, released the moment the car lands */
   }
   finishSteer(left) { const sm = this.tr.samples, i = Math.min(sm.length - 1, this.prog.i + 20 + Math.round(this.speed * 0.3)), d = sm[i].p.clone().sub(this.pose.p).dot(left);
-    return Math.max(-0.6, Math.min(0.6, -d * 0.12)); }
+    const m = 0.6 * Math.min(1, 45 * Math.sqrt(9.81 / this.g) / Math.max(1, this.speed)); /* low gravity = low grip, so more steer is still gentle */ /* B47: at high speed small corrections only (sideways accel stays well under 2.5 g) */
+    return Math.max(-m, Math.min(m, -d * 0.12)); }
   respawnAt(s, v = 22) {
     // never respawn inside (or on the lip of) a jump: go back to a proper run-up before it, so a respawn can't loop
     const inGap = this.tr.features.find(f => f.type === 'gap' && s > f.s0 - 40 && s < f.s1 + 2);
@@ -449,7 +450,7 @@ export class Sim {
     const brk = control ? (inp.brake || 0) : this.state === 'finished' ? (this.speed < 0.6 ? 1 : 0) /* R28: the gentle finish stop does the slowing */ : (running ? 0.2 : 1);
     /* B41-B43: final ramps (any jump within FINAL_RAMP_ZONE of the finish) lock boost from FINAL_RAMP_LOCK m before take-off until the landing, and the
        approach is governed on the ground so the take-off happens at the jump's design speed */
-    const fr = this.finalRampAt(this.prog.s); this.boostLocked = !!fr && running;
+    const fr = this.finalRampAt(this.prog.s); this.boostLocked = !!fr && running && (this.prog.s > fr.f.s0 - FINAL_RAMP_LOCK || !grounded); /* B48: the visible lock is only the last ~250 m (and the flight); before that the governor just cuts drive while the car is above its 1 g profile */
     /* B41-B43: final-ramp flights touch down softly: in the last 0.5 s the sink speed into the landing surface eases (<=3 g) toward a clean landing */
     if (this.state === 'race' && !grounded && fr && this.landing && this.landing.t < 0.5) { const n = this.landing.n, v = b.linvel(), vn = -(v.x * n.x + v.y * n.y + v.z * n.z), tgt = LAND_CLEAN * 0.95 * Math.sqrt(this.veh.tough);
       if (vn > tgt) { const d = Math.min(vn - tgt, FINAL_SOFT_DEC * h); b.setLinvel({ x: v.x + n.x * d, y: v.y + n.y * d, z: v.z + n.z * d }, true); } }
@@ -467,8 +468,10 @@ export class Sim {
     /* B41-B43: final-ramp approach governor: on the ground, follow a <=1 g braking profile that reaches the design take-off speed at the lip
        (motor cut while above it). Applied as a smooth speed bleed, flagged so it never scores as a wall hit / impact. */
     this.rampGovT = Math.max(0, (this.rampGovT || 0) - h);
+    const govPrev = this.govPrevFs; this.govPrevFs = null;
     if (fr && grounded && this.prog.s < fr.f.s0 + 2 && fspeed > 5) { let vt = Math.sqrt(fr.v * fr.v + 2 * FINAL_RAMP_DEC * Math.max(0, fr.f.s0 - this.prog.s)); for (const L of fr.loops) { if (this.prog.s < L.b) vt = Math.max(vt, Math.sqrt(L.v * L.v + 2 * FINAL_RAMP_DEC * Math.max(0, L.a - this.prog.s))); }
-      if (fspeed > vt) { drive = 0; const lv = b.linvel(), k = Math.max(vt, fspeed - FINAL_RAMP_DEC * h) / fspeed; b.setLinvel({ x: lv.x * k, y: lv.y * k, z: lv.z * k }, true); this.rampGovT = 0.5; this.stat.rampGov = (this.stat.rampGov || 0) + h; }
+      const nat = govPrev != null ? Math.max(0, (govPrev - fspeed) / h) : 0; /* B46: drag/slope already slowing the car count toward the 1 g budget */
+      if (fspeed > vt) { drive = 0; const lv = b.linvel(), k = govPrev == null ? 1 : Math.max(vt, fspeed - Math.max(0, FINAL_RAMP_BUDGET - nat) * h) / fspeed; /* first governed step only cuts drive, so drag is known before braking */ b.setLinvel({ x: lv.x * k, y: lv.y * k, z: lv.z * k }, true); this.govPrevFs = fspeed * k; this.rampGovT = 0.5; this.stat.rampGov = (this.stat.rampGov || 0) + h; }
       /* with boost locked, a slow car is topped up on the last 120 m (up to 0.7 g) so it still makes the design take-off speed */
       else if (thr > 0.5 && this.prog.s > fr.f.s0 - FINAL_TOPUP_LEN && fspeed < fr.v * 0.98) { const lv = b.linvel(), dv = Math.min(fr.v * 0.98 - fspeed, FINAL_TOPUP_ACC * h); b.setLinvel({ x: lv.x + fwd.x * dv, y: lv.y + fwd.y * dv, z: lv.z + fwd.z * dv }, true); } }
     // ramp launch assist: heavy vehicles (and stock cars) get topped up to the jump's design speed while on the take-off ramp
@@ -506,7 +509,8 @@ export class Sim {
     for (let i = 0; i < 4; i++) { vc.setWheelEngineForce(i, drive * (i < 2 ? 0.42 : 0.58) / 2); vc.setWheelBrake(i, braking * (i < 2 ? 0.6 : 0.4) + (hb && i >= 2 ? 14 : 0)); }
     // steering (speed-sensitive, smoothed)
     // B12: progressive curve (small inputs are gentle), stronger speed sensitivity, slower wheel rate at speed, quick self-centring
-    const sIn = control ? (inp.steer || 0) * (inp.sens || 1) : this.state === 'finished' && grounded ? this.finishSteer(left) : 0, sC = Math.max(-1, Math.min(1, sIn));
+    let sIn = control ? (inp.steer || 0) * (inp.sens || 1) : this.state === 'finished' && grounded ? this.finishSteer(left) : 0;
+    const sC = Math.max(-1, Math.min(1, sIn));
     const curve = sC * (STEER_LIN + (1 - STEER_LIN) * Math.abs(sC));
     const spd = Math.max(0, speed), sens = st.steer / (1 + Math.pow(spd / STEER_V0, STEER_EXP));
     const target = curve * (sens + 0.012);

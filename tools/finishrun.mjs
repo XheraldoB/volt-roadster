@@ -38,4 +38,4 @@ if (!process.env.STRESS && import.meta.url === `file://${process.argv[1]}`) { co
 /* STRESS=1: QA-style sweep: bot variants (weave 0 / 0.25 / 0.45 with different phases, boost on/off, slow and fast run-up) */
 export async function stress(levels = LEVELS) { const V = [{}, { weave: 0, boost: true }, { weave: 0.45, phase: 1.3 }, { weave: 0.25, phase: 2.1, boost: false }, { weave: 0.25, phase: 0.7, startV: 60 }]; let out = [];
   for (const v of V) out = out.concat(await finishRuns({ levels, lv: [0, 5], ...v })); return out; }
-if (process.env.STRESS && import.meta.url === `file://${process.argv[1]}`) { const r = await stress(); for (const x of r) if (!x.ok) console.log(JSON.stringify(x)); console.log('STRESS ' + r.filter(x => x.ok).length + '/' + r.length + ' ok'); }
+if (process.env.STRESS && import.meta.url === `file://${process.argv[1]}`) { const r = await stress(process.env.LV ? LEVELS.filter(l => process.env.LV.split(',').includes(l.id)) : LEVELS); for (const x of r) if (!x.ok) console.log(JSON.stringify(x)); console.log('STRESS ' + r.filter(x => x.ok).length + '/' + r.length + ' ok'); }

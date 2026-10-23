@@ -36,7 +36,7 @@
   "id": "RP touch GAS drives forward",
   "pass": true,
   "info": {
-   "ds": 2.1,
+   "ds": 2.2,
    "kmh": 24
   }
  },
@@ -44,8 +44,8 @@
   "id": "RP touch BRAKE stops then REVERSES",
   "pass": true,
   "info": {
-   "s1": 24,
-   "s2": 26.6
+   "s1": 24.1,
+   "s2": 26.3
   }
  },
  {
@@ -92,15 +92,15 @@
   "pass": true,
   "info": {
    "s": 21.8,
-   "t": 0.06666666666666667
+   "t": 0.008333333333333333
   }
  },
  {
   "id": "RP10 frame-time ring buffer",
   "pass": true,
   "info": {
-   "n": 156,
-   "p50": 433.3,
+   "n": 159,
+   "p50": 383.3,
    "p95": 933.3
   }
  },
@@ -187,11 +187,11 @@
   "pass": true,
   "info": {
    "g1": {
-    "s": 22.347455978393555,
+    "s": 22.347028732299805,
     "gear": "D"
    },
    "g2": {
-    "s": 25.08141326904297,
+    "s": 25.877199172973633,
     "gear": "R",
     "rev": true
    }

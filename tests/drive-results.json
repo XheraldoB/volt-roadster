@@ -582,14 +582,23 @@
   "pass": true
  },
  {
-  "id": "B41-B43 final ramp: boost locked + flagged, approach bleed <= 1.05 g (incl. drag), lip speed ~design, no wall hit/impact",
+  "id": "B47 finish jolt < 2.5 g (r4/r1 maxed, 368 km/h)",
+  "pass": true,
+  "info": {
+   "r4": 1.72,
+   "r1": 1.92
+  }
+ },
+ {
+  "id": "B41-B46/B48 final ramp: boost locked + flagged only near the lip, approach bleed <= 1.0 g incl. drag, no wall hit/impact",
   "pass": true,
   "info": {
    "locked": true,
-   "maxDec": 11.57,
-   "govSteps": 367,
+   "maxDec": 9.83,
+   "govSteps": 487,
    "wall": 0,
-   "vLip": 40.2
+   "vLip": 42.3,
+   "lockFrom": 249.41893862597544
   }
  },
  {
@@ -597,7 +606,7 @@
   "pass": true,
   "info": {
    "unknown": [],
-   "known": 8,
+   "known": 7,
    "total": 198
   }
  },

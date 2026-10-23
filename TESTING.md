@@ -555,3 +555,39 @@ Verdict: **FAIL.** B40 is fixed and no false triggers were found, but the B39 re
   - The remaining failures are mostly the bot overspeeding or weaving in the finale loops of e4/e8/m3/r3. They fail on db99eda too and are listed in drive.test's FINISH_KNOWN. Also: a few post-line peaks of 4.1-4.9 g, and heavy-weave wall scrapes.
 - m2 stock pickup "airborne at the line" was a battery-out DNF while falling into The Abyss (the stock pickup could not clear it after a respawn). It is now cleared via the top-up. r1 Lv5 pickup: 0 airborne finishes.
 - Suites: drive 79/79, quests 15/15, simtest roadster 23/23, hauler 23/23, qa local 31/31, player.browser 24/24.
+
+## Regression (commit 117848c)
+Build: fresh worktree /workspace/volt-roadster-qa-117848c -> /workspace/vr-dist-117848c, preview :4173. GitHub master = 117848c, and the assets are identical to live. Zero live writes: the only live API call was GET /api/load (restore). No commits or source edits. The dev's drive test was run from a copy in qa/ so tests/ wasn't touched. Summary: qa/summary-117848c.json.
+
+| Item | Measured | Claimed / baseline |
+|---|---|---|
+| Dev finishrun | 190/198 | claimed 190/198; same harness on db99eda 171/198 |
+| Dev STRESS | 613/660 | claimed 613/660; db99eda 562/660 |
+| Own 450-run stress (run-ups from -1500 m and before every jump) | 400/450 ok; 0 airborne at the line; crash/wall/hard landings within 300 m of the line: 25 runs; max \|x\| at the line 2.35 m | db99eda 367 (54 near-finish), db11e24 354 (65) |
+| B41 off-road landing | FIXED: every final-ramp landing is at \|x\| <= 0.4 m (Node and browser) | |
+| B42 landing wall hit / crash landing | FIXED for r1/r4/r6: 0 hard landings or wall hits on landing in braked runs | |
+| B43 hang / feel | FIXED: flights 4.3-7.0 s, 2.8-6.4 m high, no mid-air slowdown; camera 12-25 m in flight. The BOOST LOCKED cue shows on the boost bar. The ground governor is smooth (ramped) but measured **1.18-1.52 g** in the browser (r6 1.47-1.52 g), not <= 1 g; 225-231 -> 139-141 km/h over about 130 m | claimed <= 1 g |
+| B44 finishrun stricter | DONE: it now catches pre-line crashes, wall hits and off-centre landings | |
+| B36 leftovers | 0 airborne at the line in 450 runs (3 on db99eda) | |
+| False triggers | B6 pickup pad landings in race and trial (e1/m1/r1, every gap) on the pad as before; normal mid-level jumps keep their speed | |
+| e4/e8/r3 | Same as or better than db99eda (stress e4 8/8, e8 4/6, r3 7/8) | |
+| **m3** | **Worse**: stress 5 fails vs 1, finishrun 2 vs 0 | claim "also on db99eda" is wrong for m3 |
+| Smoke | drive.test 79/79; B34 138-run 137 ok (e4 harness); fall-through stress 0 NaN, 4 kills, 58 strict fails (61 before); B34/B35 browser same as before; B37 N; B40 0 uncaught errors | |
+| RP1-RP15 by touch (DPR3 and 2772) | RP1/RP12 reverse 0.24-0.33 s, -28 km/h, both vehicles; RP2-RP7 via drive.test; RP8/RP13 classic layout, 0 overlaps, smallest 9.0 mm, multi-touch clears on release; RP14 3 cameras saved across reload; tutorial ok. RP9-RP11 and RP15 need the phone. The Settings layout select wasn't found by the harness (not counted) | |
+| Live boot | 2.7 s, 0 errors, restore GET only | |
+
+New bugs:
+- **B45 (Major): m3 Roadster Lv3/Lv5 falls (crash:fall) 265-293 m before the line, worse than db99eda.** Repro: `STRESS=1 LV=m3 node tools/finishrun.mjs` -> 5 fails (db99eda 1); `LV=m3 node tools/finishrun.mjs` -> 2 fails (db99eda 0). Boost is locked for 14-62 s in these runs and there are meteor hits. Likely the slower governed approach leaves the car in the meteor/crater section longer, or the lock blocks recovery after a respawn.
+- **B46 (Minor): final-ramp governor peaks at 1.2-1.5 g, not <= 1 g.** Repro: browser r6 Lv5 Roadster, boost held from 500 m before the last jump: 231 -> 139 km/h between -679 and -547 m, peak 1.52 g (the ramp gradient adds to the bleed).
+- **B47 (Minor): one-step 3.3 g spike at the finish at 368 km/h.** Repro: Node, r4 Roadster Lv5, run-up from finish -1500 with boost (qa/peak-trace.mjs): peak 3.33 g at line +1 m, then about 1 g. Same on r1 from gap0 (3.19 g).
+- **B48 (Minor, design/feel): boost is locked for most of the last 2 km on two-ramp levels.** m4 is locked from -2056 m, r6 from -1634 to -853 and -838 to -180, m1/m2/m3/m5 similar (qa/fr-zones-results.json). Boosting players may feel the finale is "taken away". Consider shortening the lock to about 250 m before each lip.
+
+Verdict: **CONDITIONAL PASS.** B41-B44 are fixed, B36 has no leftovers, and the dev's numbers reproduce exactly. Fix B45 (m3 regression) before release; B46-B48 are polish.
+
+## Fix round 15 (B45-B48)
+- B45 m3: jumps with a loop between the landing and the finish are no longer final ramps (the loop needs the speed, and a flight can't skip it). That covers m3 (both gaps), e2 Grand Gulch, e4 Sea Stack and e8 Skywalk. The m3 Roadster had been landing at about 126 km/h 60 m before Eclipse Loop and falling out of it. m3: STRESS 39/40 and finishrun 12/12, identical to db99eda on the same harness (117848c: 35/40, 10/12). `STRESS=1 LV=..` now honours LV.
+- B48: the visible boost lock only covers the last 250 m before the lip plus the flight, and it releases the moment the car lands. Between 450 and 250 m before the lip the governor only cuts drive while the car is above its profile, with no lock and no braking beyond the 1 g budget.
+- B46: total along-road slowdown, including drag and slope, is held at <= 0.97 g. The governor measures the car's own decel each step, brakes only for the rest, and only cuts drive on the first step. drive.test measures 9.83 m/s² along the road on r6 Hop Four from 288 km/h; the old horizontal-only figure over-read on pitch changes. If the zone is too short, the take-off is a little faster and the run-off plus the finish brake handle it.
+- B47: after the line the auto-steer limit scales with speed and gravity: 0.6 x min(1, 45·sqrt(9.81/g)/v). Post-line peak: r4 3.33 -> 1.72 g, r1 4.1 -> < 3 g (QA's peak-trace scenario). Moon early decel is unchanged at 7.3 m/s². New drive test: B47 < 2.5 g.
+- Same-harness totals: finishrun 117848c 190/198 -> 191/198 (0 airborne at the line). STRESS 613/660 -> 628/660 (0 airborne).
+- Suites: drive 80/80, quests 15/15, simtest roadster 23/23 and hauler 23/23, qa local 31/31, player.browser 24/24, BOOST LOCKED cue ok.
