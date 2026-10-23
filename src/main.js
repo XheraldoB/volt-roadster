@@ -524,6 +524,7 @@ function updateHud() {
   $('#spd').textContent = Math.round(s.speed * 3.6); { const gr = s.state === 'countdown' || s.speed * 3.6 < 1 ? 'N' : s.reversing || s.fspeed < -0.5 ? 'R' : 'D'; /* B37: N when stopped / counting down */ const ge = $('#gear'); if (ge.textContent !== gr) { ge.textContent = gr; ge.className = 'gear ' + gr; } }
   updateHorizon(s);
   const bat = s.battery / st.tank; $('#bat-fill').style.width = (bat * 100).toFixed(1) + '%'; $('#bat-val').textContent = Math.ceil(s.battery) + 's'; $('#bat').classList.toggle('low', bat < 0.2);
+  { const lk = !!s.boostLocked, el = $('#boost-lock'); if (el && el.hidden === lk) { el.hidden = !lk; document.querySelectorAll('[data-ctl="boost"]').forEach(e => e.classList.toggle('locked', lk)); } }
   $('#boost-fill').style.width = (s.boost / st.boostCap * 100).toFixed(1) + '%'; $('#thr-fill').style.width = (s.veh.rcs ? s.gas / st.gasCap : s.thrust / st.thrustCap) * 100 + '%';
   $('#hud-coins').textContent = s.coins; $('#hud-score').textContent = nf(s.score);
   const cb = s.combo; $('#hud-mult').textContent = cb.mult > 1 ? `x${cb.mult}` : ''; $('#hud-mult').style.setProperty('--t', cb.chain ? cb.timer / 4 : 0);
@@ -587,7 +588,7 @@ canvas.addEventListener('webglcontextrestored', () => { G.ctxLost = false; gfx.c
 window.__game = {
   get fps() { return G.fps; }, get screen() { return G.screen; }, get quality() { return gfx.qName; }, get gpu() { return gfx.info; },
   get world() { return G.level ? G.level.planet : G.planet; }, get level() { return G.level ? G.level.id : null; },
-  get car() { const s = G.sim; if (!s) return null; return { speed: s.speed, kmh: s.speed * 3.6, s: s.prog.s, x: s.prog.x, battery: s.battery, boost: s.boost, grounded: s.grounded, state: s.state, score: s.score, coins: s.coins, pos: s.pose.p.toArray(), raceTime: s.raceTime, crashes: s.stat.crashes, vehicle: s.veh.id, gas: s.gas, rcs: { ...s.rcs }, thrust: s.thrust }; },
+  get car() { const s = G.sim; if (!s) return null; return { boostLocked: !!s.boostLocked, speed: s.speed, kmh: s.speed * 3.6, s: s.prog.s, x: s.prog.x, battery: s.battery, boost: s.boost, grounded: s.grounded, state: s.state, score: s.score, coins: s.coins, pos: s.pose.p.toArray(), raceTime: s.raceTime, crashes: s.stat.crashes, vehicle: s.veh.id, gas: s.gas, rcs: { ...s.rcs }, thrust: s.thrust }; },
   get vehicle() { return save.vehicle; }, setVehicle: id => { if (!VEHICLES[id]) throw new Error('no vehicle ' + id); if (!P.selectVehicle(save, id)) throw new Error('vehicle not owned: ' + id); persist(true); return id; }, ownsVehicle: id => P.ownsVehicle(save, id),
   grantVehicle: id => { if (!VEHICLES[id]) throw new Error('no vehicle ' + id); if (!save.owned.vehicles.includes(id)) save.owned.vehicles.push(id); persist(true); return id; }, /* QA/dev helper */ get gems() { return save.gems; },
   get pixelRatio() { return gfx.renderer.getPixelRatio(); }, get drawingBuffer() { const v = gfx.renderer.getDrawingBufferSize(new THREE.Vector2()); return { w: v.x, h: v.y, css: { w: innerWidth, h: innerHeight }, dpr: devicePixelRatio, dynScale: gfx.dynScale }; },

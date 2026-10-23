@@ -514,3 +514,44 @@ Verdict: **CONDITIONAL PASS.** B36 (airborne finish) and B37 are fixed, and noth
 - B38: finishrun.mjs now starts 500 m before EVERY jump in the last 2 km (r6 Hop Three and Hop Four, r1 Rust Rift and Dust Devil Gap, ...), upgrades 0/3/5 × both vehicles × 23 levels = 198 runs: 198/198 ok. None crossed the finish more than 2 m in the air. Max g after the line was 2.3. There was no wall hit, hit or crash within 1 s of air braking. Air brake was active for 0.6–7.5 s on r1/r4/r6.
 - B40: engine() and rcs() clamp and sanitise inputs, so AudioParam.setTargetAtTime never gets NaN/Infinity. New drive test.
 - Suites: drive 78/78, quests 15/15, simtest roadster 23/23, hauler 23/23, qa local 31/31, player.browser 24/24.
+
+## Regression (commit db11e24)
+Build: fresh worktree /workspace/volt-roadster-qa-db11e24 -> /workspace/vr-dist-db11e24, preview :4173 (old one stopped). GitHub master = db11e24, and the assets are identical to live. Zero live writes: the only live API call was GET /api/load?code=VOLT-QPM5-VG64-XXS9. No commits or source edits. Scripts and results: qa/b38-stress.mjs (+ b38-summ.py), b6-airbrake*.mjs, p14.mjs, p13.mjs, p11b/p11c.mjs, fallstress.mjs, b34-stress.mjs, p12-live.mjs, all in the worktree's qa/. The same b38-stress was also run on db99eda as a baseline.
+
+| Item | Result |
+|---|---|
+| Dev tools/finishrun.mjs | 198/198 ok. It only checks events after the line, so it misses B41/B42 |
+| Own stress (b38-stress): 23 levels x 2 vehicles x 0/3/5; run-ups from finish -1500 m and from 500 m before EVERY gap (450 runs); boost held, weaving bot | **FAIL.** The air brake engaged in 28 runs (r1, r4, r6 at Lv3/Lv5) and **23 of those 28 fail**. Typical result: the car lands 83-105 m before the line with HARD LANDING + WALL HIT (-250). r6 roadster Lv3/Lv5: **crash:landing (respawn) at -83 to -157 m** in 5 of 5 braked runs. r1 hauler Lv5: airborne at the line, 14 m off-centre, 19.9 g. Against db99eda: 17 runs regressed, 4 improved. Runs where the brake never engaged match the baseline (the bot's own wall hits are harness noise on both commits) |
+| False triggers | None found. The brake never engaged on a jump whose unbraked landing was more than 120 m before the line. B6 pickup hover pads (e1, m1, r1, every gap, race and trial): identical pad landings with the brake on and off, air-brake time 0 |
+| Browser DPR 3, Lv5, boost held (p14) | **FAIL.** r1 roadster: take-off at 335 km/h, braked 4.5 s at up to 1.40 g (335 -> 204 km/h), 9.2 s in the air, 48 m high. It lands 114 m before the line but **103 m sideways off the road -> crash:off, respawn**, then a crash:off loop (a short hop near the line is braked 133 -> 61 km/h and falls off again). r1 hauler: 302 km/h, braked 3.1 s, lands 98 m off the road, same loop. r6 hauler: take-off at 306 km/h, **104 m high, 14.2 s in the air**, braked 6.3 s, lands 92 m before the line at 48 km/h on the road edge (x 6 m). r6 roadster: the in-page bot never got cleanly through the run-up (stuck/respawn loops around -1408 m); no braked flight recorded. Both haptic types fire ([40,30,80] crash pattern and short pulses), and "WALL HIT -250" / "HARD LANDING" popups appear |
+| Feel | Not a sudden lurch: the brake ramps over 0.3 s and holds about 1.25-1.4 g. But it is **noticeable and wrong-feeling**: 130-250 km/h vanishes in mid-air for no visible reason, flights of 8-14 s hang 40-104 m up, and the chase camera trails 19-35 m (normally 10.9). The landing then gets punished anyway |
+| B40 | FIXED: 0 uncaught errors in the tutorial + level-switch path (p13), the boost/crash/respawn audio paths (p14), p11b, p11c and the live boot |
+| B34/B35 ground finishes | PASS, unchanged (e1/m6 Lv5 320 km/h 1.05-1.06 g; stock stops in 133-155 m) |
+| B36 airborne finish | Still airborne at the line: 3 runs (m2 hauler stock x2, the same on db99eda; plus r1 hauler Lv5, new) |
+| B37, cameras, RP12/RP13 | PASS: gear N in the countdown (tutorial and normal start); cameras 10.5/3.0/68, 5.2/1.7/62, hood, saved across reload; R reverses in 0.68 s to -28.9 km/h; classic layout, 0 overlaps, minimum 54 px |
+| Fall-through stress | PASS: 0 NaN, 2 kills (4 before), backwall and after-finish 0. Two free-roam edge scenarios changed state (no kills) |
+| Live boot | PASS: 3.7 s, 0 errors, restore GET only |
+
+New bugs:
+- **B41 (Critical): the air brake can't steer, so on r1 the long braked flight lands about 100 m off the road.** Browser, Lv5, both vehicles: the car flies straight while the road curves, then crash:off and a respawn loop near the finish. The brake also re-triggers on short hops after a respawn and drops the car short.
+- **B42 (Major): braked flights land 83-105 m before the line as a HARD LANDING + WALL HIT (-250, combo reset, crash haptic).** On r6 roadster they land as a **crash:landing respawn**. This is B38 in another form. Cause: the brake keeps horizontal speed down but the car stays up for 6-14 s, so it lands steep and hard right at the 80 m margin. 23 of 28 braked runs.
+- **B43 (Major, feel): mid-air speed loss plus very long hang time.** 8-14 s in the air, up to 104 m high, the camera trailing about 3x its normal distance. Suggestion: return to a ground-side cap on the take-off ramp, spread over 150-200 m at about 1 g, and exempt it from wall-hit scoring; or reduce boost on the final ramps so the take-off speed stays within about 1.2x the design speed.
+- **B44 (test gap): finishrun only checks events after the line.** It should fail on crash/hardLanding/wallHit within 300 m before the line, and on landings more than 3 m off-centre.
+
+Verdict: **FAIL.** B40 is fixed and no false triggers were found, but the B39 replacement makes the r1/r4/r6 finishes worse (off-road crashes, crash landings, scored wall hits). B38 is not fixed.
+
+## Fix round 14 (B41-B44 redo; production was rolled back to db99eda first)
+- Rolled production back to db99eda (dpl_3QaUtUQQ6zBdG1msZ7psihSzDJEu) via Vercel rollback before any work; live bundle index-DVgCHjXc.js confirmed.
+- B41/B42/B43: the air brake is removed completely. Replacement, all on the ground:
+  - Final ramps are gaps in the last 2 km whose ballistic flight at this car's fast speed (min(100 m/s, vmax x 1.2)) would come down within 300 m of the finish or past it.
+  - On those ramps boost is locked from 450 m before the lip until the landing. The zone never reaches back into a previous gap or cork. HUD shows an amber "BOOST LOCKED" pill and the boost button greys out (qa-shots/b43-boost-locked.png).
+  - Approach governor: a <=1 g braking profile (motor cut while above it) ends at 1.1x the design speed at the lip. A loop inside the zone keeps 1.6x its loop-the-loop minimum (>=30 m/s). A slow car (stock pickup) is topped up at up to 0.7 g over the last 120 m. Measured approach bleed on r6 Hop Four from 288 km/h: 1.18 g including aero drag.
+  - On final-ramp flights only: a gentle (<=0.4 g) lateral nudge toward the centreline at the predicted touchdown, and the sink speed eases toward a clean landing in the last 0.5 s.
+  - The governor never feeds wall-hit or impact scoring. Landing speed loss, including the hard-landing penalty, is no longer also scored as a WALL HIT: 0.5 s landing grace (e7 Broken Span used to give HARD LANDING + WALL HIT on every run).
+- B44: finishrun fails on any crash, hard landing, wall hit or respawn in the last 300 m before the line, on gap landings >3 m off centre, and on being airborne at the line (any height). It keeps the 500 m run-ups before every jump in the last 2 km. Rival AI cars are parked, because the bot can't dodge them; meteor strikes are counted separately. STRESS=1 runs a 660-run QA-style sweep (5 bot variants: weave 0/0.25/0.45, phases, boost off, 60 m/s run-up).
+- Results (same harness on both builds):
+  - finishrun 198 runs: db99eda 171/198 -> 190/198, 0 airborne at the line.
+  - Stress 660 runs: db99eda 562/660 (6 airborne at the line) -> 613/660 (1 airborne).
+  - The remaining failures are mostly the bot overspeeding or weaving in the finale loops of e4/e8/m3/r3. They fail on db99eda too and are listed in drive.test's FINISH_KNOWN. Also: a few post-line peaks of 4.1-4.9 g, and heavy-weave wall scrapes.
+- m2 stock pickup "airborne at the line" was a battery-out DNF while falling into The Abyss (the stock pickup could not clear it after a respawn). It is now cleared via the top-up. r1 Lv5 pickup: 0 airborne finishes.
+- Suites: drive 79/79, quests 15/15, simtest roadster 23/23, hauler 23/23, qa local 31/31, player.browser 24/24.

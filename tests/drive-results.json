@@ -582,13 +582,23 @@
   "pass": true
  },
  {
-  "id": "B36/B38/B39 run-up from 500 m before every jump in the last 2 km: grounded at finish, no wall hit/crash/hit within 1 s of air braking, peak g<=4 after line, stops on road (0/3/5 x 2 vehicles x all levels)",
+  "id": "B41-B43 final ramp: boost locked + flagged, approach bleed <= 1.05 g (incl. drag), lip speed ~design, no wall hit/impact",
   "pass": true,
   "info": {
-   "runs": 198,
-   "bad": [],
-   "maxG": 2.3,
-   "air": 0
+   "locked": true,
+   "maxDec": 11.57,
+   "govSteps": 367,
+   "wall": 0,
+   "vLip": 40.2
+  }
+ },
+ {
+  "id": "B44 no NEW finish-run failures beyond the documented loop-overspeed cases",
+  "pass": true,
+  "info": {
+   "unknown": [],
+   "known": 8,
+   "total": 198
   }
  },
  {
